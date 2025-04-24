@@ -1,0 +1,6 @@
+.idea/
+env/
+static/
+db.sqlite3
+.env
+logs.log
