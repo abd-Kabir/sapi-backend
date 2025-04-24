@@ -1,9 +1,5 @@
-from django.urls import path
-from rest_framework.routers import DefaultRouter
+from apps.authentication.endpoints.auth import urlpatterns as auth_urls
 
-router = DefaultRouter()
-urlpatterns = [
-    # path()
-]
-
-urlpatterns += router.urls
+app_name = 'authentication'
+urlpatterns = []
+urlpatterns += auth_urls

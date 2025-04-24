@@ -1,0 +1,43 @@
+from django.db import models
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+
+from apps.authentication.models import User
+
+sms_message_purpose = {
+    'login': 'Ваш код для входа на sapi.uz: {code}',
+    'forgot_password': 'Ваш код для восстановления пароля на sapi.uz: {code}',
+    'password_reset': 'Ваш код для изменения пароля на sapi.uz: {code}',
+    'phone_update': 'Ваш код для изменения номера телефона на sapi.uz: {code}',
+}
+
+
+def sms_message_purpose_tool(purpose, code):
+    return sms_message_purpose[purpose].format(code=code)
+
+
+class PurposeEnum(models.TextChoices):
+    login = 'login', _("Регистрация")
+    forgot_password = 'forgot_password', _("Забыли пароль")
+    password_reset = 'password_reset', _("Сброс пароля")
+    phone_update = 'phone_update', _("Обновление телефона")
+
+
+class SMSConfirmation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sms_confirmations", null=True, blank=True)
+    phone_number = models.CharField(max_length=30, null=True, blank=True)
+    code = models.CharField(max_length=6)
+    purpose = models.CharField(
+        max_length=20,
+        choices=PurposeEnum.choices,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return now() > self.expires_at
+
+    class Meta:
+        db_table = "sms_confirmation"

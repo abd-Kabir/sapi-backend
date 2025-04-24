@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     # apps
     'apps.authentication',
+    'apps.integrations',
 ]
 
 MIDDLEWARE = [
@@ -118,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'authentication.User'
 
 # Internationalization
-LANGUAGE_CODE = 'uz-uz'
+LANGUAGE_CODE = 'ru-ru'
 LANGUAGES = [
     ('uz', _('Uzbek')),
     ('ru', _('Russian')),
@@ -153,7 +154,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'EXCEPTION_HANDLER': 'config.core.api_exceptions.uni_exception_handler',
 }
@@ -170,12 +171,13 @@ AWS_DEFAULT_ACL = None  # Optional: use None for default ACL
 # AWS_S3_CUSTOM_DOMAIN = 'localhost:8008'
 AWS_S3_USE_SSL = False
 AWS_QUERYSTRING_AUTH = False
+
 # SMS Integration
-# SMS_INTEGRATION_SETTINGS = {
-#     'SMS_BASE_URL': getenv('SMS_BASE_URL'),
-#     'SMS_USERNAME': getenv('SMS_USERNAME'),
-#     'SMS_PASSWORD': getenv('SMS_PASSWORD'),
-# }
+SMS_INTEGRATION_SETTINGS = {
+    'SMS_BASE_URL': getenv('SMS_BASE_URL'),
+    'SMS_USERNAME': getenv('SMS_USERNAME'),
+    'SMS_PASSWORD': getenv('SMS_PASSWORD'),
+}
 
 # Debug Toolbar
 if DEBUG:
