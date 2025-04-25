@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     # apps
     'apps.authentication',
     'apps.integrations',
+    'apps.files',
+    'apps.content',
 ]
 
 MIDDLEWARE = [
