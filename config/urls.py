@@ -28,6 +28,9 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('control-panel/', admin.site.urls),
     path('', include('apps.authentication.endpoints.auth')),
+    path('files/', include('apps.files.urls')),
+    path('content/', include('apps.content.urls')),
+
     path('media/<path:path>', MediaPath.as_view(), name='serve_private_file'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

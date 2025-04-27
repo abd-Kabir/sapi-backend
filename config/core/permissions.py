@@ -1,12 +1,13 @@
 from rest_framework import permissions
 
 
-class LandingPage(permissions.BasePermission):
+class IsCreator(permissions.BasePermission):
     """
-    Allow users to GET requests
+    Allow to creators
     """
 
     def has_permission(self, request, view):
-        if view.action == 'list' or view.action == 'retrieve':
+        user = request.user
+        if user.is_creator and user.is_authenticated:
             return True
-        return request.user.is_authenticated
+        return False

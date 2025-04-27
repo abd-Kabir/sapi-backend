@@ -145,7 +145,7 @@ STATIC_ROOT = join_path(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = join_path(BASE_DIR, 'media')
-# FILE_UPLOAD_DIR = join_path(MEDIA_ROOT, 'uploads')
+FILE_UPLOAD_DIR = join_path(MEDIA_ROOT, 'uploads')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

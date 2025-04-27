@@ -5,11 +5,13 @@ from django.utils.translation import gettext_lazy as _
 
 from config.models import BaseModel
 
+
 class CardType(models.TextChoices):
     visa = 'visa', 'VISA'
     uzcard = 'uzcard', 'UZCARD'
     humo = 'humo', 'HUMO'
     mastercard = 'mastercard', 'Mastercard'
+
 
 class User(AbstractUser):
     email = None
@@ -29,12 +31,26 @@ class User(AbstractUser):
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []
 
+    multibank_account = models.CharField(max_length=20, null=True, blank=True)
+    multibank_verified = models.BooleanField(default=False)
+
+    profile_photo = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+                                         related_name='profile_photo')
+    profile_banner_photo = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+                                                related_name='profile_banner_photo')
+
     class Meta:
         db_table = 'user'
 
 
 class Card(BaseModel):
+    is_deleted = models.BooleanField(default=False)
+    is_main = models.BooleanField(default=False)
+    card_owner = models.CharField(max_length=155)
     number = models.CharField(max_length=16)
-    type = models.CharField(max_length=10)
+    expiration = models.CharField(max_length=4)
+    type = models.CharField(max_length=10, choices=CardType.choices, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards', null=True)
+
     class Meta:
         db_table = 'card'
