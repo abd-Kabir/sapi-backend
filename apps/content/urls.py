@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.content.views import PostCreateAPIView, CategoryListAPIView, ChoiceTypeListAPIView
+from apps.content.views import (PostCreateAPIView, CategoryListAPIView, ChoiceTypeListAPIView)
 
 app_name = 'content'
 urlpatterns = [

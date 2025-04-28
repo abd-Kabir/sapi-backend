@@ -54,3 +54,19 @@ class Card(BaseModel):
 
     class Meta:
         db_table = 'card'
+
+
+class Subscription(BaseModel):
+    is_deleted = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+    name = models.CharField(max_length=55)
+    description = models.TextField(null=True, blank=True)
+    price = models.PositiveBigIntegerField()
+    banner = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='subscriptions')
+
+    # def subscribers_count(self):
+    #     return self.users.count()
+
+    class Meta:
+        db_table = 'subscription'
