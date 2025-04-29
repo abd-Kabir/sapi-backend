@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.content.models import Post, Category, PostTypes, ReportTypes
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer
 from config.core.api_exceptions import APIValidation
-from config.core.permissions import IsCreator
+from config.core.permissions import IsCreator, AllowGet
 from config.core.swagger import query_choice_swagger_param
 from config.views import BaseModelViewSet
 
@@ -46,6 +46,7 @@ class ChoiceTypeListAPIView(APIView):
 class CategoryModelViewSet(BaseModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [AllowGet, ]
 
     @swagger_auto_schema(
         request_body=openapi.Schema(type=openapi.TYPE_OBJECT, required=['name'], properties={

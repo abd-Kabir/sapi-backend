@@ -28,9 +28,7 @@ class User(AbstractUser):
     is_deleted = models.BooleanField(default=False)
     is_creator = models.BooleanField(default=False)
 
-    USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = []
-
+    creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
     multibank_verified = models.BooleanField(default=False)
 
@@ -38,6 +36,11 @@ class User(AbstractUser):
                                          related_name='profile_photo')
     profile_banner_photo = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                                 related_name='profile_banner_photo')
+    category = models.ForeignKey('content.Category', on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='users')
+
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = []
 
     class Meta:
         db_table = 'user'
@@ -64,7 +67,7 @@ class Subscription(BaseModel):
     price = models.PositiveBigIntegerField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
-                                  related_name='subscriptions')
+                               related_name='subscriptions')
 
     # def subscribers_count(self):
     #     return self.user

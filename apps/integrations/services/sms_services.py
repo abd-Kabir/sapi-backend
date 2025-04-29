@@ -14,7 +14,10 @@ def only_phone_numbers(phone):
     """
     return: Remove all non-digit characters and return phone-number
     """
-    return re.sub(r'\D', '', phone)
+    phone_number = re.sub(r'\D', '', phone)
+    if not phone_number:
+        raise APIValidation(_('Введите номер телефона'), status_code=status.HTTP_400_BAD_REQUEST)
+    return phone_number
 
 
 def generate_sms_code() -> str:
