@@ -8,8 +8,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
-from apps.authentication.serializer import (JWTObtainPairSerializer, LoginWelcomeSerializer, LoginVerifySMSSerializer,
-                                            LoginSetUsernameSerializer)
+from apps.authentication.serializers.auth import (JWTObtainPairSerializer, LoginWelcomeSerializer,
+                                                  LoginVerifySMSSerializer, LoginSetUsernameSerializer)
 from apps.integrations.services.sms_services import only_phone_numbers
 from config.core.api_exceptions import APIValidation
 

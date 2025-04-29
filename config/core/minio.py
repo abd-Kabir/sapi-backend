@@ -8,21 +8,21 @@ import boto3
 import botocore
 from botocore.client import Config
 
+s3_client = boto3.client(
+    's3',
+    endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+)
 
 def ensure_minio_bucket():
-    s3 = boto3.client(
-        's3',
-        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    )
     try:
-        s3.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
+        s3_client.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
         print(f"MinIO bucket '{settings.AWS_STORAGE_BUCKET_NAME}' already exists.")
     except botocore.exceptions.ClientError as e:
         error_code = int(e.response['Error']['Code'])
         if error_code == 404:
-            s3.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
+            s3_client.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
             print(f"MinIO bucket '{settings.AWS_STORAGE_BUCKET_NAME}' created.")
         else:
             print(e)

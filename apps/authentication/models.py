@@ -62,11 +62,12 @@ class Subscription(BaseModel):
     name = models.CharField(max_length=55)
     description = models.TextField(null=True, blank=True)
     price = models.PositiveBigIntegerField()
-    banner = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                   related_name='subscriptions')
 
     # def subscribers_count(self):
-    #     return self.users.count()
+    #     return self.user
 
     class Meta:
         db_table = 'subscription'

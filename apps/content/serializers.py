@@ -4,6 +4,7 @@ from rest_framework import serializers, status
 
 from apps.content.models import Post, Category, AnswerOption
 from apps.files.models import File
+from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
 
 
@@ -12,12 +13,16 @@ class ChoiceTypeSerializer(serializers.Serializer):
     code = serializers.CharField()
 
 
-class CategoryListSerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
+    icon_info = FileSerializer(read_only=True, allow_null=True, source='icon')
+
     class Meta:
         model = Category
         fields = [
             'id',
             'name',
+            'icon',
+            'icon_info',
         ]
 
 
@@ -64,10 +69,6 @@ class PostCreateSerializer(serializers.ModelSerializer):
                     answers_list.append(AnswerOption(questionnaire_post=post, **answer))
                 AnswerOption.objects.bulk_create(answers_list)
             return post
-
-    def to_representation(self, instance):
-        representation= super().to_representation(instance)
-        return representation
 
     class Meta:
         model = Post

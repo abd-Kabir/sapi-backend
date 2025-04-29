@@ -1,15 +1,17 @@
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
 from apps.content.models import Post, Category, PostTypes, ReportTypes
-from apps.content.serializers import PostCreateSerializer, CategoryListSerializer, ChoiceTypeSerializer
+from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.permissions import IsCreator
 from config.core.swagger import query_choice_swagger_param
+from config.views import BaseModelViewSet
 
 
 class ChoiceTypeListAPIView(APIView):
@@ -41,9 +43,29 @@ class ChoiceTypeListAPIView(APIView):
         return Response(data)
 
 
-class CategoryListAPIView(ListAPIView):
+class CategoryModelViewSet(BaseModelViewSet):
     queryset = Category.objects.all()
-    serializer_class = CategoryListSerializer
+    serializer_class = CategorySerializer
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(type=openapi.TYPE_OBJECT, required=['name'], properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'icon': openapi.Schema(type=openapi.TYPE_INTEGER)
+        }),
+        responses={status.HTTP_201_CREATED: CategorySerializer()}
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(type=openapi.TYPE_OBJECT, required=['name'], properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'icon': openapi.Schema(type=openapi.TYPE_INTEGER)
+        }),
+        responses={status.HTTP_201_CREATED: CategorySerializer()}
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
 
 class PostCreateAPIView(CreateAPIView):

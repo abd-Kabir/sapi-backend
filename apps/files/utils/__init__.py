@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.db import transaction
 from rest_framework import status
 
 from apps.files.models import File
@@ -12,6 +13,8 @@ from os import sep
 from dotenv import load_dotenv
 import uuid
 import time
+
+from config.core.minio import s3_client
 
 load_dotenv()
 logger = logging.getLogger()
@@ -25,8 +28,8 @@ def unique_code() -> str:
     return "%s%s" % (time.time_ns(), str(uuid.uuid4()).replace("-", ""))
 
 
-def upload_path() -> str:
-    return settings.FILE_UPLOAD_DIR
+def upload_path(file_name) -> str:
+    return join_path('uploads', file_name)
 
 
 def media_path(file_name):
@@ -43,24 +46,37 @@ def gen_hash_name(filename) -> str:
 
 def upload_file(file):
     try:
-        name = file.name
-        size = file.size
-        gen_name = gen_new_name(file)
-        content_type = file.content_type
-        extension = get_extension(filename=file.name)
-        path = media_path(gen_name)
-        uploaded_file = File(name=name,
-                             size=size,
-                             gen_name=gen_name,
-                             path=path,
-                             content_type=content_type,
-                             extension=extension)
-        with open(join_path(upload_path(), gen_name.replace(sep, '/')), 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
-        uploaded_file.save()
+        with transaction.atomic():
+            name = file.name
+            size = file.size
+            gen_name = gen_new_name(file)
+            content_type = file.content_type
+            extension = get_extension(filename=file.name)
+            path = media_path(gen_name)
+            s3_path = upload_path(gen_name)
 
-        return uploaded_file
+            s3_client.upload_fileobj(
+                file,
+                settings.AWS_STORAGE_BUCKET_NAME,
+                s3_path,
+                ExtraArgs={
+                    'ContentType': content_type,
+                    # 'ACL': 'private' # or whatever ACL you need
+                }
+            )
+
+            uploaded_file = File(name=name,
+                                 size=size,
+                                 gen_name=gen_name,
+                                 path=path,
+                                 content_type=content_type,
+                                 extension=extension)
+            # with open(join_path(upload_path(), gen_name.replace(sep, '/')), 'wb+') as destination:
+            #     for chunk in file.chunks():
+            #         destination.write(chunk)
+            uploaded_file.save()
+
+            return uploaded_file
     except Exception as exc:
         logger.debug(f'file_upload_failed: {exc.__doc__}')
         raise APIValidation(detail=f"{exc.__doc__} - {exc.args}", status_code=status.HTTP_400_BAD_REQUEST)

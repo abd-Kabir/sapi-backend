@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.authentication.views import (LoginWelcomeAPIView, LoginVerifySMSAPIView, LoginSetUsernameAPIView)
+from apps.authentication.routes.auth import (LoginWelcomeAPIView, LoginVerifySMSAPIView, LoginSetUsernameAPIView)
 
 urlpatterns = [
     path('auth/login/welcome/', LoginWelcomeAPIView.as_view(), name='login_welcome'),
