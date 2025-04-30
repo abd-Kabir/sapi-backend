@@ -9,7 +9,8 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
 from apps.authentication.serializers.auth import (JWTObtainPairSerializer, LoginWelcomeSerializer,
-                                                  LoginVerifySMSSerializer, LoginSetUsernameSerializer)
+                                                  LoginVerifySMSSerializer, LoginSetUsernameSerializer,
+                                                  AuthAccountDataSerializer)
 from apps.integrations.services.sms_services import only_phone_numbers
 from config.core.api_exceptions import APIValidation
 
@@ -18,8 +19,21 @@ class LoginWelcomeAPIView(APIView):
     permission_classes = [AllowAny, ]
     serializer_class = LoginWelcomeSerializer
 
+    @staticmethod
+    def get_user(phone_number):
+        try:
+            user = User.objects.get(phone_number=phone_number)
+            if user.is_deleted:
+                raise APIValidation(_('Ползователь удалил свой аккунт'), status_code=status.HTTP_400_BAD_REQUEST)
+            return user
+        except User.DoesNotExist:
+            raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
+
     @swagger_auto_schema(request_body=LoginWelcomeSerializer)
     def post(self, request, *args, **kwargs):
+        phone_number = only_phone_numbers(request.data.get('phone_number'))
+        self.get_user(phone_number)
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         # data = serializer.validated_data
@@ -33,7 +47,10 @@ class LoginVerifySMSAPIView(APIView):
     @staticmethod
     def get_user(phone_number):
         try:
-            return User.objects.get(phone_number=phone_number)
+            user = User.objects.get(phone_number=phone_number)
+            if user.is_deleted:
+                raise APIValidation(_('Ползователь удалил свой аккунт'), status_code=status.HTTP_400_BAD_REQUEST)
+            return user
         except User.DoesNotExist:
             raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -73,3 +90,14 @@ class LoginSetUsernameAPIView(APIView):
 class JWTObtainPairView(TokenObtainPairView):
     serializer_class = JWTObtainPairSerializer
     permission_classes = [AllowAny, ]
+
+
+class AuthAccountDataAPIView(APIView):
+    serializer_class = AuthAccountDataSerializer
+
+    @swagger_auto_schema(operation_description='After login, get user account data',
+                         responses={status.HTTP_200_OK: AuthAccountDataSerializer()})
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user)
+        return Response(serializer.data)

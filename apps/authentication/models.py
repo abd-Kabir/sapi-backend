@@ -61,7 +61,7 @@ class Card(BaseModel):
 
 class Subscription(BaseModel):
     is_deleted = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     name = models.CharField(max_length=55)
     description = models.TextField(null=True, blank=True)
     price = models.PositiveBigIntegerField()

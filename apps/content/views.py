@@ -1,13 +1,14 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
 from apps.content.models import Post, Category, PostTypes, ReportTypes
-from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer
+from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
+    PostAccessibilitySerializer
 from config.core.api_exceptions import APIValidation
 from config.core.permissions import IsCreator, AllowGet
 from config.core.swagger import query_choice_swagger_param
@@ -72,4 +73,10 @@ class CategoryModelViewSet(BaseModelViewSet):
 class PostCreateAPIView(CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
+    permission_classes = [IsCreator, ]
+
+
+class PostAccessibilityAPIView(UpdateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostAccessibilitySerializer
     permission_classes = [IsCreator, ]

@@ -21,6 +21,7 @@ class PurposeEnum(models.TextChoices):
     forgot_password = 'forgot_password', _("Забыли пароль")
     password_reset = 'password_reset', _("Сброс пароля")
     phone_update = 'phone_update', _("Обновление телефона")
+    delete_account = 'delete_account', _("Удаление аккаунта")
 
 
 class SMSConfirmation(models.Model):

@@ -3,8 +3,10 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.serializers.user import BecomeCreatorSerializer
+from apps.authentication.serializers.user import BecomeCreatorSerializer, DeleteAccountVerifySerializer
+from apps.integrations.services.sms_services import sms_confirmation_open
 
 
 class BecomeUserMultibankAPIView(APIView):
@@ -78,3 +80,45 @@ class RetrieveAccountInfoAPIView(APIView):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data)
+
+
+class DeleteAccountAPIView(APIView):
+
+    @swagger_auto_schema(
+        operation_description='Delete Account API',
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description=_('СМС отправлен на указанный номер'),
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={'detail': openapi.Schema(
+                    type=openapi.TYPE_STRING, example=_('СМС отправлен на указанный номер')
+                )}))
+        }
+    )
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        sms_confirmation_open(user, 'delete_account')
+        return Response({'detail': _('СМС отправлен на указанный номер')})
+
+
+class DeleteAccountVerifyAPIView(APIView):
+    serializer_class = DeleteAccountVerifySerializer
+
+    @swagger_auto_schema(
+        operation_description='Delete Account Verification API',
+        request_body=DeleteAccountVerifySerializer,
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description=_('Ваш аккаунт удален'),
+                schema=openapi.Schema(type=openapi.TYPE_OBJECT, properties={'detail': openapi.Schema(
+                    type=openapi.TYPE_STRING, example=_('Ваш аккаунт удален')
+                )}))
+        }
+    )
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user.is_active = False
+        user.is_deleted = True
+        user.save()
+        return Response({'detail': _('Ваш аккаунт удален')})

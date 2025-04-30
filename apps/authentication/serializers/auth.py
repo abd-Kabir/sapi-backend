@@ -4,6 +4,7 @@ from rest_framework import serializers, status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.authentication.models import User
+from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import sms_confirmation_open, verify_sms_code, only_phone_numbers
 from config.core.api_exceptions import APIValidation
 
@@ -43,6 +44,22 @@ class LoginSetUsernameSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username']
+
+
+class AuthAccountDataSerializer(serializers.ModelSerializer):
+    profile_photo = FileSerializer(read_only=True, allow_null=True)
+    profile_banner_photo = FileSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'phone_number',
+            'is_creator',
+            'profile_photo',
+            'profile_banner_photo',
+        ]
 
 
 class JWTObtainPairSerializer(TokenObtainPairSerializer):

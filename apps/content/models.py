@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.models import User
+from apps.authentication.models import User, Subscription
 from apps.files.models import File
 from config.models import BaseModel
 
@@ -53,6 +53,7 @@ class Category(BaseModel):
 
 
 class Post(BaseModel):
+    is_posted = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -65,6 +66,7 @@ class Post(BaseModel):
     files = models.ManyToManyField(File)
     allow_multiple_answers = models.BooleanField(default=False)  # only for questionnaire
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='posts')
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True, related_name='posts')
 
     def has_liked(self, user):
         return self.likes.filter(user=user).exists()

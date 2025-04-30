@@ -78,8 +78,36 @@ class PostCreateSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'post_type',
-            'category',
             'files',
             'answers',
             'allow_multiple_answers',
+        ]
+
+
+class PostAccessibilitySerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    subscription_name = serializers.CharField(source='subscription.name', read_only=True, allow_null=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        post = self.instance
+        if post.user != user:
+            raise APIValidation(_('У вас недостаточно прав для выполнения данного действия.'),
+                                status_code=status.HTTP_403_FORBIDDEN)
+        return super().validate(attrs)
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.is_posted = True
+        instance.save()
+        return instance
+
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'category',
+            'category_name',
+            'subscription',
+            'subscription_name',
         ]
