@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.content.models import Post, Category, PostTypes, ReportTypes
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
-    PostAccessibilitySerializer
+    PostAccessibilitySerializer, QuestionnairePostAnswerSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.permissions import IsCreator, AllowGet
 from config.core.swagger import query_choice_swagger_param
@@ -80,3 +80,14 @@ class PostAccessibilityAPIView(UpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostAccessibilitySerializer
     permission_classes = [IsCreator, ]
+
+
+class QuestionnairePostAnswerAPIView(APIView):
+    serializer_class = QuestionnairePostAnswerSerializer
+
+    @swagger_auto_schema(request_body=QuestionnairePostAnswerSerializer)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from config.models import BaseModel
@@ -59,18 +60,63 @@ class Card(BaseModel):
         db_table = 'card'
 
 
-class Subscription(BaseModel):
+class SubscriptionPlan(BaseModel):
     is_deleted = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     name = models.CharField(max_length=55)
     description = models.TextField(null=True, blank=True)
     price = models.PositiveBigIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    duration = models.DurationField()
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscription_plans')
     banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
-                               related_name='subscriptions')
+                               related_name='subscription_plans')
 
     # def subscribers_count(self):
     #     return self.user
 
     class Meta:
-        db_table = 'subscription'
+        db_table = 'subscription_plan'
+
+
+class UserSubscription(models.Model):
+    """Active subscriptions of users to creators"""
+    subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    payment_reference = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        db_table = 'user_subscription'
+        constraints = [
+            models.UniqueConstraint(fields=['subscriber', 'creator'], name='user_subs_unique_subscriber_creator')
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.end_date and self.plan:
+            self.end_date = timezone.now() + self.plan.duration
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.subscriber} -> {self.creator} ({self.plan})"
+
+
+class UserFollow(models.Model):
+    """Free following relationship between users"""
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')  # follower
+    followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')  # *creator
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_follow'
+        constraints = [
+            models.UniqueConstraint(fields=['follower', 'followed'], name='followers_unique_followed_follower')
+        ]
+        indexes = [
+            models.Index(fields=['follower']), models.Index(fields=['followed']),
+        ]
+
+    def __str__(self):
+        return f"{self.follower} follows {self.followed}"

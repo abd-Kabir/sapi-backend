@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.models import User, Subscription
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.files.models import File
 from config.models import BaseModel
 
@@ -66,7 +66,8 @@ class Post(BaseModel):
     files = models.ManyToManyField(File)
     allow_multiple_answers = models.BooleanField(default=False)  # only for questionnaire
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='posts')
-    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True, related_name='posts')
+    is_premium = models.BooleanField(default=False)
+    subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='posts')
 
     def has_liked(self, user):
         return self.likes.filter(user=user).exists()
@@ -82,17 +83,27 @@ class Post(BaseModel):
         for comment in self.comments.all():
             comment.update_like_count()
 
+    def can_view(self, user):
+        """Check if user can view this content"""
+        if not self.is_premium:
+            return True
+
+        if not user.is_authenticated:
+            return False
+
+        if self.user == user:
+            return True
+
+        # Check if user has active subscription to creator
+        return UserSubscription.objects.filter(
+            subscriber=user,
+            creator=self.user,
+            is_active=True,
+            end_date__gte=timezone.now()
+        ).exists()
+
     class Meta:
         db_table = "post"
-
-
-# class QuestionnairePost(models.Model):
-#     text = models.TextField()
-#     allow_multiple_answers = models.BooleanField(default=False)
-#     post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name='questionnaire_post')
-#
-#     class Meta:
-#         db_table = 'post_questionnaire'
 
 
 class AnswerOption(models.Model):
@@ -101,7 +112,19 @@ class AnswerOption(models.Model):
     questionnaire_post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='answers')
 
     class Meta:
-        db_table = 'post_questionnaire_answer'
+        db_table = 'post_questionnaire_answer_option'
+
+
+class PostAnswer(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='post_answers')
+    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, related_name='post_answers')
+    answers = models.JSONField(default=list)
+
+    class Meta:
+        db_table = 'post_answer'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='unique_user_post')
+        ]
 
 
 class Comment(BaseModel):
@@ -174,4 +197,6 @@ class Report(BaseModel):
 
     class Meta:
         db_table = 'report'
-        unique_together = ('user', 'post')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='reports_unique_user_post')
+        ]

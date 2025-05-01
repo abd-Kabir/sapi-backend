@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
-from apps.content.models import Post, Category, AnswerOption
+from apps.content.models import Post, Category, AnswerOption, PostAnswer
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -111,3 +111,64 @@ class PostAccessibilitySerializer(serializers.ModelSerializer):
             'subscription',
             'subscription_name',
         ]
+
+
+class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=True)
+    answers = serializers.PrimaryKeyRelatedField(many=True, queryset=AnswerOption.objects.all(), required=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'answers'
+        ]
+
+    @staticmethod
+    def validate_post(pk, answers):
+        try:
+            post = Post.objects.get(pk=pk, post_type='questionnaire')
+            if not post.allow_multiple_answers and len(answers) > 1:
+                raise APIValidation(_('Дайте один ответ'), status_code=status.HTTP_400_BAD_REQUEST)
+        except Post.DoesNotExist:
+            raise APIValidation(_('Опросник не найден'), status_code=status.HTTP_404_NOT_FOUND)
+
+    def validate_answers(self, answers):
+        post_id = self.initial_data.get('id')
+        if not post_id:
+            raise serializers.ValidationError(_('ID поста обязателен для заполнения'))
+        self.validate_post(post_id, answers)
+
+        invalid_options = [opt.id for opt in answers if opt.questionnaire_post_id != post_id]
+        if invalid_options:
+            raise serializers.ValidationError(
+                _(f'Варианты ответов {invalid_options} не принадлежат посту {post_id}')
+            )
+
+        return answers
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        post_id = validated_data['id']
+        answer_options = validated_data['answers']
+
+        post_answer, created = PostAnswer.objects.update_or_create(
+            user=request.user,
+            post_id=post_id,
+            defaults={
+                'answers': [opt.id for opt in answer_options]
+            }
+        )
+
+        return post_answer.post
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        representation = super().to_representation(instance)
+        representation['answers'] = (
+            instance.post_answers
+            .filter(user=request.user)
+            .first()
+            .answers
+        )
+        return representation
