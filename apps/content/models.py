@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription
+from apps.content.managers import PostManager
 from apps.files.models import File
 from config.models import BaseModel
 
@@ -54,6 +55,8 @@ class Category(BaseModel):
 
 class Post(BaseModel):
     is_posted = models.BooleanField(default=False)
+    publication_time = models.DateTimeField(null=True, blank=True)
+
     is_deleted = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -68,6 +71,9 @@ class Post(BaseModel):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='posts')
     is_premium = models.BooleanField(default=False)
     subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='posts')
+
+    objects = PostManager()
+    all_objects = models.Manager()
 
     def has_liked(self, user):
         return self.likes.filter(user=user).exists()

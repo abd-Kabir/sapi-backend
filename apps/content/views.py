@@ -77,7 +77,7 @@ class PostCreateAPIView(CreateAPIView):
 
 
 class PostAccessibilityAPIView(UpdateAPIView):
-    queryset = Post.objects.all()
+    queryset = Post.all_objects.all()
     serializer_class = PostAccessibilitySerializer
     permission_classes = [IsCreator, ]
 

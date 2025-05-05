@@ -3,19 +3,18 @@ services:
   web:
     build:
       context: .  # Path to the directory containing your Dockerfile
-    command: |
-      bash -c "
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      gunicorn config.wsgi:application --bind 0.0.0.0:8000
-      "
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py crontab add &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app  # Mount the app directory into the container
       - ./media:/app/media  # Mount the media folder to persist data
     env_file:
       - .env  # Load environment variables from the .env file
     ports:
-      - "8000:8000"  # Expose port 8000 for Django
+      - "8008:8000"  # Expose port 8000 for Django
     networks:
       - app_network
 
@@ -32,6 +31,58 @@ services:
       - web
     networks:
       - app_network
+
+  # Celery worker
+#  celery:
+#    image: sapi-backend-web:latest
+##    build:
+##      context: .
+#    command: celery -A config worker -l INFO
+#    volumes:
+#      - .:/app
+#    env_file:
+#      - .env
+#    depends_on:
+#      - web
+#      - redis
+#    networks:
+#      - app_network
+#
+#  celery-beat:
+#    image: sapi-backend-web:latest
+##    build:
+##      context: .
+#    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+#    volumes:
+#      - .:/app
+#    env_file:
+#      - .env
+#    depends_on:
+#      - web
+#      - redis
+#    networks:
+#      - app_network
+#  flower:
+#    image: sapi-backend-web:latest
+##    build:
+##      context: .
+#    command: celery --broker=redis://redis:6379/0 flower --port=5555
+#    env_file:
+#      - .env
+#    ports:
+#      - "5555:5555"
+#    depends_on:
+#      - celery
+#    networks:
+#      - app_network
+#
+#  # Redis broker
+#  redis:
+#    image: redis:7
+#    ports:
+#      - "6379:6379"
+#    networks:
+#      - app_network
 
   # MINIO service
   minio:

@@ -97,9 +97,9 @@ class PostAccessibilitySerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def update(self, instance, validated_data):
-        instance = super().update(instance, validated_data)
+        instance: Post = super().update(instance, validated_data)
         instance.is_posted = True
-        instance.save()
+        instance.save(update_fields=['is_posted'])
         return instance
 
     class Meta:
@@ -110,6 +110,7 @@ class PostAccessibilitySerializer(serializers.ModelSerializer):
             'category_name',
             'subscription',
             'subscription_name',
+            'publication_time',
         ]
 
 

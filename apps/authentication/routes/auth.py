@@ -27,7 +27,8 @@ class LoginWelcomeAPIView(APIView):
                 raise APIValidation(_('Ползователь удалил свой аккунт'), status_code=status.HTTP_400_BAD_REQUEST)
             return user
         except User.DoesNotExist:
-            raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
+            pass
+            # raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(request_body=LoginWelcomeSerializer)
     def post(self, request, *args, **kwargs):
