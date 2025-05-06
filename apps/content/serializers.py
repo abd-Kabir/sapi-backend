@@ -173,3 +173,42 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
             .answers
         )
         return representation
+
+
+class PostByCategoryListSerializer(serializers.ModelSerializer):
+    post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
+    files = FileSerializer(read_only=True, allow_null=True, many=True)
+
+    def to_representation(self, instance: Post):
+        user = self.context.get('request').user
+        representation = super().to_representation(instance)
+        if not instance.can_view(user):
+            return {
+                'id': instance.id,
+                'title': instance.title,
+                'description': instance.description,
+                'like_count': instance.like_count,
+                'comment_count': instance.comment_count,
+                'post_type': instance.post_type,
+                'post_type_display': instance.get_post_type_display(),
+                'created_at': instance.created_at
+            }
+        return representation
+
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'title',
+            'description',
+            'like_count',
+            'comment_count',
+            'post_type',
+            'post_type_display',
+            'created_at',
+            'files',
+        ]
+
+
+class PostToggleLikeSerializer(serializers.Serializer):
+    post_id = serializers.IntegerField(required=True)
