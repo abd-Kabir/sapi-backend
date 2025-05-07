@@ -58,7 +58,7 @@ class Post(BaseModel):
     publication_time = models.DateTimeField(null=True, blank=True)
 
     is_deleted = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     post_type = models.CharField(max_length=20, choices=PostTypes.choices)
@@ -108,6 +108,35 @@ class Post(BaseModel):
             end_date__gte=timezone.now()
         ).exists()
 
+    def is_saved_by(self, user):
+        """Check if the post is saved by the given user"""
+        return self.saved_by_users.filter(user=user).exists()
+
+    def save_post(self, user):
+        """Save the post for a user"""
+        if not self.is_saved_by(user):
+            SavedPost.objects.create(user=user, post=self)
+            return True
+        return False
+
+    def unsave_post(self, user):
+        """Remove the post from user's saved posts"""
+        self.saved_by_users.filter(user=user).delete()
+        return True
+
+    def toggle_saving_post(self, user):
+        """Toggle saving the post for a user"""
+        if self.is_saved_by(user):
+            self.unsave_post(user)
+            return False
+        else:
+            self.save_post(user)
+            return True
+
+    def get_saved_count(self):
+        """Get total number of saves for this post"""
+        return self.saved_by_users.count()
+
     class Meta:
         db_table = "post"
 
@@ -131,6 +160,18 @@ class PostAnswer(BaseModel):
         constraints = [
             models.UniqueConstraint(fields=['user', 'post'], name='unique_user_post')
         ]
+
+
+class SavedPost(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_posts')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='saved_by_users')
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'post'], name='saved_post_unique_user_post')
+        ]
+        db_table = "saved_post"
 
 
 class Comment(BaseModel):

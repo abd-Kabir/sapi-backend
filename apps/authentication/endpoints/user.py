@@ -2,7 +2,8 @@ from django.urls import path
 
 from apps.authentication.routes.user import (BecomeUserMultibankAPIView, BecomeUserMultibankVerificationAPIView,
                                              BecomeCreatorAPIView, EditAccountAPIView, RetrieveAccountInfoAPIView,
-                                             DeleteAccountAPIView, DeleteAccountVerifyAPIView)
+                                             DeleteAccountAPIView, DeleteAccountVerifyAPIView, ToggleFollowAPIView,
+                                             UserRetrieveAPIView)
 
 urlpatterns = [
     path('user/become-creator/multibank/', BecomeUserMultibankAPIView.as_view(), name='become_creator_multibank'),
@@ -13,4 +14,7 @@ urlpatterns = [
     path('user/retrieve-account/', RetrieveAccountInfoAPIView.as_view(), name='retrieve_account'),
     path('user/delete-account/', DeleteAccountAPIView.as_view(), name='delete_account'),
     path('user/delete-account-verification/', DeleteAccountVerifyAPIView.as_view(), name='delete_account_verification'),
+
+    path('user/<int:pk>/retrieve', UserRetrieveAPIView.as_view(), name='user_retrieve'),
+    path('user/<int:user_id>/toggle-follow/', ToggleFollowAPIView.as_view(), name='follow_someone'),
 ]

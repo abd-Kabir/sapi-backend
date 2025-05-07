@@ -43,6 +43,46 @@ class User(AbstractUser):
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []
 
+    def followers_count(self):
+        """Return the number of followers this user has"""
+        return self.followers.count()
+
+    def following_count(self):
+        """Return the number of users this user is following"""
+        return self.following.count()
+
+    def is_following(self, user):
+        """Check if this user is following another user"""
+        return self.following.filter(followed=user).exists()
+
+    def is_followed_by(self, user):
+        """Check if this user is followed by another user"""
+        return self.followers.filter(follower=user).exists()
+
+    def toggle_follow(self, user_to_follow):
+        """
+        Toggle follow/unfollow another user
+        Returns tuple: (action_taken, follow_relation)
+        where action_taken is either 'followed' or 'unfollowed'
+        """
+        if self == user_to_follow:
+            raise ValueError("You cannot follow yourself.")
+
+        follow_relation = UserFollow.objects.filter(
+            follower=self,
+            followed=user_to_follow
+        ).first()
+
+        if follow_relation:
+            follow_relation.delete()
+            return 'unfollowed', None
+        else:
+            new_relation = UserFollow.objects.create(
+                follower=self,
+                followed=user_to_follow
+            )
+            return 'followed', new_relation
+
     class Meta:
         db_table = 'user'
 

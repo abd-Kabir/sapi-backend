@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
-from apps.content.models import Post, Category, AnswerOption, PostAnswer
+from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -97,9 +97,12 @@ class PostAccessibilitySerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def update(self, instance, validated_data):
+        subscription = validated_data.get('subscription')
         instance: Post = super().update(instance, validated_data)
+        if subscription:
+            instance.is_premium = True
         instance.is_posted = True
-        instance.save(update_fields=['is_posted'])
+        instance.save()
         return instance
 
     class Meta:
@@ -175,9 +178,68 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
         return representation
 
 
-class PostByCategoryListSerializer(serializers.ModelSerializer):
+class PostListSerializer(serializers.ModelSerializer):
     post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
     files = FileSerializer(read_only=True, allow_null=True, many=True)
+    has_liked = serializers.SerializerMethodField()
+    can_view = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
+
+    def get_has_liked(self, obj):
+        user = self.context.get('request').user
+        return obj.has_liked(user)
+
+    def get_can_view(self, obj):
+        return True
+
+    def get_is_saved(self, obj: Post):
+        user = self.context.get('request').user
+        return obj.is_saved_by(user)
+
+    def to_representation(self, instance: Post):
+        user = self.context.get('request').user
+        representation = super().to_representation(instance)
+        if not instance.can_view(user):
+            return {
+                'id': instance.id,
+                'title': instance.title,
+                'description': instance.description,
+                'like_count': instance.like_count,
+                'comment_count': instance.comment_count,
+                'post_type': instance.post_type,
+                'post_type_display': instance.get_post_type_display(),
+                'created_at': instance.created_at,
+                'can_view': False,
+                'is_saved': instance.is_saved_by(user)
+            }
+        return representation
+
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'title',
+            'description',
+            'like_count',
+            'comment_count',
+            'post_type',
+            'post_type_display',
+            'created_at',
+            'has_liked',
+            'can_view',
+            'is_saved',
+            'files',
+        ]
+
+
+class PostShowSerializer(serializers.ModelSerializer):
+    post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
+    files = FileSerializer(read_only=True, allow_null=True, many=True)
+    has_liked = serializers.SerializerMethodField()
+
+    def get_has_liked(self, obj):
+        user = self.context.get('request').user
+        return obj.has_liked(user)
 
     def to_representation(self, instance: Post):
         user = self.context.get('request').user
@@ -206,9 +268,86 @@ class PostByCategoryListSerializer(serializers.ModelSerializer):
             'post_type',
             'post_type_display',
             'created_at',
+            'has_liked',
             'files',
         ]
 
 
+class PostShowCommentListSerializer(serializers.ModelSerializer):
+    replies = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
+
+    def get_has_liked(self, obj):
+        user = self.context.get('request').user
+        return obj.has_liked(user)
+
+    def get_replies(self, obj):
+        replies = obj.replies.all().order_by('-created_at')[:1]
+        serializer = PostShowCommentListSerializer(replies, many=True, context=self.context)
+        return serializer.data
+
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'text',
+            'like_count',
+            'has_liked',
+            'replies',
+            'created_at',
+        ]
+
+
+class PostShowCommentRepliesSerializer(serializers.ModelSerializer):
+    has_liked = serializers.SerializerMethodField()
+
+    def get_has_liked(self, obj):
+        user = self.context.get('request').user
+        return obj.has_liked(user)
+
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'text',
+            'like_count',
+            'has_liked',
+            'created_at',
+        ]
+
+
 class PostToggleLikeSerializer(serializers.Serializer):
+    post_id = serializers.IntegerField(required=False)
+    comment_id = serializers.IntegerField(required=False)
+
+
+class PostLeaveCommentSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True)
     post_id = serializers.IntegerField(required=True)
+    comment_id = serializers.IntegerField(required=False)
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = [
+            'id',
+            'post',
+            'report_type',
+            'description',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by'
+        ]
+        read_only_fields = [
+            'id',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by',
+            'user'
+        ]
+
+    def create(self, validated_data):
+        # Automatically set the user from the request
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)

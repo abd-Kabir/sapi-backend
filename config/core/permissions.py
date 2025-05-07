@@ -22,3 +22,15 @@ class IsCreator(permissions.BasePermission):
         if user.is_creator and user.is_authenticated:
             return True
         return False
+
+
+class IsAdmin(permissions.BasePermission):
+    """
+    Allow to admins
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if user.groups.filter(name='ADMIN').exists():
+            return True
+        return False
