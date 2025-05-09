@@ -19,7 +19,7 @@ class IsCreator(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        if user.is_creator and user.is_authenticated:
+        if user.is_authenticated and user.is_creator:
             return True
         return False
 

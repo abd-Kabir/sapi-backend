@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.authentication.managers import CardManager
 from config.models import BaseModel
 
 
@@ -93,8 +94,34 @@ class Card(BaseModel):
     card_owner = models.CharField(max_length=155)
     number = models.CharField(max_length=16)
     expiration = models.CharField(max_length=4)
+    cvc_cvv = models.CharField(max_length=5, null=True, blank=True)
     type = models.CharField(max_length=10, choices=CardType.choices, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards', null=True)
+
+    objects = CardManager()
+    all_objects = models.Manager()
+
+    @property
+    def card_pan(self):
+        return f'*{self.number[-4:]}' if self.number else None
+
+    def delete_card(self):
+        if self.is_main:
+            self.is_main = False
+            another_card = Card.objects.exclude(pk=self.pk).first()
+            if another_card:
+                another_card.is_main = True
+                another_card.save()
+        self.is_deleted = True
+        self.save()
+
+    def set_main(self, is_main):
+        if is_main:
+            Card.objects.exclude(id=self.id).update(is_main=False)
+            self.is_main = True
+            self.save()
+            return True
+        return False
 
     class Meta:
         db_table = 'card'

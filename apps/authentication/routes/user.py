@@ -1,16 +1,17 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, ListAPIView, CreateAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User
+from apps.authentication.models import User, Card
 from apps.authentication.serializers.user import BecomeCreatorSerializer, DeleteAccountVerifySerializer, \
-    UserRetrieveSerializer
+    UserRetrieveSerializer, MyCardListSerializer, AddCardSerializer
 from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
+from config.core.permissions import IsCreator
 
 
 class BecomeUserMultibankAPIView(APIView):
@@ -205,3 +206,57 @@ class ToggleFollowAPIView(APIView):
                 'followed': user_to_follow.id,
             }
         }, status=status.HTTP_200_OK)
+
+
+class MyCardListAPIView(ListAPIView):
+    queryset = Card.objects.all()
+    serializer_class = MyCardListSerializer
+    permission_classes = [IsCreator, ]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        queryset = queryset.filter(user=user)
+        return queryset
+
+
+class AddCardAPIView(CreateAPIView):
+    queryset = Card.objects.all()
+    serializer_class = AddCardSerializer
+    permission_classes = [IsCreator, ]
+
+
+class DeleteCardAPIView(DestroyAPIView):
+    queryset = Card.objects.all()
+    permission_classes = [IsCreator, ]
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        instance: Card = self.get_object()
+        if instance.user != user:
+            raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_404_NOT_FOUND)
+        # self.perform_destroy(instance)
+        instance.is_deleted = True
+        instance.delete_card()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SetMainCardAPIView(APIView):
+    queryset = Card.objects.all()
+    permission_classes = [IsCreator, ]
+
+    @staticmethod
+    def get_card(pk):
+        try:
+            return Card.objects.get(pk=pk)
+        except Card.DoesNotExist:
+            raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, pk, *args, **kwargs):
+        user = request.user
+        instance: Card = self.get_card(pk)
+        if instance.user != user:
+            raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_404_NOT_FOUND)
+        # self.perform_destroy(instance)
+        instance.set_main(True)
+        return Response(status=status.HTTP_204_NO_CONTENT)
