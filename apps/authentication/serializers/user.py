@@ -2,9 +2,8 @@ from django.db.models import Q
 from django.utils.timezone import now
 from rest_framework import serializers
 
-from apps.authentication.models import User, Card
+from apps.authentication.models import User
 from apps.files.serializers import FileSerializer
-from apps.integrations.services.sms_services import only_phone_numbers, verify_sms_code
 
 
 class BecomeCreatorSerializer(serializers.ModelSerializer):
@@ -25,16 +24,6 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
             'profile_banner_photo',
             'profile_banner_photo_info',
         ]
-
-
-class DeleteAccountVerifySerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=6, required=True)
-
-    def validate(self, attrs):
-        user = self.context['request'].user
-        sms = attrs.get('code')
-        verify_sms_code(user, sms)
-        return super().validate(attrs)
 
 
 class UserRetrieveSerializer(serializers.ModelSerializer):
@@ -88,39 +77,4 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_following',
             'is_followed_by_you',
             'has_subscription',
-        ]
-
-
-class MyCardListSerializer(serializers.ModelSerializer):
-    type_display = serializers.CharField(source='get_type_display', read_only=True)
-
-    class Meta:
-        model = Card
-        fields = [
-            'id',
-            'card_pan',
-            'type',
-            'type_display',
-        ]
-
-
-class AddCardSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    def create(self, validated_data):
-        is_main = validated_data.pop('is_main', False)
-        card = super().create(validated_data)
-        card.set_main(is_main)
-        return card
-
-    class Meta:
-        model = Card
-        fields = [
-            'id',
-            'is_main',
-            'card_owner',
-            'number',
-            'expiration',
-            'cvc_cvv',
-            'user',
         ]

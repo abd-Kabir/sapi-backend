@@ -1,0 +1,115 @@
+from rest_framework import serializers
+
+from apps.authentication.models import SubscriptionPlan, Card
+from apps.files.serializers import FileSerializer
+from apps.integrations.services.sms_services import verify_sms_code
+
+
+class DeleteAccountVerifySerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=6, required=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        sms = attrs.get('code')
+        verify_sms_code(user, sms)
+        return super().validate(attrs)
+
+
+class MyCardListSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+
+    class Meta:
+        model = Card
+        fields = [
+            'id',
+            'card_pan',
+            'type',
+            'type_display',
+        ]
+
+
+class AddCardSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    def create(self, validated_data):
+        is_main = validated_data.pop('is_main', False)
+        card = super().create(validated_data)
+        card.set_main(is_main)
+        return card
+
+    class Meta:
+        model = Card
+        fields = [
+            'id',
+            'is_main',
+            'card_owner',
+            'number',
+            'expiration',
+            'cvc_cvv',
+            'user',
+        ]
+
+
+class MySubscriptionPlanListSerializer(serializers.ModelSerializer):
+    banner = FileSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'id',
+            'is_active',
+            'name',
+            'description',
+            'price',
+            # 'duration',
+            'banner',
+        ]
+
+
+class AddSubscriptionPlanSerializer(serializers.ModelSerializer):
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    def create(self, validated_data):
+        instance: SubscriptionPlan = super().create(validated_data)
+        instance.set_duration()
+        return instance
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['banner'] = FileSerializer(instance.banner).data if instance.banner else None
+        return representation
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'id',
+            'is_active',
+            'name',
+            'description',
+            'price',
+            # 'duration',
+            'creator',
+            'banner',
+        ]
+
+
+class MySubscriptionPlanRetrieveUpdateSerializer(serializers.ModelSerializer):
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['banner'] = FileSerializer(instance.banner).data if instance.banner else None
+        return representation
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'id',
+            'is_active',
+            'name',
+            'description',
+            'price',
+            # 'duration',
+            'creator',
+            'banner',
+        ]

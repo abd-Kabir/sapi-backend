@@ -1,3 +1,6 @@
+import calendar
+from datetime import date, timedelta
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
@@ -133,13 +136,19 @@ class SubscriptionPlan(BaseModel):
     name = models.CharField(max_length=55)
     description = models.TextField(null=True, blank=True)
     price = models.PositiveBigIntegerField()
-    duration = models.DurationField()
+    duration = models.DurationField(null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscription_plans')
     banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='subscription_plans')
 
     # def subscribers_count(self):
     #     return self.user
+
+    def set_duration(self):
+        today = date.today()
+        days_in_month = calendar.monthrange(today.year, today.month)[1]
+        self.duration = timedelta(days=days_in_month)
+        self.save()
 
     class Meta:
         db_table = 'subscription_plan'
