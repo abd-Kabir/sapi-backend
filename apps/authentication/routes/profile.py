@@ -1,6 +1,7 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView, ListAPIView, DestroyAPIView, RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,8 +13,11 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
                                                      MySubscriptionPlanRetrieveUpdateSerializer)
 from apps.authentication.serializers.user import BecomeCreatorSerializer
+from apps.content.models import Post
+from apps.content.serializers import PostListSerializer
 from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
+from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator
 
 
@@ -174,4 +178,34 @@ class MySubscriptionPlanRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         user = self.request.user
         queryset = super().get_queryset()
         queryset = queryset.filter(creator=user)
+        return queryset
+
+
+class LikedPostListAPIView(ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostListSerializer
+    pagination_class = APILimitOffsetPagination
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        queryset = queryset.filter(likes__user=user)
+        return queryset
+
+
+class SavedPostListAPIView(ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostListSerializer
+    pagination_class = APILimitOffsetPagination
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        queryset = queryset.filter(saved_by_users__user=user)
         return queryset
