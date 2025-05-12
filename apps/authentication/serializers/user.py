@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.utils.timezone import now
 from rest_framework import serializers
 
-from apps.authentication.models import User
+from apps.authentication.models import User, SubscriptionPlan
 from apps.files.serializers import FileSerializer
 
 
@@ -77,4 +77,18 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_following',
             'is_followed_by_you',
             'has_subscription',
+        ]
+
+
+class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
+    banner = FileSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'id',
+            'name',
+            'description',
+            'price',
+            'banner',
         ]

@@ -1,13 +1,14 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User
-from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer
+from apps.authentication.models import User, SubscriptionPlan
+from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
+    UserSubscriptionPlanListSerializer
 from config.core.api_exceptions import APIValidation
 
 
@@ -127,3 +128,13 @@ class ToggleFollowAPIView(APIView):
                 'followed': user_to_follow.id,
             }
         }, status=status.HTTP_200_OK)
+
+
+class UserSubscriptionPlanListAPIView(ListAPIView):
+    queryset = SubscriptionPlan.objects.all()
+    serializer_class = UserSubscriptionPlanListSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(creator=self.kwargs['user_id'])
+        return queryset
