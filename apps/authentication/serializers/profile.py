@@ -33,7 +33,9 @@ class AddCardSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         is_main = validated_data.pop('is_main', False)
+        expiration = validated_data.pop('expiration', None).replace('/', '')
         card = super().create(validated_data)
+        card.expiration = expiration
         card.set_main(is_main)
         return card
 

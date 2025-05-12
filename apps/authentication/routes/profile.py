@@ -100,7 +100,7 @@ class DeleteAccountVerifyAPIView(APIView):
 class MyCardListAPIView(ListAPIView):
     queryset = Card.objects.all()
     serializer_class = MyCardListSerializer
-    permission_classes = [IsCreator, ]
+    # permission_classes = [IsCreator, ]
 
     def get_queryset(self):
         user = self.request.user
@@ -112,12 +112,12 @@ class MyCardListAPIView(ListAPIView):
 class AddCardAPIView(CreateAPIView):
     queryset = Card.objects.all()
     serializer_class = AddCardSerializer
-    permission_classes = [IsCreator, ]
+    # permission_classes = [IsCreator, ]
 
 
 class DeleteCardAPIView(DestroyAPIView):
     queryset = Card.objects.all()
-    permission_classes = [IsCreator, ]
+    # permission_classes = [IsCreator, ]
 
     def destroy(self, request, *args, **kwargs):
         user = request.user
@@ -155,6 +155,9 @@ class MySubscriptionPlanListAPIView(ListAPIView):
     queryset = SubscriptionPlan.objects.all()
     serializer_class = MySubscriptionPlanListSerializer
     permission_classes = [IsCreator, ]
+    filter_backends = [OrderingFilter, ]
+    ordering_fields = ['price']
+    ordering = ['-price']
 
     def get_queryset(self):
         user = self.request.user

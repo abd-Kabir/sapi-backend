@@ -1,14 +1,15 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView, ListAPIView
+from rest_framework.filters import OrderingFilter
+from rest_framework.generics import RetrieveAPIView, ListAPIView, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User, SubscriptionPlan
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
-    UserSubscriptionPlanListSerializer
+    UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer
 from config.core.api_exceptions import APIValidation
 
 
@@ -133,8 +134,16 @@ class ToggleFollowAPIView(APIView):
 class UserSubscriptionPlanListAPIView(ListAPIView):
     queryset = SubscriptionPlan.objects.all()
     serializer_class = UserSubscriptionPlanListSerializer
+    filter_backends = [OrderingFilter, ]
+    ordering_fields = ['price']
+    ordering = ['-price']
 
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(creator=self.kwargs['user_id'])
         return queryset
+
+
+class UserSubscribeCreateAPIView(CreateAPIView):
+    queryset = UserSubscription.objects.all()
+    serializer_class = UserSubscriptionCreateSerializer

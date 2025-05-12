@@ -190,7 +190,8 @@ class PostListSerializer(serializers.ModelSerializer):
         return obj.has_liked(user)
 
     def get_can_view(self, obj):
-        return True
+        user = self.context['request'].user if self.context['request'].user.is_authenticated else None
+        return obj.can_view(user)
 
     def get_is_saved(self, obj: Post):
         user = self.context.get('request').user

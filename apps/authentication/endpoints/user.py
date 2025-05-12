@@ -2,7 +2,7 @@ from django.urls import path
 
 from apps.authentication.routes.user import (BecomeUserMultibankAPIView, BecomeUserMultibankVerificationAPIView,
                                              BecomeCreatorAPIView, ToggleFollowAPIView, UserRetrieveAPIView,
-                                             UserSubscriptionPlanListAPIView)
+                                             UserSubscriptionPlanListAPIView, UserSubscribeCreateAPIView)
 
 urlpatterns = [
     path('user/become-creator/multibank/', BecomeUserMultibankAPIView.as_view(), name='become_creator_multibank'),
@@ -14,4 +14,5 @@ urlpatterns = [
     path('user/<int:user_id>/toggle-follow/', ToggleFollowAPIView.as_view(), name='follow_someone'),
     path('user/<int:user_id>/subscription-plan/list/', UserSubscriptionPlanListAPIView.as_view(),
          name='user_subscription_plan_list'),
+    path('user/subscribe/', UserSubscribeCreateAPIView.as_view(), name='user_subscribe'),
 ]

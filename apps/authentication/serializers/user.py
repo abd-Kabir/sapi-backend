@@ -1,9 +1,12 @@
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from apps.authentication.models import User, SubscriptionPlan
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.files.serializers import FileSerializer
+from config.core.api_exceptions import APIValidation
 
 
 class BecomeCreatorSerializer(serializers.ModelSerializer):
@@ -42,13 +45,11 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_followers_count(obj):
-        # user = self.context['request'].user
         return obj.followers_count()
 
     @staticmethod
     def get_subscribers_count(obj):
-        # user = self.context['request'].user
-        return 0
+        return obj.subscribers_count()
 
     def get_is_following(self, obj):
         user = self.context['request'].user
@@ -58,11 +59,9 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return obj.is_followed_by(user)
 
-    @staticmethod
-    def get_has_subscription(obj):
-        # TODO: end subscription creation and subs logic
-        # user = self.context['request'].user
-        return False
+    def get_has_subscription(self, obj):
+        user = self.context['request'].user
+        return obj.has_subscription(user)
 
     class Meta:
         model = User
@@ -91,4 +90,40 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'banner',
+        ]
+
+
+class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
+
+    def check_subscription(self, validated_data):
+        request = self.context['request']
+        subscriber = request.user
+        plan = validated_data.get('plan')
+        user_subs = UserSubscription.objects.filter(
+            subscriber=subscriber,
+            plan=plan,
+            is_active=True,
+            end_date__gte=timezone.now(),
+        ).exists()
+        return user_subs
+
+    def create(self, validated_data):
+        request = self.context['request']
+        plan = validated_data.get('plan')
+        creator = plan.creator
+        end_date = now() + plan.duration
+        subscriber = request.user
+
+        if self.check_subscription(validated_data):
+            raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
+        subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
+                                                       **validated_data)
+        return subscription
+
+    class Meta:
+        model = UserSubscription
+        fields = [
+            'id',
+            'plan',
+            'commission_by_subscriber',
         ]

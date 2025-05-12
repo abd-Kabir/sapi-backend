@@ -18,6 +18,12 @@ class CardType(models.TextChoices):
     mastercard = 'mastercard', 'Mastercard'
 
 
+class PaymentType(models.TextChoices):
+    card = 'card', _('Карта')
+    click = 'click', 'Click'
+    payme = 'payme', 'Payme'
+
+
 class User(AbstractUser):
     email = None
     first_name = None
@@ -46,6 +52,13 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []
+
+    def subscribers_count(self):
+        """Return the number of subscribers this user has"""
+        return self.subscribers.count()
+
+    def has_subscription(self, subscriber):
+        return self.subscribers.filter(subscriber=subscriber).exists()
 
     def followers_count(self):
         """Return the number of followers this user has"""
@@ -96,7 +109,7 @@ class Card(BaseModel):
     is_main = models.BooleanField(default=False)
     card_owner = models.CharField(max_length=155)
     number = models.CharField(max_length=16)
-    expiration = models.CharField(max_length=4)
+    expiration = models.CharField(max_length=5)
     cvc_cvv = models.CharField(max_length=5, null=True, blank=True)
     type = models.CharField(max_length=10, choices=CardType.choices, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards', null=True)
@@ -162,12 +175,15 @@ class UserSubscription(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
-    payment_reference = models.CharField(max_length=100, blank=True)
+    commission_by_subscriber = models.BooleanField(default=False)
+    payment_type = models.CharField(choices=PaymentType.choices, default=PaymentType.card, null=True, blank=True)
+    payment_reference = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = 'user_subscription'
         constraints = [
-            models.UniqueConstraint(fields=['subscriber', 'creator'], name='user_subs_unique_subscriber_creator')
+            models.UniqueConstraint(fields=['subscriber', 'creator', 'plan'],
+                                    name='user_subs_unique_subscriber_creator_plan')
         ]
 
     def save(self, *args, **kwargs):

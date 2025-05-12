@@ -101,12 +101,19 @@ class Post(BaseModel):
             return True
 
         # Check if user has active subscription to creator
-        return UserSubscription.objects.filter(
+        user_subscription = UserSubscription.objects.filter(
             subscriber=user,
             creator=self.user,
             is_active=True,
-            end_date__gte=timezone.now()
-        ).exists()
+            end_date__gte=timezone.now(),
+        )
+        if not user_subscription.exists():
+            return False
+        subs_prices = user_subscription.values_list('plan__price', flat=True)
+        if self.subscription.price > max(subs_prices):
+            return False
+        else:
+            return True
 
     def is_saved_by(self, user):
         """Check if the post is saved by the given user"""
