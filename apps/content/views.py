@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import Q, OuterRef, Exists, Count
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, serializers
@@ -8,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
+from apps.authentication.models import UserFollow, UserSubscription, User
 from apps.content.models import Post, Category, PostTypes, ReportTypes, Like, Comment, Report
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
@@ -123,6 +125,36 @@ class PostByUserListAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(user_id=self.kwargs['user_id'])
+        return queryset
+
+
+class PostByFollowedListAPIView(ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostListSerializer
+    pagination_class = APILimitOffsetPagination
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        followed = UserFollow.objects.filter(
+            follower=user,
+            followed_id=OuterRef('user_id')
+        )
+        subscribed = UserSubscription.objects.filter(
+            subscriber=user,
+            creator_id=OuterRef('user_id'),
+            is_active=True
+        )
+
+        queryset = super().get_queryset()
+        queryset = (
+            queryset
+            .annotate(is_followed=Exists(followed), is_subscribed=Exists(subscribed))
+            .filter(Q(is_followed=True) | Q(is_subscribed=True), is_deleted=False)
+        )
         return queryset
 
 
@@ -336,3 +368,44 @@ class PostToggleSaveAPIView(APIView):
         else:
             response = {'detail': _('Пост убран из сохраненных')}
         return Response(response)
+
+
+class PopularCreatorListAPIView(APIView):
+
+    def most_popular_creators(self, limit: int = 10):
+        return
+
+    def popular_creators_by_category(self, limit_per_category: int = 5):
+        """
+        Returns popular creators grouped by category
+        :param limit_per_category: Number of creators to return per category
+        :return: Dictionary with categories as keys and lists of creators as values
+        """
+        from collections import defaultdict
+        from django.db.models import Count
+
+        # Get all categories that have creators
+        categories_with_creators = Category.objects.filter(
+            users__is_creator=True,
+            users__is_deleted=False
+        ).distinct()
+
+        result = defaultdict(list)
+
+        for category in categories_with_creators:
+            creators = User.objects.filter(
+                category=category,
+                is_creator=True,
+                is_deleted=False
+            ).annotate(
+                follower_count=Count('followers')
+            ).order_by('-follower_count')[:limit_per_category]
+
+            if creators:
+                result[category] = creators
+
+        return dict(result)
+
+    def get(self, request, *args, **kwargs):
+
+        return Response()

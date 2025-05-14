@@ -1,3 +1,4 @@
+from django.db.models import Count, F
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -10,7 +11,9 @@ from django.utils.translation import gettext_lazy as _
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
     UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer
+from apps.content.models import Category
 from config.core.api_exceptions import APIValidation
+from config.core.swagger import query_search_swagger_param
 
 
 class BecomeUserMultibankAPIView(APIView):
@@ -147,3 +150,195 @@ class UserSubscriptionPlanListAPIView(ListAPIView):
 class UserSubscribeCreateAPIView(CreateAPIView):
     queryset = UserSubscription.objects.all()
     serializer_class = UserSubscriptionCreateSerializer
+
+
+class PopularCreatorListAPIView(APIView):
+
+    def most_popular_creators(self, limit: int = 10):
+        return (
+            User.objects
+            .filter(is_creator=True, is_deleted=False)
+            .annotate(follower_count=Count('followers'))
+            .order_by('-follower_count')
+            .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+            [:limit]
+        )
+
+    def popular_creators_by_category(self, limit_per_category: int = 5):
+        from django.db.models import Count
+
+        categories_with_creators = Category.objects.filter(
+            users__is_creator=True,
+            users__is_deleted=False
+        ).distinct()
+
+        result = []
+
+        for category in categories_with_creators:
+            creators = (
+                User.objects
+                .filter(category=category, is_creator=True, is_deleted=False)
+                .annotate(follower_count=Count('followers'))
+                .order_by('-follower_count')
+                .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+                [:limit_per_category]
+            )
+            if creators:
+                result.append({
+                    'category_id': category.id,
+                    'category_name': category.name,
+                    'creators': creators,
+                })
+        return result
+
+    @swagger_auto_schema(
+        operation_description="Get most popular creators and popular creators by categories",
+        responses={
+            200: openapi.Response(
+                description="Popular creators data",
+                examples={
+                    "application/json": {
+                        "most_populars": [
+                            {
+                                "username": "umarov",
+                                "follower_count": 1,
+                                "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
+                            }
+                        ],
+                        "popular_by_categories": [
+                            {
+                                "category_id": 1,
+                                "category_name": "Music",
+                                "creators": [
+                                    {
+                                        "username": "umarov",
+                                        "follower_count": 1,
+                                        "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        most_populars = self.most_popular_creators()
+        most_populars_by_category = self.popular_creators_by_category()
+        return Response({
+            'most_populars': most_populars,
+            'popular_by_categories': most_populars_by_category
+        })
+
+
+class PopularCategoryCreatorListAPIView(APIView):
+
+    def most_popular_creators(self, limit: int = 10):
+        return (
+            User.objects
+            .filter(is_creator=True, is_deleted=False)
+            .annotate(follower_count=Count('followers'))
+            .order_by('-follower_count')
+            .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+            [:limit]
+        )
+
+    def popular_creators_by_category(self, category_id, limit_per_category: int = 5):
+        from django.db.models import Count
+
+        categories_with_creators = Category.objects.filter(
+            users__is_creator=True,
+            users__is_deleted=False,
+            pk=category_id
+        ).distinct()
+
+        if categories_with_creators.exists():
+            category = categories_with_creators.first()
+            creators = (
+                User.objects
+                .filter(category=category, is_creator=True, is_deleted=False)
+                .annotate(follower_count=Count('followers'))
+                .order_by('-follower_count')
+                .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+                [:limit_per_category]
+            )
+            return {
+                'category_id': category.id,
+                'category_name': category.name,
+                'creators': creators,
+            }
+        else:
+            return {}
+
+    @swagger_auto_schema(
+        operation_description="Get popular creators",
+        responses={
+            200: openapi.Response(
+                description="Popular creators data",
+                examples={
+                    "application/json": {
+                        "most_populars": [
+                            {
+                                "username": "umarov",
+                                "follower_count": 1,
+                                "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
+                            }
+                        ],
+                        "popular_by_category": {
+                            "category_id": 1,
+                            "category_name": "Music",
+                            "creators": [
+                                {
+                                    "username": "umarov",
+                                    "follower_count": 1,
+                                    "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
+                                }
+                            ]
+                        }
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request, category_id, *args, **kwargs):
+        most_populars = self.most_popular_creators()
+        most_populars_by_category = self.popular_creators_by_category(category_id)
+        return Response({
+            'most_populars': most_populars,
+            'popular_by_category': most_populars_by_category
+        })
+
+
+class SearchCreatorAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[query_search_swagger_param],
+        responses={
+            200: openapi.Response(
+                description="Popular creators data",
+                examples={
+                    "application/json": [
+                        {
+                            "id": 1,
+                            "username": "umarov",
+                            "follower_count": 1,
+                            "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
+                        }
+                    ]
+                }
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        search_term = request.GET.get('search')
+        if not search_term:
+            return Response([])
+        users = (
+            User.objects
+            .annotate(follower_count=Count('followers'))
+            .filter(is_creator=True, is_deleted=False, username__icontains=search_term)
+            .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+            .order_by('-follower_count')
+            [:15]
+        )
+        return Response(users)

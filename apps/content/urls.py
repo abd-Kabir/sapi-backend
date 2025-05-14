@@ -5,7 +5,8 @@ from apps.content.views import (PostCreateAPIView, CategoryModelViewSet, ChoiceT
                                 PostAccessibilityAPIView, QuestionnairePostAnswerAPIView, PostByCategoryListAPIView,
                                 PostToggleLikeAPIView, PostShowAPIView, PostShowCommentListAPIView,
                                 PostShowRepliesListAPIView, PostLeaveCommentAPIView, CreateReportAPIView,
-                                ReportListView, ResolveReportAPIView, PostToggleSaveAPIView, PostByUserListAPIView)
+                                ReportListView, ResolveReportAPIView, PostToggleSaveAPIView, PostByUserListAPIView,
+                                PostByFollowedListAPIView)
 
 router = DefaultRouter()
 router.register('category', CategoryModelViewSet, basename='category')
@@ -19,6 +20,7 @@ urlpatterns = [
 
     path('post/by-category/<int:category_id>/', PostByCategoryListAPIView.as_view(), name='post_by_category'),
     path('post/by-user/<int:user_id>/', PostByUserListAPIView.as_view(), name='post_by_user'),
+    path('post/by-followed/', PostByFollowedListAPIView.as_view(), name='post_by_followed'),
     path('post/<int:pk>/show/', PostShowAPIView.as_view(), name='post_show'),
     path('post/<int:post_id>/show/comments/', PostShowCommentListAPIView.as_view(), name='post_show_comments'),
     path('post/show/comment/<int:comment_id>/replies/', PostShowRepliesListAPIView.as_view(),
