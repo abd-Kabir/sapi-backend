@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('apps.authentication.urls')),
     path('files/', include('apps.files.urls')),
     path('content/', include('apps.content.urls')),
+    path('chat/', include('apps.chat.urls')),
 
     path('media/<path:path>', MediaPath.as_view(), name='serve_private_file'),
 ]

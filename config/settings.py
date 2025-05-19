@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.integrations',
     'apps.files',
     'apps.content',
+    'apps.chat',
 ]
 
 MIDDLEWARE = [
@@ -212,6 +213,18 @@ SWAGGER_SETTINGS = {
 if not DEBUG:
     # SWAGGER_SETTINGS['DEFAULT_API_URL'] = 'http://195.26.243.201:8080'
     SWAGGER_SETTINGS['DEFAULT_API_URL'] = 'https://backend.sapi.uz'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # For development
+        # OR for production with Redis:
+        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'CONFIG': {
+        #     'hosts': [('redis', 6379)],  # Or your Redis server address
+        # },
+    },
+}
+
 
 # Logging
 LOGGING = {

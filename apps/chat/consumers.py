@@ -3,27 +3,16 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import Q
 from django.utils import timezone
 
-from apps.authentication.models import ChatRoom, Message, BlockedUser, UserSubscription
-
-
-class TestConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        await self.accept()
-        await self.send(text_data=json.dumps({"message": "Connected"}))
-
-    async def disconnect(self, close_code):
-        pass
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        await self.send(text_data=json.dumps({"echo": data}))
+from apps.authentication.models import UserSubscription
+from apps.chat.models import ChatRoom, Message, BlockedUser
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_id = self.scope['url_route']['kwargs']['room_id']
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
         self.user = self.scope['user']
 
         if isinstance(self.user, AnonymousUser):
@@ -36,7 +25,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        self.room_group_name = f'chat_{self.room_id}'
+        self.room_group_name = f'chat_{self.user_id}'
 
         # Join room group
         await self.channel_layer.group_add(
@@ -55,14 +44,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def verify_chat_access(self):
-        try:
-            room = ChatRoom.objects.get(pk=self.room_id)
-        except ChatRoom.DoesNotExist:
+        if int(self.user_id) == self.user.id:
             return False
 
-        # Check if current user is part of this chat
-        if self.user not in [room.creator, room.subscriber]:
-            return False
+        room = self.get_room()
 
         # Check if users are blocked
         if BlockedUser.is_blocked(room.creator, room.subscriber):
@@ -78,6 +63,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
             ).exists()
 
         return True
+
+    def get_room(self):
+        room = (
+            ChatRoom.objects
+            .filter(
+                (Q(creator=self.user) | Q(creator_id=self.user_id)) &
+                (Q(subscriber=self.user) | Q(subscriber_id=self.user_id))
+            )
+            .first()
+        )
+        if not room:
+            return ChatRoom.objects.create(creator_id=self.user_id, subscriber=self.user)
+        return room
+
+        # if ChatRoom.objects.filter(creator_id=self.user_id, subscriber=self.user).exists():
+        #     return ChatRoom.objects.filter(creator_id=self.user_id, subscriber=self.user).first()
+        # elif ChatRoom.objects.filter(creator_id=self.user.id, subscriber_id=self.user_id).exists():
+        #     return ChatRoom.objects.filter(creator_id=self.user.id, subscriber_id=self.user_id).first()
+        # else:
 
     @database_sync_to_async
     def create_message(self, content):
