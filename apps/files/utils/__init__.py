@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 
 from django.conf import settings
 from django.db import transaction
@@ -50,7 +51,8 @@ def upload_file(file):
             name = file.name
             size = file.size
             gen_name = gen_new_name(file)
-            content_type = file.content_type
+            extra_content_type, encoding = mimetypes.guess_type(file.name)
+            content_type = file.content_type if hasattr(file, 'content_type') else extra_content_type
             extension = get_extension(filename=file.name)
             path = media_path(gen_name)
             s3_path = upload_path(gen_name)

@@ -342,3 +342,78 @@ class SearchCreatorAPIView(APIView):
             [:15]
         )
         return Response(users)
+
+
+
+class ToggleBlockAPIView(APIView):
+    """
+    API to toggle block/unblock a user
+    """
+
+    @staticmethod
+    def get_user(user_id):
+        try:
+            return User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_404_NOT_FOUND)
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(
+                description="Success response",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, description='Operation status'),
+                        'action': openapi.Schema(type=openapi.TYPE_STRING, description='Action performed'),
+                        'data': openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'blocker': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the blocker'),
+                                'blocked': openapi.Schema(type=openapi.TYPE_INTEGER,
+                                                           description='ID of the user being blocked'),
+                            },
+                            description='Relationship data'
+                        ),
+                    }
+                ),
+                examples={
+                    "application/json": {
+                        "status": "success",
+                        "action": "block",  # or "unblock" depending on the action
+                        "data": {
+                            "blocker": 123,
+                            "blocked": 456,
+                        }
+                    }
+                }
+            ),
+            # You can add other status codes and responses here
+            400: "Bad Request",
+            404: "Not Found",
+        }
+    )
+    def post(self, request, user_id):
+        # Get the user to be blocked/unblocked
+        user_to_block = self.get_user(user_id)
+        blocker = request.user
+
+        # Can't block yourself
+        if blocker == user_to_block:
+            return Response(
+                {'detail': _('Вы не можете заблокировать себя.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if the block relationship already exists
+        action, toggle_relation = blocker.toggle_block(user_to_block)
+
+        # Return the appropriate response
+        return Response({
+            'status': 'success',
+            'action': action,
+            'data': {
+                'blocker': blocker.id,
+                'blocked': user_to_block.id,
+            }
+        }, status=status.HTTP_200_OK)

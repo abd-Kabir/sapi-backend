@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.models import User
+from apps.authentication.models import User, BlockedUser
 from config.models import BaseModel
 
 
@@ -43,7 +43,8 @@ class Message(BaseModel):
     """Represents a message in a chat room"""
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
+    content = models.TextField(null=True, blank=True)
+    file = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True, related_name='messages')
     is_read = models.BooleanField(default=False)
 
     class Meta:
@@ -52,34 +53,3 @@ class Message(BaseModel):
 
     def __str__(self):
         return f'{self.sender}: {self.content[:10]}...'
-
-
-class BlockedUser(BaseModel):
-    """Represents a user blocking another user"""
-    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_users')
-    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_by')
-
-    class Meta:
-        db_table = 'blocked_user'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['blocker', 'blocked'],
-                name='unique_block'
-            )
-        ]
-
-    @classmethod
-    def is_blocked(cls, user1, user2):
-        """Check if either user has blocked the other"""
-        return cls.objects.filter(
-            models.Q(blocker=user1, blocked=user2) |
-            models.Q(blocker=user2, blocked=user1)
-        ).exists()
-
-    def clean(self):
-        if self.blocker == self.blocked:
-            raise ValidationError('Users cannot block themselves.')
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)

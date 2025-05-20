@@ -6,6 +6,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
 
 from apps.authentication.managers import CardManager
 from config.models import BaseModel
@@ -99,6 +100,30 @@ class User(AbstractUser):
                 followed=user_to_follow
             )
             return 'followed', new_relation
+
+    def toggle_block(self, user_to_block):
+        """
+        Toggle block/unblock another user
+        Returns tuple: (action_taken, block_relation)
+        where action_taken is either 'blocked' or 'unblocked'
+        """
+        if self == user_to_block:
+            raise ValueError("You cannot block yourself.")
+
+        block_relation = BlockedUser.objects.filter(
+            blocker=self,
+            blocked=user_to_block
+        ).first()
+
+        if block_relation:
+            block_relation.delete()
+            return 'unblocked', None
+        else:
+            new_relation = BlockedUser.objects.create(
+                blocker=self,
+                blocked=user_to_block
+            )
+            return 'blocked', new_relation
 
     class Meta:
         db_table = 'user'
@@ -213,3 +238,33 @@ class UserFollow(models.Model):
     def __str__(self):
         return f"{self.follower} follows {self.followed}"
 
+
+class BlockedUser(BaseModel):
+    """Represents a user blocking another user"""
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_users')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_by')
+
+    class Meta:
+        db_table = 'blocked_user'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['blocker', 'blocked'],
+                name='unique_block'
+            )
+        ]
+
+    @classmethod
+    def is_blocked(cls, user1, user2):
+        """Check if either user has blocked the other"""
+        return cls.objects.filter(
+            models.Q(blocker=user1, blocked=user2) |
+            models.Q(blocker=user2, blocked=user1)
+        ).exists()
+
+    def clean(self):
+        if self.blocker == self.blocked:
+            raise ValidationError('Users cannot block themselves.')
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
