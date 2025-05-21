@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'storages',
+    'fcm_django',
 
     # apps
     'apps.authentication',
@@ -185,6 +186,12 @@ SMS_INTEGRATION_SETTINGS = {
     'SMS_PASSWORD': getenv('SMS_PASSWORD'),
 }
 
+# FIREBASE
+FCM_DJANGO_SETTINGS = {
+        'FCM_SERVER_KEY': getenv('FIREBASE_API_KEY')
+}
+FIREBASE_PROJECT_ID = getenv('FIREBASE_PROJECT_ID')
+
 # Debug Toolbar
 if DEBUG:
     def show_toolbar(request):
@@ -224,7 +231,6 @@ CHANNEL_LAYERS = {
         # },
     },
 }
-
 
 # Logging
 LOGGING = {

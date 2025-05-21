@@ -1,6 +1,7 @@
 from django.db.models import Count, F
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from fcm_django.models import FCMDevice
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import RetrieveAPIView, ListAPIView, CreateAPIView
@@ -344,7 +345,6 @@ class SearchCreatorAPIView(APIView):
         return Response(users)
 
 
-
 class ToggleBlockAPIView(APIView):
     """
     API to toggle block/unblock a user
@@ -371,7 +371,7 @@ class ToggleBlockAPIView(APIView):
                             properties={
                                 'blocker': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the blocker'),
                                 'blocked': openapi.Schema(type=openapi.TYPE_INTEGER,
-                                                           description='ID of the user being blocked'),
+                                                          description='ID of the user being blocked'),
                             },
                             description='Relationship data'
                         ),
@@ -417,3 +417,16 @@ class ToggleBlockAPIView(APIView):
                 'blocked': user_to_block.id,
             }
         }, status=status.HTTP_200_OK)
+
+
+class SendNotificationAPIView(APIView):
+
+    def post(self, request):
+        user = request.user
+        title = request.data.get("title", "Hello")
+        body = request.data.get("body", "You have a message")
+
+        devices = FCMDevice.objects.filter(user=user)
+        devices.send_message(title=title, body=body)
+
+        return Response({"status": "sent"})

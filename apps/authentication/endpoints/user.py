@@ -4,7 +4,7 @@ from apps.authentication.routes.user import (BecomeUserMultibankAPIView, BecomeU
                                              BecomeCreatorAPIView, ToggleFollowAPIView, UserRetrieveAPIView,
                                              UserSubscriptionPlanListAPIView, UserSubscribeCreateAPIView,
                                              PopularCreatorListAPIView, PopularCategoryCreatorListAPIView,
-                                             SearchCreatorAPIView, ToggleBlockAPIView)
+                                             SearchCreatorAPIView, ToggleBlockAPIView, SendNotificationAPIView)
 
 urlpatterns = [
     path('user/become-creator/multibank/', BecomeUserMultibankAPIView.as_view(), name='become_creator_multibank'),
@@ -22,4 +22,5 @@ urlpatterns = [
          name='user_popular_creators_category'),
     path('user/search/creator/', SearchCreatorAPIView.as_view(), name='user_search_creator'),
     path('user/<int:user_id>/toggle-block/', ToggleBlockAPIView.as_view(), name='block_toggle'),
+    path('user/send-notifications-test/', SendNotificationAPIView.as_view(), name='send_notifications_test'),
 ]
