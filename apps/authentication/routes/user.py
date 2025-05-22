@@ -418,15 +418,3 @@ class ToggleBlockAPIView(APIView):
             }
         }, status=status.HTTP_200_OK)
 
-
-class SendNotificationAPIView(APIView):
-
-    def post(self, request):
-        user = request.user
-        title = request.data.get("title", "Hello")
-        body = request.data.get("body", "You have a message")
-
-        devices = FCMDevice.objects.filter(user=user)
-        devices.send_message(title=title, body=body)
-
-        return Response({"status": "sent"})
