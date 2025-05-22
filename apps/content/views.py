@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import UserFollow, UserSubscription, User
+from apps.authentication.services import create_activity
 from apps.content.models import Post, Category, PostTypes, ReportTypes, Like, Comment, Report
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
@@ -19,6 +20,7 @@ from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator, AllowGet, IsAdmin
 from config.core.swagger import query_choice_swagger_param
+from config.services import run_with_thread
 from config.views import BaseModelViewSet
 
 
@@ -219,6 +221,9 @@ class PostToggleLikeAPIView(APIView):
             like_obj.delete()
             response = {'detail': _('Вы убрали лайк с этого комментарийа')}
         comment.update_like_count()
+        if user != comment.user:
+            run_with_thread(create_activity, ('liked_comment', None,
+                                              like_obj.id if created else None, user, comment.user))
         return response
 
     def like_post(self, post_id):
@@ -232,6 +237,9 @@ class PostToggleLikeAPIView(APIView):
             like_obj.delete()
             response = {'detail': _('Вы убрали лайк с этого поста')}
         post.update_counts()
+        if user != post.user:
+            run_with_thread(create_activity, ('liked_post', None,
+                                              like_obj.id if created else None, user, post.user))
         return response
 
     @swagger_auto_schema(request_body=PostToggleLikeSerializer)
@@ -273,7 +281,9 @@ class PostLeaveCommentAPIView(APIView):
         user = self.request.user
 
         post = self.get_post(post_id)
-        Comment.objects.create(user=user, post=post, text=text)
+        comment = Comment.objects.create(user=user, post=post, text=text)
+        if user != post.user:
+            run_with_thread(create_activity, ('commented', None, comment.id, user, post.user))
         return {'detail': _('Вы оставили комментарий')}
 
     def leave_reply(self, post_id, comment_id, text):
@@ -281,7 +291,9 @@ class PostLeaveCommentAPIView(APIView):
 
         post = self.get_post(post_id)
         parent = self.get_comment(comment_id)
-        Comment.objects.create(user=user, post=post, parent=parent, text=text)
+        comment = Comment.objects.create(user=user, post=post, parent=parent, text=text)
+        if user != post.user:
+            run_with_thread(create_activity, ('replied', None, comment.id, user, post.user))
         return {'detail': _('Вы оставили ответ на комментарий')}
 
     @swagger_auto_schema(request_body=PostLeaveCommentSerializer)

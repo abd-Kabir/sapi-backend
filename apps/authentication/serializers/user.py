@@ -5,8 +5,10 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription
+from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
+from config.services import run_with_thread
 
 
 class BecomeCreatorSerializer(serializers.ModelSerializer):
@@ -118,6 +120,7 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
         subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                        **validated_data)
+        run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
         return subscription
 
     class Meta:

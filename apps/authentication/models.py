@@ -28,9 +28,11 @@ class PaymentType(models.TextChoices):
 class ActivityType(models.TextChoices):
     donation = 'donation', _('Задонатил')
     commented = 'commented', _('Оставил комментарий')
+    replied = 'replied', _('Оставил ответный комментарий')
     followed = 'followed', _('Фолловнул')
     subscribed = 'subscribed', _('Подписался')
-    liked = 'liked', _('Лайкнул')
+    liked_post = 'liked_post', _('Лайкнул пост')
+    liked_comment = 'liked_comment', _('Лайкнул комментарий')
 
 
 class User(AbstractUser):
@@ -279,7 +281,7 @@ class BlockedUser(BaseModel):
 
 
 class UserActivity(BaseModel):
-    type = models.CharField(choices=ActivityType.choices, max_length=10)
+    type = models.CharField(choices=ActivityType.choices, max_length=20)
     content = models.TextField(null=True, blank=True)
     content_id = models.CharField(max_length=50, null=True, blank=True)
     initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_initiator', null=True)

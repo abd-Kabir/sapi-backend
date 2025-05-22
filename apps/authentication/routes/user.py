@@ -124,7 +124,7 @@ class ToggleFollowAPIView(APIView):
 
         # Check if the follow relationship already exists
         action, follow_relation = follower.toggle_follow(user_to_follow)
-        if action=='followed':
+        if action == 'followed':
             run_with_thread(create_activity, ('followed', None, None, follower, user_to_follow))
 
         # Return the appropriate response
@@ -420,4 +420,3 @@ class ToggleBlockAPIView(APIView):
                 'blocked': user_to_block.id,
             }
         }, status=status.HTTP_200_OK)
-
