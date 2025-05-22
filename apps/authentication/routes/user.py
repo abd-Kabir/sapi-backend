@@ -11,9 +11,11 @@ from django.utils.translation import gettext_lazy as _
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
     UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer
+from apps.authentication.services import create_activity
 from apps.content.models import Category
 from config.core.api_exceptions import APIValidation
 from config.core.swagger import query_search_swagger_param
+from config.services import run_with_thread
 
 
 class BecomeUserMultibankAPIView(APIView):
@@ -122,6 +124,8 @@ class ToggleFollowAPIView(APIView):
 
         # Check if the follow relationship already exists
         action, follow_relation = follower.toggle_follow(user_to_follow)
+        if action=='followed':
+            run_with_thread(create_activity, ('followed', None, None, follower, user_to_follow))
 
         # Return the appropriate response
         return Response({

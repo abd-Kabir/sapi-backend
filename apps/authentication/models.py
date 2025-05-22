@@ -282,8 +282,8 @@ class UserActivity(BaseModel):
     type = models.CharField(choices=ActivityType.choices, max_length=10)
     content = models.TextField(null=True, blank=True)
     content_id = models.CharField(max_length=50, null=True, blank=True)
-    initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_initiator')
-    content_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='content_owner')
+    initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_initiator', null=True)
+    content_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='content_owner', null=True)
 
     class Meta:
         db_table = 'user_activity'
