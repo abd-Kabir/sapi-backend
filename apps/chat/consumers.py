@@ -118,6 +118,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def chat_message(self, event):
+        if event['sender_id'] != self.user.id:
+            message = await Message.objects.aget(pk=event['message_id'])
+            message.is_read = True
+            await message.asave()
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': event['message'],

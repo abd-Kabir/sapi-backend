@@ -8,12 +8,21 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User, BlockedUser
 from apps.chat.models import ChatRoom, Message
-from apps.chat.serializers import MessageListSerializer
+from apps.chat.serializers import MessageListSerializer, UserChatRoomListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 
 
-class UserChatRoomAPIView(APIView):
+class UserChatRoomListAPIView(ListAPIView):
+    queryset = ChatRoom.objects.all()
+    serializer_class = UserChatRoomListSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset
+
+
+class UserGetChatRoomAPIView(APIView):
     @staticmethod
     def get_user(user_id):
         try:
@@ -37,7 +46,7 @@ class UserChatRoomAPIView(APIView):
         ).first()
 
         if not room:
-            room = ChatRoom.objects.create(creator=chat_started_user, subscriber=writing_to)
+            room = ChatRoom.objects.create(creator=writing_to, subscriber=chat_started_user)
         return Response({
             'room_id': room.id,
             'chat_started': chat_started_user.id,

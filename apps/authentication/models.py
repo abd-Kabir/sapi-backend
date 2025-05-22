@@ -25,6 +25,14 @@ class PaymentType(models.TextChoices):
     payme = 'payme', 'Payme'
 
 
+class ActivityType(models.TextChoices):
+    donation = 'donation', _('Задонатил')
+    commented = 'commented', _('Оставил комментарий')
+    followed = 'followed', _('Фолловнул')
+    subscribed = 'subscribed', _('Подписался')
+    liked = 'liked', _('Лайкнул')
+
+
 class User(AbstractUser):
     email = None
     first_name = None
@@ -268,3 +276,15 @@ class BlockedUser(BaseModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class UserActivity(BaseModel):
+    type = models.CharField(choices=ActivityType.choices, max_length=10)
+    content = models.TextField(null=True, blank=True)
+    content_id = models.CharField(max_length=50, null=True, blank=True)
+    initiator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_initiator')
+    content_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='content_owner')
+
+    class Meta:
+        db_table = 'user_activity'
+# TODO: end user activity in views

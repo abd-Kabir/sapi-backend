@@ -1,7 +1,6 @@
 from django.db.models import Count, F
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from fcm_django.models import FCMDevice
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import RetrieveAPIView, ListAPIView, CreateAPIView
