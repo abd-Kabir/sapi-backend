@@ -219,7 +219,7 @@ SWAGGER_SETTINGS = {
 }
 if not DEBUG:
     # SWAGGER_SETTINGS['DEFAULT_API_URL'] = 'http://195.26.243.201:8080'
-    SWAGGER_SETTINGS['DEFAULT_API_URL'] = 'https://backend.sapi.uz'
+    SWAGGER_SETTINGS['DEFAULT_API_URL'] = 'https://api.sapi.uz'
 
 CHANNEL_LAYERS = {
     'default': {

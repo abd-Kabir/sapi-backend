@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.conf import settings
 from django.urls import path, include
 
 from rest_framework import permissions
@@ -7,6 +6,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.authentication import BasicAuthentication
 
 from config.views import MediaPath
 
@@ -22,10 +22,13 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=[permissions.AllowAny, ],
-    # **SWAGGER_SETTINGS
+    authentication_classes=[BasicAuthentication],
 )
 
 urlpatterns = [
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
     path('control-panel/', admin.site.urls),
     path('', include('apps.authentication.urls')),
     path('files/', include('apps.files.urls')),
@@ -41,6 +44,4 @@ urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 if settings.DEBUG:
     urlpatterns += [
         path("__debug__/", include("debug_toolbar.urls")),
-        path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-        path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     ]
