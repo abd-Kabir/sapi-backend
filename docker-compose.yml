@@ -18,6 +18,8 @@ services:
       - "8008:8000"  # Expose port 8000 for Django
     networks:
       - app_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # Nginx service
   nginx:
