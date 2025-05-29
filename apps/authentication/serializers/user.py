@@ -141,8 +141,18 @@ class DonationCreateSerializer(serializers.ModelSerializer):
             'creator_id',
         ]
 
+    @staticmethod
+    def get_creator(pk):
+        try:
+            return User.objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+
     def create(self, validated_data):
         donater = self.context['request'].user
+        creator = self.get_creator(validated_data.get('creator_id'))
+        if creator.minimum_message_donation > validated_data.get('amount', 0):
+            validated_data['message'] = None
         validated_data['donator'] = donater
         donation = super().create(validated_data)
         run_with_thread(create_activity, ('donation', None, donation.id, donater, validated_data.get('creator_id')))
