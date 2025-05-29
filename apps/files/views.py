@@ -1,5 +1,5 @@
 import logging
-from os import remove as delete_file
+# from os import remove as delete_file
 
 from django.utils.translation import gettext_lazy as _
 from django.http import Http404
@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.files.models import File
-from apps.files.utils import upload_file
+from apps.files.utils import upload_file, delete_file
 from config.core.api_exceptions import APIValidation
 
 logger = logging.getLogger()
@@ -62,8 +62,7 @@ class FileDeleteAPIView(APIView):
 
     def delete(self, request, pk):
         file = self.get_object(pk)
-        delete_file(file.path)
-        file.delete()
+        delete_file(file)
         return Response({
             'message': _('Файл успешно удален'),
             'status': status.HTTP_200_OK

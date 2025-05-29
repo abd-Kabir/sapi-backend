@@ -82,3 +82,6 @@ def upload_file(file):
     except Exception as exc:
         logger.debug(f'file_upload_failed: {exc.__doc__}')
         raise APIValidation(detail=f"{exc.__doc__} - {exc.args}", status_code=status.HTTP_400_BAD_REQUEST)
+
+def delete_file(file: File):
+    s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file.gen_name)
