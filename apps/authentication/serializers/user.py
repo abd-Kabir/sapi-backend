@@ -4,7 +4,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation
 from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -130,3 +130,20 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             'plan',
             'commission_by_subscriber',
         ]
+
+
+class DonationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Donation
+        fields = [
+            'amount',
+            'message',
+            'creator_id',
+        ]
+
+    def create(self, validated_data):
+        donater = self.context['request'].user
+        validated_data['donator'] = donater
+        donation = super().create(validated_data)
+        run_with_thread(create_activity, ('donation', None, donation.id, donater, validated_data.get('creator_id')))
+        return donation

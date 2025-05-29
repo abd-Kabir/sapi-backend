@@ -53,6 +53,7 @@ class User(AbstractUser):
     creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
     multibank_verified = models.BooleanField(default=False)
+    minimum_message_donation = models.PositiveBigIntegerField(default=0)
 
     profile_photo = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name='profile_photo')
@@ -273,11 +274,37 @@ class BlockedUser(BaseModel):
 
     def clean(self):
         if self.blocker == self.blocked:
-            raise ValidationError('Users cannot block themselves.')
+            raise ValidationError(_('Пользователь не может заблокировать себя.'))
 
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class Donation(BaseModel):
+    amount = models.PositiveBigIntegerField()
+    message = models.TextField(null=True, blank=True)
+
+    donator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations_made')
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations_received')
+
+    def __str__(self):
+        return f"Donation of {self.amount} by {self.donator} to {self.creator}"
+
+    def clean(self):
+        if self.donator == self.creator:
+            raise ValidationError(_('Вы не можете донатить самому себе.'))
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'donation'
+        indexes = [
+            models.Index(fields=['donator']),
+            models.Index(fields=['creator']),
+        ]
 
 
 class UserActivity(BaseModel):

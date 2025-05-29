@@ -8,9 +8,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
-    UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer
+    UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer, DonationCreateSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
 from config.core.api_exceptions import APIValidation
@@ -420,3 +420,8 @@ class ToggleBlockAPIView(APIView):
                 'blocked': user_to_block.id,
             }
         }, status=status.HTTP_200_OK)
+
+
+class DonateAPIView(CreateAPIView):
+    queryset = Donation.objects.all()
+    serializer_class = DonationCreateSerializer
