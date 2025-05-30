@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'apps.files',
     'apps.content',
     'apps.chat',
+    'startup.apps.StartupConfig',
 ]
 
 MIDDLEWARE = [

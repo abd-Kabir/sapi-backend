@@ -63,6 +63,7 @@ class FileDeleteAPIView(APIView):
     def delete(self, request, pk):
         file = self.get_object(pk)
         delete_file(file)
+        file.delete()
         return Response({
             'message': _('Файл успешно удален'),
             'status': status.HTTP_200_OK

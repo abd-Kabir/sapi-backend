@@ -84,4 +84,6 @@ def upload_file(file):
         raise APIValidation(detail=f"{exc.__doc__} - {exc.args}", status_code=status.HTTP_400_BAD_REQUEST)
 
 def delete_file(file: File):
-    s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=file.gen_name)
+    # file = s3_client.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=f'uploads/{file.gen_name}')
+    # print(file)
+    return s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=f'uploads/{file.gen_name}')

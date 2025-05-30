@@ -100,7 +100,7 @@ services:
       MINIO_ADDRESS: ':9000'
       MINIO_CONSOLE_ADDRESS: ':9001'
     volumes:
-      - minio_data:/data
+      - ./minio_data:/data
     command: server --compat /data --console-address ":9001"
     networks:
       - app_network

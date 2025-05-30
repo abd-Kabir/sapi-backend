@@ -1,10 +1,11 @@
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -133,11 +134,15 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
 
 
 class DonationCreateSerializer(serializers.ModelSerializer):
+    fundraising_id = serializers.IntegerField(required=False, allow_null=True)
+    creator_id = serializers.IntegerField(required=True)
+
     class Meta:
         model = Donation
         fields = [
             'amount',
             'message',
+            'fundraising_id',
             'creator_id',
         ]
 
@@ -148,12 +153,27 @@ class DonationCreateSerializer(serializers.ModelSerializer):
         except:
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
+    @staticmethod
+    def get_fundraising(pk):
+        try:
+            return Fundraising.objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Сбор средств не найден'), status_code=404)
+
     def create(self, validated_data):
-        donater = self.context['request'].user
-        creator = self.get_creator(validated_data.get('creator_id'))
-        if creator.minimum_message_donation > validated_data.get('amount', 0):
-            validated_data['message'] = None
-        validated_data['donator'] = donater
-        donation = super().create(validated_data)
-        run_with_thread(create_activity, ('donation', None, donation.id, donater, validated_data.get('creator_id')))
-        return donation
+        with transaction.atomic():
+            donater = self.context['request'].user
+            creator = self.get_creator(validated_data.get('creator_id'))
+            if validated_data.get('fundraising_id'):
+                fundraising = self.get_fundraising(validated_data.get('fundraising_id'))
+                if fundraising.minimum_donation and fundraising.minimum_donation > validated_data.get('amount', 0):
+                    raise APIValidation(_(f'Минимальный донат является: {validated_data.get("amount", 0)}'),
+                                        status_code=400)
+                if fundraising.deadline < now():
+                    raise APIValidation(_('Срок сбора средств прошел'), status_code=400)
+            if creator.minimum_message_donation > validated_data.get('amount', 0):
+                validated_data['message'] = None
+            validated_data['donator'] = donater
+            donation = super().create(validated_data)
+            run_with_thread(create_activity, ('donation', None, donation.id, donater, validated_data.get('creator_id')))
+            return donation
