@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.authentication.models import SubscriptionPlan, Card
+from apps.authentication.models import SubscriptionPlan, Card, Fundraising
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
 
@@ -114,4 +114,20 @@ class MySubscriptionPlanRetrieveUpdateSerializer(serializers.ModelSerializer):
             # 'duration',
             'creator',
             'banner',
+        ]
+
+
+class FundraisingSerializer(serializers.ModelSerializer):
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Fundraising
+        fields = [
+            'id',
+            'title',
+            'description',
+            'goal',
+            'deadline',
+            'minimum_donation',
+            'creator',
         ]

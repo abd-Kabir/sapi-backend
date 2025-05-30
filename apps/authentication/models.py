@@ -284,11 +284,11 @@ class BlockedUser(BaseModel):
 class Fundraising(BaseModel):
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    current_amount = models.PositiveBigIntegerField()
+    current_amount = models.PositiveBigIntegerField(default=0)
     goal = models.PositiveBigIntegerField()
 
-    minimum_donation = models.PositiveBigIntegerField()
-    deadline = models.DateTimeField()
+    minimum_donation = models.PositiveBigIntegerField(null=True, blank=True)
+    deadline = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fundraising')

@@ -1,17 +1,25 @@
+from collections import defaultdict, OrderedDict
+from datetime import timedelta
+
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+from django.utils.timezone import now, localtime
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import CreateAPIView, ListAPIView, DestroyAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, DestroyAPIView, RetrieveUpdateAPIView, \
+    ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import Card, SubscriptionPlan
+from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow
 from apps.authentication.serializers.profile import (DeleteAccountVerifySerializer,
                                                      MyCardListSerializer, AddCardSerializer,
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
-                                                     MySubscriptionPlanRetrieveUpdateSerializer)
+                                                     MySubscriptionPlanRetrieveUpdateSerializer,
+                                                     FundraisingSerializer)
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -100,6 +108,7 @@ class DeleteAccountVerifyAPIView(APIView):
 class MyCardListAPIView(ListAPIView):
     queryset = Card.objects.all()
     serializer_class = MyCardListSerializer
+
     # permission_classes = [IsCreator, ]
 
     def get_queryset(self):
@@ -117,6 +126,7 @@ class AddCardAPIView(CreateAPIView):
 
 class DeleteCardAPIView(DestroyAPIView):
     queryset = Card.objects.all()
+
     # permission_classes = [IsCreator, ]
 
     def destroy(self, request, *args, **kwargs):
@@ -212,3 +222,84 @@ class SavedPostListAPIView(ListAPIView):
         queryset = super().get_queryset()
         queryset = queryset.filter(saved_by_users__user=user)
         return queryset
+
+
+class FundraisingListCreateAPIView(ListCreateAPIView):
+    queryset = Fundraising.objects.all()
+    serializer_class = FundraisingSerializer
+    permission_classes = [IsCreator, ]
+
+
+class FundraisingDeleteRetrieveUpdateAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Fundraising.objects.all()
+    serializer_class = FundraisingSerializer
+    permission_classes = [IsCreator, ]
+
+
+class FollowersDashboardAPIView(APIView):
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(
+        operation_description='Period Type',
+        manual_parameters=[
+            openapi.Parameter(
+                'period', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description=_('Тип для дашборда'),
+                enum=['week', 'month']
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        period = request.query_params.get('period', 'week')
+        today = localtime(now()).date()
+
+        if period == 'month':
+            start_date = today - timedelta(days=30)
+            queryset = UserFollow.objects.filter(created_at__date__gte=start_date)
+
+            # Define cutoff days (end of each 5-day chunk)
+            checkpoints = [start_date + timedelta(days=i * 5) for i in range(7)]
+            checkpoints.append(today)
+
+            result = OrderedDict()
+
+            for i in range(len(checkpoints) - 1):
+                start = checkpoints[i]
+                end = checkpoints[i + 1]
+                count = queryset.filter(
+                    created_at__date__gte=start,
+                    created_at__date__lte=end
+                ).count()
+
+                label = end.strftime('%d %b')
+                result[label] = count
+
+            return Response({
+                "period": "last_month",
+                "interval_follow_counts": result
+            })
+
+        elif period == 'week':
+            start_date = today - timedelta(days=6)
+            queryset = UserFollow.objects.filter(created_at__date__gte=start_date)
+
+            data = queryset.annotate(day=TruncDate('created_at')) \
+                .values('day') \
+                .annotate(count=Count('id')) \
+                .order_by('day')
+
+            days = [(start_date + timedelta(days=i)) for i in range(7)]
+            result = {day.strftime('%Y-%m-%d'): 0 for day in days}
+
+            for item in data:
+                result[item['day'].strftime('%Y-%m-%d')] = item['count']
+
+            return Response({
+                "period": "last_week",
+                "daily_follow_counts": result
+            })
+
+        return Response({"error": "Invalid period"}, status=400)
+# TODO: dashboard by plans

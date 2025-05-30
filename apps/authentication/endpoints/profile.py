@@ -4,7 +4,9 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 DeleteAccountVerifyAPIView, MyCardListAPIView, AddCardAPIView,
                                                 DeleteCardAPIView, SetMainCardAPIView, MySubscriptionPlanListAPIView,
                                                 AddSubscriptionPlanAPIView, MySubscriptionPlanRetrieveUpdateAPIView,
-                                                LikedPostListAPIView, SavedPostListAPIView)
+                                                LikedPostListAPIView, SavedPostListAPIView,
+                                                FundraisingListCreateAPIView, FundraisingDeleteRetrieveUpdateAPIView,
+                                                FollowersDashboardAPIView)
 
 urlpatterns = [
     # account
@@ -32,4 +34,12 @@ urlpatterns = [
     # saved/liked posts
     path('profile/interested/liked-posts/', LikedPostListAPIView.as_view(), name='own_liked_posts'),
     path('profile/interested/saved-posts/', SavedPostListAPIView.as_view(), name='own_saved_posts'),
+
+    # fundraising
+    path('profile/fundraising/', FundraisingListCreateAPIView.as_view(), name='profile_fundraising_list_create'),
+    path('profile/fundraising/<int:pk>/', FundraisingDeleteRetrieveUpdateAPIView.as_view(),
+         name='profile_fundraising_get_destroy_update'),
+
+    # dashboard
+    path('profile/dashboard/followers/', FollowersDashboardAPIView.as_view(), name='profile_dashboard_followers'),
 ]
