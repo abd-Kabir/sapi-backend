@@ -131,3 +131,10 @@ class FundraisingSerializer(serializers.ModelSerializer):
             'minimum_donation',
             'creator',
         ]
+
+
+class FollowersDashboardByPlanSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    subscriber_count = serializers.IntegerField()
+    percent = serializers.FloatField()

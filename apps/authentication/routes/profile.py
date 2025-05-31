@@ -1,7 +1,7 @@
 from collections import defaultdict, OrderedDict
 from datetime import timedelta
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now, localtime
 from drf_yasg import openapi
@@ -19,7 +19,7 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      MyCardListSerializer, AddCardSerializer,
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
                                                      MySubscriptionPlanRetrieveUpdateSerializer,
-                                                     FundraisingSerializer)
+                                                     FundraisingSerializer, FollowersDashboardByPlanSerializer)
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -302,4 +302,41 @@ class FollowersDashboardAPIView(APIView):
             })
 
         return Response({"error": "Invalid period"}, status=400)
-# TODO: dashboard by plans
+
+
+class FollowersDashboardByPlanAPIView(APIView):
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(
+        operation_description="Get subscriber counts and percentages per subscription plan for the creator.",
+        responses={200: FollowersDashboardByPlanSerializer(many=True)}
+    )
+    def get(self, request):
+        creator = request.user  # Assuming the authenticated user is the creator
+
+        # Annotate each plan with subscriber count
+        plans = SubscriptionPlan.objects.filter(creator=creator).annotate(
+            subscriber_count=Count(
+                'usersubscription',
+                filter=Q(usersubscription__is_active=True)
+            )
+        )
+
+        # Compute total subscriber count across all plans
+        total_subscribers = sum(plan.subscriber_count for plan in plans)
+
+        # Avoid division by zero
+        response_data = []
+        for plan in plans:
+            percent = (
+                (plan.subscriber_count / total_subscribers * 100)
+                if total_subscribers > 0 else 0
+            )
+            response_data.append({
+                'id': plan.id,
+                'name': plan.name,
+                'subscriber_count': plan.subscriber_count,
+                'percent': round(percent, 2),  # Rounded to 2 decimal places
+            })
+
+        return Response(response_data)
