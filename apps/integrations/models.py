@@ -42,3 +42,13 @@ class SMSConfirmation(models.Model):
 
     class Meta:
         db_table = "sms_confirmation"
+
+
+class MultibankAuthToken(models.Model):
+    token = models.TextField()
+    expires_at = models.DateTimeField()
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        db_table = "multibank_auth_token"
