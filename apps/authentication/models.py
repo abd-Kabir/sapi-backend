@@ -141,10 +141,12 @@ class User(AbstractUser):
 
 
 class Card(BaseModel):
+    is_active = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     is_main = models.BooleanField(default=False)
-    card_owner = models.CharField(max_length=155)
+    card_owner = models.CharField(max_length=155, null=True)
     number = models.CharField(max_length=16)
+    token = models.TextField(null=True, blank=True)
     expiration = models.CharField(max_length=5)
     cvc_cvv = models.CharField(max_length=5, null=True, blank=True)
     type = models.CharField(max_length=10, choices=CardType.choices, null=True)
@@ -165,6 +167,8 @@ class Card(BaseModel):
                 another_card.is_main = True
                 another_card.save()
         self.is_deleted = True
+        self.is_active = False
+        self.token = None
         self.save()
 
     def set_main(self, is_main):

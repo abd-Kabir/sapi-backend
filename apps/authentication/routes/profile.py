@@ -23,6 +23,7 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
+from apps.integrations.api_integrations.multibank import multibank_dev_app
 from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
@@ -121,7 +122,25 @@ class MyCardListAPIView(ListAPIView):
 class AddCardAPIView(CreateAPIView):
     queryset = Card.objects.all()
     serializer_class = AddCardSerializer
-    # permission_classes = [IsCreator, ]
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        multibank_response, m_bank_status = multibank_dev_app.bind_card(
+            data={
+                'store_id': 6,
+                'callback_url': 'https://ac07-213-230-118-254.ngrok-free.app/api/multibank/bind-card/webhook/',
+                'phone': user.phone_number
+            }
+        )
+        if str(m_bank_status).startswith('2'):
+            bind_card_url = multibank_response.get('data', {}).get('form_url')
+            return Response({'bind_card_url': bind_card_url}, headers=headers)
+        return Response(multibank_response, status=m_bank_status)
 
 
 class DeleteCardAPIView(DestroyAPIView):
@@ -135,7 +154,8 @@ class DeleteCardAPIView(DestroyAPIView):
         if instance.user != user:
             raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_404_NOT_FOUND)
         # self.perform_destroy(instance)
-        instance.is_deleted = True
+        if instance.token:
+            multibank_dev_app.remove_card(card_token=instance.token)
         instance.delete_card()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

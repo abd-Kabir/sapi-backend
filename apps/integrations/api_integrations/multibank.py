@@ -38,6 +38,11 @@ class MultibankRequestHandler(HTTPClient):
         }
         return self.make_request(method=method, endpoint=endpoint, headers=headers, json=data)
 
+    def remove_card(self, card_token, method: str = 'DELETE'):
+        endpoint: str = f'payment/card/{card_token}'
+        headers = {'Authorization': f'Bearer {self.auth()}'}
+        return self.make_request(method=method, endpoint=endpoint, headers=headers)
+
     def create_payment(self, data: dict, method: str = 'POST', endpoint: str = 'payment'):
         headers = {
             'Authorization': f'Bearer {self.auth()}'
