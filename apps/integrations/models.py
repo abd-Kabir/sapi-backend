@@ -1,8 +1,11 @@
+import uuid
+
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
+from config.models import BaseModel
 
 sms_message_purpose = {
     'login': 'Ваш код для входа на sapi.uz: {code}',
@@ -22,6 +25,16 @@ class PurposeEnum(models.TextChoices):
     password_reset = 'password_reset', _("Сброс пароля")
     phone_update = 'phone_update', _("Обновление телефона")
     delete_account = 'delete_account', _("Удаление аккаунта")
+
+
+class MultibankTransactionTypeEnum(models.TextChoices):
+    donation = 'donation', _("Донат")
+    fundraising = 'fundraising', _("Сбор средств")
+
+
+class MultibankTransactionStatusEnum(models.TextChoices):
+    new = 'new', _("Новый")
+    paid = 'paid', _("Оплачено")
 
 
 class SMSConfirmation(models.Model):
@@ -52,3 +65,20 @@ class MultibankAuthToken(models.Model):
 
     class Meta:
         db_table = "multibank_auth_token"
+
+
+class MultibankTransaction(BaseModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    status = models.CharField(choices=MultibankTransactionStatusEnum.choices,
+                              default=MultibankTransactionStatusEnum.new, max_length=10, null=True)
+    amount = models.IntegerField(null=True)
+    store_id = models.SmallIntegerField(null=True)
+    transaction_type = models.CharField(choices=MultibankTransactionTypeEnum.choices, max_length=15, null=True)
+    card_token = models.TextField(null=True)
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='user_multibank_transactions')
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                related_name='creator_multibank_transactions')
+
+    class Meta:
+        db_table = "multibank_transaction"

@@ -10,27 +10,74 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
-    UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer, DonationCreateSerializer
+    UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer, DonationCreateSerializer, \
+    BecomeUserMultibankAddAccountSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
+from apps.integrations.api_integrations.multibank import multibank_dev_app
 from config.core.api_exceptions import APIValidation
 from config.core.swagger import query_search_swagger_param
 from config.services import run_with_thread
 
 
-class BecomeUserMultibankAPIView(APIView):
+class BecomeUserMultibankAccountsAPIView(APIView):
 
-    @swagger_auto_schema(operation_description="First step of becoming a creator, "
-                                               "insert your Multibank account's number")
+    @swagger_auto_schema(operation_description='First step of becoming a creator, '
+                                               'List of your Multibank accounts.',
+                         responses={200: openapi.Response(
+                             description="List of creator's Multibank accounts.",
+                             examples={
+                                 'application/json': {
+                                     'bank_accounts': [
+                                         '22616000462176153001',
+                                         '20206000762156286001'
+                                     ]
+                                 }
+                             }
+                         )})
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        account_data, m_status_code = multibank_dev_app.check_account(phone=user.phone_number)
+        response = []
+        if str(m_status_code).startswith('2'):
+            accounts = account_data.get('data', {}).get('accounts', [])
+            pinfl = account_data.get('data', {}).get('user', {}).get('pinfl')
+            user.pinfl = pinfl
+            user.save(update_fields=['pinfl'])
+            for acc in accounts:
+                if acc.get('type') != 'tirikchilik':
+                    continue
+                response.append(acc.get('account'))
+            return Response({'bank_accounts': response})
+        return Response(account_data, status=m_status_code)
+
+
+class BecomeUserMultibankAddAccountAPIView(APIView):
+    serializer_class = BecomeUserMultibankAddAccountSerializer
+
+    @swagger_auto_schema(operation_description='Second step of becoming a creator, select one of multibank account.',
+                         request_body=BecomeUserMultibankAddAccountSerializer)
     def post(self, request, *args, **kwargs):
-        return Response()
+        user = request.user
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-
-class BecomeUserMultibankVerificationAPIView(APIView):
-
-    @swagger_auto_schema(operation_description='Second step of becoming a creator, Verify with sms')
-    def post(self, request, *args, **kwargs):
-        return Response()
+        account_data, m_status_code = multibank_dev_app.check_account(phone=user.phone_number)
+        bank_accounts = []
+        if str(m_status_code).startswith('2'):
+            accounts = account_data.get('data', {}).get('accounts', [])
+            for acc in accounts:
+                if acc.get('type') != 'tirikchilik':
+                    continue
+                bank_accounts.append(acc.get('account'))
+            return Response({'bank_accounts': bank_accounts})
+        if not data.get('multibank_account') in bank_accounts:
+            raise APIValidation(_('Введите действующий номер аккаунта.'), status_code=status.HTTP_400_BAD_REQUEST)
+        user.multibank_account = data.get('multibank_account')
+        user.multibank_verified = True
+        user.save(update_fields=['multibank_account', 'multibank_verified'])
+        return Response({'user_id': user.id, 'multibank_account': user.multibank_account})
 
 
 class BecomeCreatorAPIView(APIView):

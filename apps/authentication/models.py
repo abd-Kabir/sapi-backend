@@ -54,6 +54,8 @@ class User(AbstractUser):
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
     multibank_verified = models.BooleanField(default=False)
     minimum_message_donation = models.PositiveBigIntegerField(default=0)
+    sapi_share = models.PositiveSmallIntegerField(default=10)
+    pinfl = models.CharField(null=True, blank=True, max_length=14)
 
     profile_photo = models.OneToOneField('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name='profile_photo')
@@ -304,6 +306,7 @@ class Fundraising(BaseModel):
 class Donation(BaseModel):
     amount = models.PositiveBigIntegerField()
     message = models.TextField(null=True, blank=True)
+    card = models.ForeignKey(Card, on_delete=models.SET_NULL, null=True, related_name='donations')
     fundraising = models.ForeignKey(Fundraising, on_delete=models.SET_NULL, null=True, related_name='donations')
 
     donator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations_made')
@@ -312,9 +315,9 @@ class Donation(BaseModel):
     def __str__(self):
         return f"Donation of {self.amount} by {self.donator} to {self.creator}"
 
-    def clean(self):
-        if self.donator == self.creator:
-            raise ValidationError(_('Вы не можете донатить самому себе.'))
+    # def clean(self):
+    #     if self.donator == self.creator:
+    #         raise ValidationError(_('Вы не можете донатить самому себе.'))
 
     def save(self, *args, **kwargs):
         self.clean()

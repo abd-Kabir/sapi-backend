@@ -18,12 +18,13 @@ class MultibankRequestHandler(HTTPClient):
             'application_id': self.application_id,
             'secret': self.secret
         }
-        token = MultibankAuthToken.objects.filter(expires_at__lt=now())
+        token = MultibankAuthToken.objects.filter(expires_at__gt=now())
         if token.exists():
             token = token.first().token
         else:
             token_response, status_code = self.make_request(method=method, endpoint=endpoint, json=payload)
             if str(status_code).startswith('2'):
+                MultibankAuthToken.objects.all().delete()
                 token_instance = MultibankAuthToken.objects.create(token=token_response.get('token'),
                                                                    expires_at=token_response.get('expiry'))
                 token = token_instance.token
@@ -56,12 +57,20 @@ class MultibankRequestHandler(HTTPClient):
         }
         return self.make_request(method=method, endpoint=endpoint, headers=headers, params=params)
 
+    def get_receipient(self, data: dict, method: str = 'POST'):
+        endpoint: str = f'payment/merchant/6/account'
+        # 6 merchant_id == store_id?
+        headers = {
+            'Authorization': f'Bearer {self.auth()}'
+        }
+        return self.make_request(method=method, endpoint=endpoint, headers=headers, json=data)
+
     def make_request(self, method: str, endpoint: str, **kwargs):
         response = self._request(method, f"{self.base_url}/{endpoint}", **kwargs)
         try:
             return response.json(), response.status_code
         except Exception:  # noqa
-            return {"detail": f"Error occurred: {response.text}"}
+            return {"detail": f"Error occurred: {response.text}"}, 400
 
 
 multibank_prod_app = MultibankRequestHandler(

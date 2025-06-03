@@ -8,8 +8,18 @@ from rest_framework import serializers
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
+from apps.integrations.services.multibank import multibank_payment
 from config.core.api_exceptions import APIValidation
 from config.services import run_with_thread
+
+
+class BecomeUserMultibankAddAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'multibank_account',
+        ]
 
 
 class BecomeCreatorSerializer(serializers.ModelSerializer):
@@ -134,16 +144,17 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
 
 
 class DonationCreateSerializer(serializers.ModelSerializer):
-    fundraising_id = serializers.IntegerField(required=False, allow_null=True)
-    creator_id = serializers.IntegerField(required=True)
+    # fundraising_id = serializers.IntegerField(required=False, allow_null=True)
+    # creator_id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Donation
         fields = [
             'amount',
             'message',
-            'fundraising_id',
-            'creator_id',
+            'card',
+            'fundraising',
+            'creator',
         ]
 
     @staticmethod
@@ -162,10 +173,11 @@ class DonationCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         with transaction.atomic():
-            donater = self.context['request'].user
-            creator = self.get_creator(validated_data.get('creator_id'))
+            donator = self.context['request'].user
+            creator = validated_data.get('creator')
+            card = validated_data.get('card')
             if validated_data.get('fundraising_id'):
-                fundraising = self.get_fundraising(validated_data.get('fundraising_id'))
+                fundraising = validated_data.get('fundraising')
                 if fundraising.minimum_donation and fundraising.minimum_donation > validated_data.get('amount', 0):
                     raise APIValidation(_(f'Минимальный донат является: {validated_data.get("amount", 0)}'),
                                         status_code=400)
@@ -173,7 +185,8 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                     raise APIValidation(_('Срок сбора средств прошел'), status_code=400)
             if creator.minimum_message_donation > validated_data.get('amount', 0):
                 validated_data['message'] = None
-            validated_data['donator'] = donater
+            validated_data['donator'] = donator
             donation = super().create(validated_data)
-            run_with_thread(create_activity, ('donation', None, donation.id, donater, validated_data.get('creator_id')))
+            multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation')
+            run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation

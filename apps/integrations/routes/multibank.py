@@ -10,6 +10,7 @@ class MultiBankBindCardCallbackWebhookAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
+        print(data)
         card = (
             Card.objects
             .filter(user__phone_number=data.get('phone'), number__endswith=data.get('card_pan')[12:], is_active=False)
