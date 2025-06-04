@@ -10,7 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from apps.authentication.models import User
 from apps.authentication.serializers.auth import (JWTObtainPairSerializer, LoginWelcomeSerializer,
                                                   LoginVerifySMSSerializer, LoginSetUsernameSerializer,
-                                                  AuthAccountDataSerializer)
+                                                  AuthAccountDataSerializer, JWTAdminLoginSerializer)
+from apps.authentication.services import authenticate_user
 from apps.integrations.services.sms_services import only_phone_numbers
 from config.core.api_exceptions import APIValidation
 
@@ -89,8 +90,15 @@ class LoginSetUsernameAPIView(APIView):
 
 
 class JWTObtainPairView(TokenObtainPairView):
-    serializer_class = JWTObtainPairSerializer
+    serializer_class = JWTAdminLoginSerializer
     permission_classes = [AllowAny, ]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            return Response(authenticate_user(request))
+        else:
+            raise APIValidation(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthAccountDataAPIView(APIView):

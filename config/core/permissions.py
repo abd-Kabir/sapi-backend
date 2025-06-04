@@ -34,3 +34,17 @@ class IsAdmin(permissions.BasePermission):
         if user.groups.filter(name='ADMIN').exists():
             return True
         return False
+
+
+class IsAdminAllowGet(permissions.BasePermission):
+    """
+    Allow to admins and get requests
+    """
+
+    def has_permission(self, request, view):
+        if view.action == 'list' or view.action == 'retrieve':
+            return True
+        user = request.user
+        if user.groups.filter(name='ADMIN').exists():
+            return True
+        return False

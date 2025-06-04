@@ -18,7 +18,7 @@ from apps.content.serializers import PostCreateSerializer, CategorySerializer, C
     PostLeaveCommentSerializer, ReportSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
-from config.core.permissions import IsCreator, AllowGet, IsAdmin
+from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
 from config.core.swagger import query_choice_swagger_param
 from config.services import run_with_thread
 from config.views import BaseModelViewSet
@@ -56,7 +56,7 @@ class ChoiceTypeListAPIView(APIView):
 class CategoryModelViewSet(BaseModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [AllowGet, ]
+    permission_classes = [IsAdminAllowGet, ]
 
     @swagger_auto_schema(
         request_body=openapi.Schema(type=openapi.TYPE_OBJECT, required=['name'], properties={

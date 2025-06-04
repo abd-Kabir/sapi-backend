@@ -71,3 +71,8 @@ class JWTObtainPairSerializer(TokenObtainPairSerializer):
         # token['phone_number'] = user.phone_number
         user.save()
         return token
+
+
+class JWTAdminLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()

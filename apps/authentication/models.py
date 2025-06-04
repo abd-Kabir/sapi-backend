@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.managers import CardManager
+from apps.authentication.managers import CardManager, UserManager
 from config.models import BaseModel
 
 
@@ -66,6 +66,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []
+
+    objects = UserManager()
 
     def subscribers_count(self):
         """Return the number of subscribers this user has"""
