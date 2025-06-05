@@ -23,10 +23,7 @@ class LoginWelcomeAPIView(APIView):
     @staticmethod
     def get_user(phone_number):
         try:
-            user = User.objects.get(phone_number=phone_number)
-            if user.is_deleted:
-                raise APIValidation(_('Ползователь удалил свой аккунт'), status_code=status.HTTP_400_BAD_REQUEST)
-            return user
+            return User.objects.get(phone_number=phone_number)
         except User.DoesNotExist:
             pass
             # raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
@@ -49,10 +46,7 @@ class LoginVerifySMSAPIView(APIView):
     @staticmethod
     def get_user(phone_number):
         try:
-            user = User.objects.get(phone_number=phone_number)
-            if user.is_deleted:
-                raise APIValidation(_('Ползователь удалил свой аккунт'), status_code=status.HTTP_400_BAD_REQUEST)
-            return user
+            return User.objects.get(phone_number=phone_number)
         except User.DoesNotExist:
             raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_400_BAD_REQUEST)
 

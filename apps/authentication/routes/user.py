@@ -208,7 +208,7 @@ class PopularCreatorListAPIView(APIView):
     def most_popular_creators(self, limit: int = 10):
         return (
             User.objects
-            .filter(is_creator=True, is_deleted=False)
+            .filter(is_creator=True)
             .annotate(follower_count=Count('followers'))
             .order_by('-follower_count')
             .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
@@ -228,7 +228,7 @@ class PopularCreatorListAPIView(APIView):
         for category in categories_with_creators:
             creators = (
                 User.objects
-                .filter(category=category, is_creator=True, is_deleted=False)
+                .filter(category=category, is_creator=True)
                 .annotate(follower_count=Count('followers'))
                 .order_by('-follower_count')
                 .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
@@ -288,7 +288,7 @@ class PopularCategoryCreatorListAPIView(APIView):
     def most_popular_creators(self, limit: int = 10):
         return (
             User.objects
-            .filter(is_creator=True, is_deleted=False)
+            .filter(is_creator=True)
             .annotate(follower_count=Count('followers'))
             .order_by('-follower_count')
             .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
@@ -308,7 +308,7 @@ class PopularCategoryCreatorListAPIView(APIView):
             category = categories_with_creators.first()
             creators = (
                 User.objects
-                .filter(category=category, is_creator=True, is_deleted=False)
+                .filter(category=category, is_creator=True)
                 .annotate(follower_count=Count('followers'))
                 .order_by('-follower_count')
                 .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
@@ -387,7 +387,7 @@ class SearchCreatorAPIView(APIView):
         users = (
             User.objects
             .annotate(follower_count=Count('followers'))
-            .filter(is_creator=True, is_deleted=False, username__icontains=search_term)
+            .filter(is_creator=True, username__icontains=search_term)
             .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
             .order_by('-follower_count')
             [:15]
