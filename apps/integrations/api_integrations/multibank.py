@@ -57,9 +57,8 @@ class MultibankRequestHandler(HTTPClient):
         }
         return self.make_request(method=method, endpoint=endpoint, headers=headers, params=params)
 
-    def get_receipient(self, data: dict, method: str = 'POST'):
-        endpoint: str = f'payment/merchant/6/account'
-        # 6 merchant_id == store_id?
+    def get_receipient(self, merchant_id, data: dict, method: str = 'POST'):
+        endpoint: str = f'payment/merchant/{merchant_id}/account'
         headers = {
             'Authorization': f'Bearer {self.auth()}'
         }

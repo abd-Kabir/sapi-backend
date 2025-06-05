@@ -71,7 +71,6 @@ class BecomeUserMultibankAddAccountAPIView(APIView):
                 if acc.get('type') != 'tirikchilik':
                     continue
                 bank_accounts.append(acc.get('account'))
-            return Response({'bank_accounts': bank_accounts})
         if not data.get('multibank_account') in bank_accounts:
             raise APIValidation(_('Введите действующий номер аккаунта.'), status_code=status.HTTP_400_BAD_REQUEST)
         user.multibank_account = data.get('multibank_account')

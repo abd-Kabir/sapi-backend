@@ -15,7 +15,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'mfo': "00491",
         'account_no': creator.multibank_account,
         'commitent': True
-    })
+    }, merchant_id=5)
     if not str(receipient_sc).startswith('2'):
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     creator_split = {
@@ -41,7 +41,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'invoice_id': str(transaction.id),
         'split': [creator_split, sapi_split]
     }
-    payment_response, payment_sc  = multibank_dev_app.create_payment(data=body)
+    payment_response, payment_sc = multibank_dev_app.create_payment(data=body)
     if not str(payment_sc).startswith('2'):
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     return payment_response

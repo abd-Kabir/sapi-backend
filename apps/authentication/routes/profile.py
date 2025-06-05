@@ -133,7 +133,7 @@ class AddCardAPIView(CreateAPIView):
         multibank_response, m_bank_status = multibank_dev_app.bind_card(
             data={
                 'store_id': 6,
-                'callback_url': 'https://5108-94-230-230-132.ngrok-free.app/api/multibank/bind-card/webhook/',
+                'callback_url': 'https://a503-213-230-125-66.ngrok-free.app/api/multibank/bind-card/webhook/',
                 'phone': user.phone_number
             }
         )
