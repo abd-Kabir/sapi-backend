@@ -31,12 +31,12 @@ def get_last_month_intervals():
     return [(today - timedelta(days=30)) + timedelta(days=i * 5) for i in range(7)]
 
 def authenticate_user(request):
-    username = request.data.get('username')
+    phone_number = request.data.get('phone_number')
     password = request.data.get('password')
 
     try:
-        user = User.objects.get(username=username)
-        if user.check_password(password):
+        user = User.objects.get(phone_number=phone_number)
+        if user.check_password(password) and user.groups.filter(name='ADMIN').exists():
             refresh = RefreshToken.for_user(user)
             return {
                 'refresh': str(refresh),

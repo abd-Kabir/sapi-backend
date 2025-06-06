@@ -74,5 +74,5 @@ class JWTObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class JWTAdminLoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    phone_number = serializers.CharField()
     password = serializers.CharField()
