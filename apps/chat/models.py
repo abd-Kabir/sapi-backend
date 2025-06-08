@@ -6,6 +6,13 @@ from apps.authentication.models import User, BlockedUser
 from config.models import BaseModel
 
 
+class CanChatWithSettingsEnum(models.TextChoices):
+    everyone = 'everyone', _('Все')
+    nobody = 'nobody', _('Никто')
+    subscribers = 'subscribers', _('Только подписчики определенного уровня')
+    donations = 'donations', _('Только сообщения с донатом')
+
+
 class ChatRoom(BaseModel):
     """Represents a chat room between two users"""
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator_chat_rooms')
@@ -53,3 +60,17 @@ class Message(BaseModel):
 
     def __str__(self):
         return f'{self.sender}: {self.content[:10]}...'
+
+
+class ChatSettings(BaseModel):
+    """Represents a chat settings of creator"""
+
+    can_chat = models.CharField(choices=CanChatWithSettingsEnum.choices, max_length=11,
+                                default=CanChatWithSettingsEnum.everyone)
+    subscription_plans = models.JSONField(default=list)
+    minimum_message_donation = models.PositiveBigIntegerField(default=0)
+
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_settings')
+
+    class Meta:
+        db_table = 'chat_settings'
