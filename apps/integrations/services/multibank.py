@@ -11,7 +11,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
                                                       user=user, creator=creator, card_token=card.token)
     creator_amount = ((100 - creator.sapi_share) / 100) * amount
     creator_receipient, receipient_sc = multibank_dev_app.get_receipient(data={
-        'pinfl': creator.pinfl,
+        'tin': creator.pinfl,
         'mfo': "00491",
         'account_no': creator.multibank_account,
         'commitent': True
@@ -23,6 +23,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'receipient': creator_receipient.get('data', {}).get('uuid'),
         # 'receipient': '5378f655-ae41-11ee-97a8-005056b4367d',
         'amount': int(creator_amount),
+        'details': 'Донат для креатора SAPI'
     }
 
     sapi_amount = (creator.sapi_share / 100) * amount
@@ -30,6 +31,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'type': 'account',
         'receipient': '7bd7ad8e-b2d5-11ee-97a8-005056b4367d',
         'amount': int(sapi_amount),
+        'details': 'Донат для креатора SAPI'
     }
 
     body = {
