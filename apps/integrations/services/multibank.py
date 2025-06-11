@@ -9,10 +9,12 @@ from django.utils.translation import gettext_lazy as _
 def multibank_payment(user: User, creator: User, card: Card, amount, payment_type):
     transaction = MultibankTransaction.objects.create(store_id=6, amount=amount, transaction_type=payment_type,
                                                       user=user, creator=creator, card_token=card.token)
-    creator_amount = ((100 - creator.sapi_share) / 100) * amount
+    multicard_commission = amount * 0.02
+    creator_amount = (((100 - creator.sapi_share) / 100) * amount) - multicard_commission
     creator_receipient, receipient_sc = multibank_dev_app.get_receipient(data={
         'tin': creator.pinfl,
-        'mfo': "00491",
+        'mfo': '00421',
+        # 'mfo': '00491',
         'account_no': creator.multibank_account,
         'commitent': True
     }, merchant_id=5)
@@ -45,5 +47,17 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     }
     payment_response, payment_sc = multibank_dev_app.create_payment(data=body)
     if not str(payment_sc).startswith('2'):
+        transaction.status = 'failed'
+        transaction.save(update_fields=['status'])
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
+    transaction.transaction_id = payment_response.get('data', {}).get('uuid')
+    payment_confirm_resp, payment_confirm_sc = multibank_dev_app.confirm_payment(
+        transaction_id=payment_response.get('data', {}).get('uuid')
+    )
+    if not str(payment_confirm_sc).startswith('2'):
+        transaction.status = 'failed'
+        raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
+    if payment_confirm_resp.get('data', {}).get('status') == 'success':
+        transaction.status = 'paid'
+    transaction.save(update_fields=['transaction_id', 'status'])
     return payment_response

@@ -187,6 +187,6 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                 validated_data['message'] = None
             validated_data['donator'] = donator
             donation = super().create(validated_data)
-            multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation')
+            run_with_thread(multibank_payment, (donator, creator, card, validated_data.get('amount', 0), 'donation'))
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation

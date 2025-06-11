@@ -35,6 +35,7 @@ class MultibankTransactionTypeEnum(models.TextChoices):
 class MultibankTransactionStatusEnum(models.TextChoices):
     new = 'new', _("Новый")
     paid = 'paid', _("Оплачено")
+    failed = 'failed', _("Провалено")
 
 
 class SMSConfirmation(models.Model):
@@ -74,6 +75,7 @@ class MultibankTransaction(BaseModel):
     amount = models.IntegerField(null=True)
     store_id = models.SmallIntegerField(null=True)
     transaction_type = models.CharField(choices=MultibankTransactionTypeEnum.choices, max_length=15, null=True)
+    transaction_id = models.CharField(max_length=55, null=True)
     card_token = models.TextField(null=True)
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='user_multibank_transactions')

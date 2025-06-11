@@ -50,6 +50,15 @@ class MultibankRequestHandler(HTTPClient):
         }
         return self.make_request(method=method, endpoint=endpoint, headers=headers, json=data)
 
+    def confirm_payment(self, transaction_id, data: dict = None, method: str = 'PUT'):
+        endpoint: str = f'payment/{transaction_id}'
+        headers = {
+            'Authorization': f'Bearer {self.auth()}'
+        }
+        if data:
+            return self.make_request(method=method, endpoint=endpoint, headers=headers, json=data)
+        return self.make_request(method=method, endpoint=endpoint, headers=headers)
+
     def check_account(self, phone, method: str = 'GET', endpoint: str = 'mobile/user/check_account'):
         params = {'phone': phone}
         headers = {
