@@ -471,3 +471,28 @@ class ToggleBlockAPIView(APIView):
 class DonateAPIView(CreateAPIView):
     queryset = Donation.objects.all()
     serializer_class = DonationCreateSerializer
+
+    @swagger_auto_schema(
+        request_body=DonationCreateSerializer,
+        responses={
+            201: openapi.Response(
+                description="Donation created successfully",
+                schema=DonationCreateSerializer,
+                examples={
+                    "application/json": {
+                        "amount": 10000,
+                        "message": None,
+                        "card": 12,
+                        "fundraising": None,
+                        "creator": 1,
+                        "payment_info": {
+                            "need_otp": False,
+                            "transaction_id": "9bf2385d-46a1-11f0-bdd5-005056b4367d"
+                        }
+                    }
+                }
+            )
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)

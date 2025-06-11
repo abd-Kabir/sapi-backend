@@ -171,6 +171,11 @@ class DonationCreateSerializer(serializers.ModelSerializer):
         except:
             raise APIValidation(_('Сбор средств не найден'), status_code=404)
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['payment_info'] = instance.payment_info
+        return representation
+
     def create(self, validated_data):
         with transaction.atomic():
             donator = self.context['request'].user
@@ -187,6 +192,7 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                 validated_data['message'] = None
             validated_data['donator'] = donator
             donation = super().create(validated_data)
-            run_with_thread(multibank_payment, (donator, creator, card, validated_data.get('amount', 0), 'donation'))
+            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation')
+            donation.payment_info = payment_info
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation

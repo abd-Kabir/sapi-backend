@@ -51,6 +51,9 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         transaction.save(update_fields=['status'])
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     transaction.transaction_id = payment_response.get('data', {}).get('uuid')
+    need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
+    if need_otp_confirmation:
+        return {'need_otp': need_otp_confirmation, 'transaction_id': payment_response.get('data', {}).get('uuid')}
     payment_confirm_resp, payment_confirm_sc = multibank_dev_app.confirm_payment(
         transaction_id=payment_response.get('data', {}).get('uuid')
     )
@@ -60,4 +63,4 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
         transaction.status = 'paid'
     transaction.save(update_fields=['transaction_id', 'status'])
-    return payment_response
+    return {'need_otp': need_otp_confirmation, 'transaction_id': payment_response.get('data', {}).get('uuid')}
