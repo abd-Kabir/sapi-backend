@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.chat.models import Message, ChatRoom
+from apps.chat.models import Message, ChatRoom, ChatSettings
 from apps.files.serializers import FileSerializer
 
 
@@ -66,4 +66,26 @@ class MessageListSerializer(serializers.ModelSerializer):
             'sender',
             'is_read',
             'created_at',
+        ]
+
+
+class ChatSettingsSerializer(serializers.ModelSerializer):
+    subscription_plans = serializers.ListField(child=serializers.IntegerField(), required=False, write_only=True)
+    minimum_message_donation = serializers.IntegerField(required=False, write_only=True)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.can_chat == 'subscribers':
+            representation['subscription_plans'] = instance.subscription_plans
+        elif instance.can_chat == 'donations':
+            representation['minimum_message_donation'] = instance.minimum_message_donation
+        return representation
+
+    class Meta:
+        model = ChatSettings
+        fields = [
+            'id',
+            'can_chat',
+            'subscription_plans',
+            'minimum_message_donation',
         ]

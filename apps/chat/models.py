@@ -67,8 +67,8 @@ class ChatSettings(BaseModel):
 
     can_chat = models.CharField(choices=CanChatWithSettingsEnum.choices, max_length=11,
                                 default=CanChatWithSettingsEnum.everyone)
-    subscription_plans = models.JSONField(default=list)
-    minimum_message_donation = models.PositiveBigIntegerField(default=0)
+    subscription_plans = models.JSONField(default=list, null=True)
+    minimum_message_donation = models.PositiveBigIntegerField(default=0, null=True)
 
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_settings')
 

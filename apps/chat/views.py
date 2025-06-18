@@ -1,14 +1,16 @@
 from django.db.models import Q
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User, BlockedUser
-from apps.chat.models import ChatRoom, Message
-from apps.chat.serializers import MessageListSerializer, UserChatRoomListSerializer
+from apps.chat.models import ChatRoom, Message, ChatSettings
+from apps.chat.serializers import MessageListSerializer, UserChatRoomListSerializer, ChatSettingsSerializer
+from apps.chat.swagger import chat_settings_swagger
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 
@@ -68,3 +70,28 @@ class LastMessagesAPIView(ListAPIView):
         queryset = super().get_queryset()
         queryset = queryset.filter(room_id=self.kwargs['room_id'])
         return queryset
+
+
+class GetChatSettingsAPIView(APIView):
+    serializer_class = ChatSettingsSerializer
+
+    @swagger_auto_schema(responses=chat_settings_swagger)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        chat_settings = ChatSettings.objects.filter(creator=user)
+        serializer = self.serializer_class(chat_settings, many=True)
+        data = serializer.data
+
+        return Response(data)
+
+
+class ConfigureChatSettingsAPIView(APIView):
+    serializer_class = ChatSettingsSerializer
+
+    @swagger_auto_schema(request_body=ChatSettingsSerializer(), responses=chat_settings_swagger)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
