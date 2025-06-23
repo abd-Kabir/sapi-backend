@@ -3,7 +3,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription
 from apps.content.managers import PostManager
 from apps.files.models import File
 from config.models import BaseModel
@@ -58,7 +57,7 @@ class Post(BaseModel):
     publication_time = models.DateTimeField(null=True, blank=True)
 
     is_deleted = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     post_type = models.CharField(max_length=20, choices=PostTypes.choices)
@@ -70,7 +69,8 @@ class Post(BaseModel):
     allow_multiple_answers = models.BooleanField(default=False)  # only for questionnaire
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='posts')
     is_premium = models.BooleanField(default=False)
-    subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='posts')
+    subscription = models.ForeignKey('authentication.SubscriptionPlan', on_delete=models.SET_NULL, null=True,
+                                     related_name='posts')
 
     objects = PostManager()
     all_objects = models.Manager()
@@ -90,6 +90,8 @@ class Post(BaseModel):
             comment.update_like_count()
 
     def can_view(self, user):
+        from apps.authentication.models import UserSubscription
+
         """Check if user can view this content"""
         if not self.is_premium:
             return True
@@ -158,7 +160,7 @@ class AnswerOption(models.Model):
 
 
 class PostAnswer(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='post_answers')
+    user = models.ForeignKey('authentication.User', on_delete=models.SET_NULL, null=True, related_name='post_answers')
     post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, related_name='post_answers')
     answers = models.JSONField(default=list)
 
@@ -170,7 +172,7 @@ class PostAnswer(BaseModel):
 
 
 class SavedPost(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_posts')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='saved_posts')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='saved_by_users')
     saved_at = models.DateTimeField(auto_now_add=True)
 
@@ -182,7 +184,7 @@ class SavedPost(models.Model):
 
 
 class Comment(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='comments')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField()
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
@@ -202,7 +204,7 @@ class Comment(BaseModel):
 
 
 class Like(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='likes')
     post = models.ForeignKey(Post, on_delete=models.SET_NULL, related_name='likes', null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, related_name='likes', null=True, blank=True)
 
@@ -234,13 +236,13 @@ class Like(BaseModel):
 
 
 class Report(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports')
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='reports')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports')
     report_type = models.CharField(max_length=20, choices=ReportTypes.choices)
     description = models.TextField(blank=True, null=True)
     is_resolved = models.BooleanField(default=False)
     resolved_at = models.DateTimeField(null=True, blank=True)
-    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+    resolved_by = models.ForeignKey('authentication.User', on_delete=models.SET_NULL, null=True, blank=True,
                                     related_name='resolved_reports')
 
     def resolve(self, resolved_by_user):

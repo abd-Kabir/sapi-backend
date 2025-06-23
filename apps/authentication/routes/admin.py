@@ -1,37 +1,71 @@
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.translation import gettext_lazy as _
+from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.models import User
-from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer
+from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
+    AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer
 from config.core.api_exceptions import APIValidation
+from config.core.pagination import APILimitOffsetPagination
+from config.core.permissions import IsAdmin
 
 
 class AdminCreatorListAPIView(ListAPIView):
-    queryset = User.objects.filter(is_creator=True)
+    queryset = User.all_objects.all()
     serializer_class = AdminCreatorListSerializer
+    permission_classes = [IsAdmin, ]
+    pagination_class = APILimitOffsetPagination
 
 
 class AdminCreatorRetrieveAPIView(RetrieveAPIView):
-    queryset = User.objects.filter(is_creator=True)
-    serializer_class = AdminCreatorListSerializer
+    queryset = User.all_objects.all()
+    serializer_class = AdminCreatorRetrieveSerializer
+    permission_classes = [IsAdmin, ]
 
 
-class AdminCreatorSAPIShareAPIView(APIView):
-    response_serializer_class = AdminCreatorListSerializer
-    serializer_class = AdminCreatorUpdateSAPIShareSerializer
+class AdminBlockCreatorAPIView(APIView):
+    serializer_class = AdminBlockCreatorSerializer
+    permission_classes = [IsAdmin, ]
 
     @staticmethod
     def get_creator(pk):
         try:
-            return User.objects.get(pk=pk, is_creator=True)
+            return User.all_objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+
+    @swagger_auto_schema(request_body=AdminBlockCreatorSerializer,
+                         responses={200: AdminCreatorRetrieveSerializer()})
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = self.get_creator(data.get('user_id'))
+        user.is_blocked_by = request.user
+        user.block_reason = data.get('block_reason')
+        user.save(update_fields=['is_blocked_by'])
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class AdminCreatorSAPIShareAPIView(APIView):
+    response_serializer_class = AdminCreatorRetrieveSerializer
+    serializer_class = AdminCreatorUpdateSAPIShareSerializer
+    permission_classes = [IsAdmin, ]
+
+    @staticmethod
+    def get_creator(pk):
+        try:
+            return User.all_objects.get(pk=pk)
         except:
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
     @swagger_auto_schema(request_body=AdminCreatorUpdateSAPIShareSerializer,
-                         responses={200: AdminCreatorListSerializer()})
+                         responses={200: AdminCreatorRetrieveSerializer()})
     def patch(self, request, pk, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)

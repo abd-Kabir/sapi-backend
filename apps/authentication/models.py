@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from apps.authentication.managers import CardManager, UserManager, AllUserManager
+from apps.content.models import ReportTypes
 from config.models import BaseModel
 
 
@@ -49,6 +50,9 @@ class User(AbstractUser):
     is_sms_verified = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     is_creator = models.BooleanField(default=False)
+
+    is_blocked_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, related_name='admin_blocked_users')
+    block_reason = models.CharField(choices=ReportTypes.choices, max_length=20, null=True)
 
     creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
@@ -318,9 +322,9 @@ class Donation(BaseModel):
     def __str__(self):
         return f"Donation of {self.amount} by {self.donator} to {self.creator}"
 
-    # def clean(self):
-    #     if self.donator == self.creator:
-    #         raise ValidationError(_('Вы не можете донатить самому себе.'))
+    def clean(self):
+        if self.donator == self.creator:
+            raise ValidationError(_('Вы не можете донатить самому себе.'))
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -343,4 +347,3 @@ class UserActivity(BaseModel):
 
     class Meta:
         db_table = 'user_activity'
-# TODO: end user activity in views

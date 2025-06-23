@@ -36,7 +36,7 @@ class ChatRoom(BaseModel):
 
         # Check if subscriber is blocked by creator or vice versa
         if BlockedUser.is_blocked(self.creator, self.subscriber):
-            raise ValidationError('Чат не доступен - пользователь заблокирован.')
+            raise ValidationError(_('Чат не доступен - пользователь заблокирован.'))
 
     def save(self, *args, **kwargs):
         self.clean()
