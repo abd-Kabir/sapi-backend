@@ -192,11 +192,15 @@ MULTIBANK_INTEGRATION_SETTINGS = {
     'PROD': {
         'BASE_URL': getenv('MULTIBANK_PROD_BASE_URL'),
         'APPLICATION_ID': getenv('MULTIBANK_PROD_APPLICATION_ID'),
+        'STORE_ID': getenv('MULTIBANK_PROD_STORE_ID'),
+        'MERCHANT_ID': getenv('MULTIBANK_PROD_MERCHANT_ID'),
         'SECRET': getenv('MULTIBANK_PROD_SECRET'),
     },
     'DEV': {
         'BASE_URL': getenv('MULTIBANK_DEV_BASE_URL'),
         'APPLICATION_ID': getenv('MULTIBANK_DEV_APPLICATION_ID'),
+        'STORE_ID': getenv('MULTIBANK_DEV_STORE_ID'),
+        'MERCHANT_ID': getenv('MULTIBANK_DEV_MERCHANT_ID'),
         'SECRET': getenv('MULTIBANK_DEV_SECRET'),
     }
 }

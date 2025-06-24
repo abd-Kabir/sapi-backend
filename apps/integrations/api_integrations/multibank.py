@@ -86,9 +86,3 @@ multibank_prod_app = MultibankRequestHandler(
     application_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['APPLICATION_ID'],
     secret=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['SECRET']
 )
-
-multibank_dev_app = MultibankRequestHandler(
-    base_url=settings.MULTIBANK_INTEGRATION_SETTINGS['DEV']['BASE_URL'],
-    application_id=settings.MULTIBANK_INTEGRATION_SETTINGS['DEV']['APPLICATION_ID'],
-    secret=settings.MULTIBANK_INTEGRATION_SETTINGS['DEV']['SECRET']
-)

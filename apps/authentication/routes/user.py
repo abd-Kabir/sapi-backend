@@ -14,7 +14,7 @@ from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRe
     BecomeUserMultibankAddAccountSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
-from apps.integrations.api_integrations.multibank import multibank_dev_app
+from apps.integrations.api_integrations.multibank import multibank_prod_app
 from config.core.api_exceptions import APIValidation
 from config.core.swagger import query_search_swagger_param
 from config.services import run_with_thread
@@ -37,7 +37,7 @@ class BecomeUserMultibankAccountsAPIView(APIView):
                          )})
     def get(self, request, *args, **kwargs):
         user = request.user
-        account_data, m_status_code = multibank_dev_app.check_account(phone=user.phone_number)
+        account_data, m_status_code = multibank_prod_app.check_account(phone=user.phone_number)
         response = []
         if str(m_status_code).startswith('2'):
             accounts = account_data.get('data', {}).get('accounts', [])
@@ -63,7 +63,7 @@ class BecomeUserMultibankAddAccountAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        account_data, m_status_code = multibank_dev_app.check_account(phone=user.phone_number)
+        account_data, m_status_code = multibank_prod_app.check_account(phone=user.phone_number)
         bank_accounts = []
         if str(m_status_code).startswith('2'):
             accounts = account_data.get('data', {}).get('accounts', [])

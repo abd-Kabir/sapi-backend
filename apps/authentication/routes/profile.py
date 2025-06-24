@@ -1,6 +1,7 @@
 from collections import defaultdict, OrderedDict
 from datetime import timedelta
 
+from django.conf import settings
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now, localtime
@@ -23,7 +24,7 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
-from apps.integrations.api_integrations.multibank import multibank_dev_app
+from apps.integrations.api_integrations.multibank import multibank_prod_app
 from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
@@ -130,10 +131,10 @@ class AddCardAPIView(CreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        multibank_response, m_bank_status = multibank_dev_app.bind_card(
+        multibank_response, m_bank_status = multibank_prod_app.bind_card(
             data={
-                'store_id': 6,
-                'callback_url': 'https://a503-213-230-125-66.ngrok-free.app/api/multibank/bind-card/webhook/',
+                'store_id': settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'],
+                'callback_url': 'https://api.sapi.uz/api/multibank/bind-card/webhook/',
                 'phone': user.phone_number
             }
         )
@@ -155,7 +156,7 @@ class DeleteCardAPIView(DestroyAPIView):
             raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_404_NOT_FOUND)
         # self.perform_destroy(instance)
         if instance.token:
-            multibank_dev_app.remove_card(card_token=instance.token)
+            multibank_prod_app.remove_card(card_token=instance.token)
         instance.delete_card()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
