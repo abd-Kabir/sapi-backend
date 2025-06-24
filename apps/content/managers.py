@@ -5,5 +5,6 @@ from django.utils.timezone import now
 class PostManager(Manager):
     def get_queryset(self):
         return super().get_queryset().filter(
-            (Q(publication_time__lte=now()) | Q(publication_time=None)), is_posted=True
+            (Q(publication_time__lte=now()) | Q(publication_time=None)),
+            is_posted=True, is_deleted=False, is_blocked=False
         )

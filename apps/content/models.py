@@ -63,6 +63,7 @@ class Post(BaseModel):
     is_posted = models.BooleanField(default=False)
     publication_time = models.DateTimeField(null=True, blank=True)
 
+    is_blocked = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255, blank=True, null=True)
