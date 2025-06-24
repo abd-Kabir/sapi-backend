@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from apps.authentication.models import User
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer
+from apps.content.models import Report, ReportStatusTypes
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
@@ -76,3 +77,20 @@ class AdminCreatorSAPIShareAPIView(APIView):
         creator.save(update_fields=['sapi_share'])
         response = self.response_serializer_class(creator).data
         return Response(response)
+
+
+class AdminIgnoreReportAPIView(APIView):
+    permission_classes = [IsAdmin, ]
+
+    def post(self, request, post_id):
+        unresolved_reports = Report.objects.filter(post_id=post_id, is_resolved=False)
+
+        if not unresolved_reports.exists():
+            return Response({'detail': _('Для этого поста не было найдена жалоб.')},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        for report in unresolved_reports:
+            report.status = ReportStatusTypes.ignored
+            report.resolve(request.user)
+
+        return Response(status=status.HTTP_200_OK)
