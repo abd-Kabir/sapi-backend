@@ -327,18 +327,9 @@ class CreateReportAPIView(CreateAPIView):
 
 
 class ReportListView(ListAPIView):
+    queryset = Report.objects.all().order_by('-created_at')
     serializer_class = ReportSerializer
     permission_classes = [IsAdmin, ]
-
-    def get_queryset(self):
-        # Filter by resolved/unresolved if query param provided
-        is_resolved = self.request.query_params.get('is_resolved', None)
-        queryset = Report.objects.all()
-
-        if is_resolved is not None:
-            queryset = queryset.filter(is_resolved=is_resolved.lower() == 'true')
-
-        return queryset.order_by('-created_at')
 
 
 class ResolveReportAPIView(APIView):

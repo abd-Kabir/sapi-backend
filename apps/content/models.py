@@ -27,6 +27,13 @@ class ReportTypes(models.TextChoices):
     OTHER = 'other', _('Другое')
 
 
+class ReportStatusTypes(models.IntegerChoices):
+    waiting = 0, _('Ожидает модерации')
+    ignored = 1, _('Проигнорирована')
+    blocked_post = 2, _('Пост заблокирован')
+    blocked_user = 3, _('Креатор заблокирован')
+
+
 class Category(BaseModel):
     name = models.CharField(max_length=155)
     icon = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
@@ -242,6 +249,7 @@ class Report(BaseModel):
     description = models.TextField(blank=True, null=True)
     is_resolved = models.BooleanField(default=False)
     resolved_at = models.DateTimeField(null=True, blank=True)
+    status = models.IntegerField(choices=ReportStatusTypes.choices, default=ReportStatusTypes.waiting)
     resolved_by = models.ForeignKey('authentication.User', on_delete=models.SET_NULL, null=True, blank=True,
                                     related_name='resolved_reports')
 
