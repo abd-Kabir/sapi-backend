@@ -2,14 +2,16 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
+from rest_framework.exceptions import NotFound
+from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.models import User
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer
-from apps.content.models import Report, ReportStatusTypes, Post
+from apps.content.models import Report, ReportStatusTypes, Post, ReportComment
+from apps.content.serializers import ReportCommentSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
@@ -83,6 +85,7 @@ class AdminCreatorSAPIShareAPIView(APIView):
 class AdminIgnoreReportAPIView(APIView):
     permission_classes = [IsAdmin, ]
 
+    @swagger_auto_schema(responses={200: openapi.Response(description='Successful response.')})
     def post(self, request, post_id):
         unresolved_reports = Report.objects.filter(post_id=post_id, is_resolved=False)
 
@@ -117,3 +120,10 @@ class AdminBlockPostAPIView(APIView):
         post.save(update_fields=['is_blocked'])
         self.resolve_reports(post_id, request.user)
         return Response(status=status.HTTP_200_OK)
+
+
+class AdminReportCommentAPIView(CreateAPIView):
+    queryset = ReportComment.objects.all()
+    serializer_class = ReportCommentSerializer
+    permission_classes = [IsAdmin, ]
+

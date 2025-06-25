@@ -265,3 +265,12 @@ class Report(BaseModel):
         constraints = [
             models.UniqueConstraint(fields=['user', 'post'], name='reports_unique_user_post')
         ]
+
+class ReportComment(BaseModel):
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='report_comments')
+    report = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='report_comments')
+    text = models.TextField()
+
+    class Meta:
+        db_table = 'report_comment'
+        ordering = ['-created_at']
