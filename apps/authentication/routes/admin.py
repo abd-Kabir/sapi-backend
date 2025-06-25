@@ -1,14 +1,15 @@
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.models import User
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer
-from apps.content.models import Report, ReportStatusTypes
+from apps.content.models import Report, ReportStatusTypes, Post
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
@@ -93,4 +94,26 @@ class AdminIgnoreReportAPIView(APIView):
             report.status = ReportStatusTypes.ignored
             report.resolve(request.user)
 
+        return Response(status=status.HTTP_200_OK)
+
+
+class AdminBlockPostAPIView(APIView):
+    permission_classes = [IsAdmin, ]
+
+    @staticmethod
+    def resolve_reports(post_id, user):
+        unresolved_reports = Report.objects.filter(post_id=post_id, is_resolved=False)
+        for report in unresolved_reports:
+            report.status = ReportStatusTypes.blocked_post
+            report.resolve(user)
+    @swagger_auto_schema(responses={200:openapi.Response(description='Successful response.')})
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        if post.is_blocked:
+            self.resolve_reports(post_id, request.user)
+            return Response({'detail': _('Пост уже заблокирован.')},
+                            status=status.HTTP_400_BAD_REQUEST)
+        post.is_blocked = True
+        post.save(update_fields=['is_blocked'])
+        self.resolve_reports(post_id, request.user)
         return Response(status=status.HTTP_200_OK)
