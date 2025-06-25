@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
-from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report
+from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report, ReportComment
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -352,3 +352,13 @@ class ReportSerializer(serializers.ModelSerializer):
         # Automatically set the user from the request
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+class ReportCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportComment
+        fields = [
+            'id',
+            'user',
+            'report',
+            'text'
+        ]
