@@ -30,17 +30,30 @@ def get_last_month_intervals():
     today = now().date()
     return [(today - timedelta(days=30)) + timedelta(days=i * 5) for i in range(7)]
 
+
+def permissions_by_category(permissions):
+    categories = set({'_'.join(i.split('_')[1:]) for i in permissions})
+    categories = {i: [] for i in categories}
+    for permission in permissions:
+        category_part = '_'.join(permission.split('_')[1:])
+        categories[category_part].append(permission)
+    return categories
+
+
 def authenticate_user(request):
     phone_number = request.data.get('phone_number')
     password = request.data.get('password')
 
     try:
         user = User.objects.get(phone_number=phone_number)
-        if user.check_password(password) and user.groups.filter(name='ADMIN').exists():
+        if user.check_password(password) and user.is_admin:
             refresh = RefreshToken.for_user(user)
+            permissions = list(user.permissions.values_list('permission', flat=True))
             return {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'permissions': permissions,
+                'permissions_by_category': permissions_by_category(permissions),
             }
     except User.DoesNotExist:
         pass

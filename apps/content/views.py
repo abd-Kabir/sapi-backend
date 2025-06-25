@@ -56,7 +56,11 @@ class ChoiceTypeListAPIView(APIView):
 class CategoryModelViewSet(BaseModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminAllowGet, ]
+    permission_classes = [IsAdmin, ]
+    router_name = 'CATEGORIES'
+
+    def get_action(self):
+        return self.action
 
     @swagger_auto_schema(
         request_body=openapi.Schema(type=openapi.TYPE_OBJECT, required=['name'], properties={

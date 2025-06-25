@@ -6,5 +6,5 @@ class PostManager(Manager):
     def get_queryset(self):
         return super().get_queryset().filter(
             (Q(publication_time__lte=now()) | Q(publication_time=None)),
-            is_posted=True, is_deleted=False, is_blocked=False
+            is_posted=True, is_deleted=False, is_blocked=False, user__is_blocked_by__isnull=True
         )

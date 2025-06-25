@@ -1,3 +1,4 @@
+from django.utils.timezone import now
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -8,9 +9,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
-from apps.authentication.serializers.auth import (JWTObtainPairSerializer, LoginWelcomeSerializer,
-                                                  LoginVerifySMSSerializer, LoginSetUsernameSerializer,
-                                                  AuthAccountDataSerializer, JWTAdminLoginSerializer)
+from apps.authentication.serializers.auth import (LoginWelcomeSerializer, LoginVerifySMSSerializer,
+                                                  LoginSetUsernameSerializer, AuthAccountDataSerializer,
+                                                  JWTAdminLoginSerializer)
 from apps.authentication.services import authenticate_user
 from apps.integrations.services.sms_services import only_phone_numbers
 from config.core.api_exceptions import APIValidation
@@ -59,6 +60,7 @@ class LoginVerifySMSAPIView(APIView):
         user = self.get_user(phone_number)
         user.is_sms_verified = True
         user.is_active = True
+        user.last_login = now()
         user.save()
         refresh = RefreshToken.for_user(user)
         tokens = {

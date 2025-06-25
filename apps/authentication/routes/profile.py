@@ -101,6 +101,10 @@ class DeleteAccountVerifyAPIView(APIView):
         user = request.user
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+        user.temp_phone_number = user.phone_number
+        user.phone_number = None
+        user.temp_username = user.username
+        user.username = None
         user.is_active = False
         user.is_deleted = True
         user.save()

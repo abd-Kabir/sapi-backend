@@ -36,23 +36,72 @@ class ActivityType(models.TextChoices):
     liked_comment = 'liked_comment', _('Лайкнул комментарий')
 
 
+class PermissionTypes(models.TextChoices):
+    VIEW_STATISTICS = 'VIEW_STATISTICS', _('Просмотр статистики')
+    MODIFY_STATISTICS = 'MODIFY_STATISTICS', _('Редактирование статистики')
+
+    VIEW_SENDING_NOTIFICATIONS = 'VIEW_SENDING_NOTIFICATIONS', _('Просмотр рассылок уведомлений')
+    MODIFY_SENDING_NOTIFICATIONS = 'MODIFY_SENDING_NOTIFICATIONS', _('Редактирование рассылок уведомлений')
+
+    VIEW_REPORTS = 'VIEW_REPORTS', _('Просмотр жалоб')
+    MODIFY_REPORTS = 'MODIFY_REPORTS', _('Редактирование жалоб')
+
+    VIEW_CREATORS = 'VIEW_CREATORS', _('Просмотр креаторов')
+    MODIFY_CREATORS = 'MODIFY_CREATORS', _('Редактирование креаторов')
+
+    VIEW_CHATS = 'VIEW_CHATS', _('Просмотр чата поддержки')
+    MODIFY_CHATS = 'MODIFY_CHATS', _('Редактирование чата поддержки')
+
+    VIEW_ADMINS = 'VIEW_ADMINS', _('Просмотр администраторов')
+    MODIFY_ADMINS = 'MODIFY_ADMINS', _('Редактирование администраторов')
+
+    @staticmethod
+    def categories() -> dict:
+        """
+        return the categories of permissions
+        response is a dict type
+        value: tuple -> (Name of Category, Has children, Only View)
+        """
+
+        return {
+            'STATISTICS': 'Статистика',
+            'SENDING_NOTIFICATIONS': 'Рассылка уведомлений',
+            'REPORTS': 'Жалобы',
+            'CREATORS': 'Креаторы',
+            'CHATS': 'Чаты',
+            'ADMINS': 'Администраторы',
+        }
+
+
+class UserPermissions(models.Model):
+    permission = models.CharField(max_length=55, choices=PermissionTypes.choices)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='permissions')
+
+    class Meta:
+        db_table = 'user_permission'
+
+
 class User(AbstractUser):
     email = None
-    first_name = None
-    last_name = None
+    first_name = models.CharField(_("first name"), max_length=150, blank=True, null=True)
+    last_name = models.CharField(_("last name"), max_length=150, blank=True, null=True)
 
     username_validator = UnicodeUsernameValidator()
+    temp_username = models.CharField(_("temp username"), max_length=150, blank=True, null=True)
     username = models.CharField(_("username"), max_length=150, unique=True, validators=[username_validator],
                                 null=True, blank=True,
                                 help_text=_("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
                                 error_messages={"unique": _("A user with that username already exists.")})
-    phone_number = models.CharField(max_length=30, unique=True)
+    temp_phone_number = models.CharField(max_length=30, null=True, blank=True)
+    phone_number = models.CharField(max_length=30, unique=True, null=True, blank=True)
     is_sms_verified = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     is_creator = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
 
     is_blocked_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, related_name='admin_blocked_users')
     block_reason = models.CharField(choices=ReportTypes.choices, max_length=20, null=True)
+    block_desc = models.TextField(null=True, blank=True)
 
     creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)

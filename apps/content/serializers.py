@@ -2,6 +2,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
+from apps.authentication.models import User, UserPermissions, PermissionTypes
 from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report, ReportComment
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
@@ -353,12 +354,84 @@ class ReportSerializer(serializers.ModelSerializer):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
 
+
 class ReportCommentSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    def create(self, validated_data):
+        report_id = self.context['kwargs'].get('report_id')
+        comment = ReportComment.objects.create(**validated_data, report_id=report_id)
+        return comment
+
     class Meta:
         model = ReportComment
         fields = [
             'id',
             'user',
-            'report',
-            'text'
+            'text',
         ]
+
+
+class AdminUserListSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'phone_number',
+            'permissions',
+        ]
+
+    @staticmethod
+    def get_permissions(obj):
+        return list(obj.permissions.values_list('permission', flat=True))
+
+
+class AdminUserModifySerializer(serializers.ModelSerializer):
+    permissions = serializers.ListField(
+        child=serializers.ChoiceField(choices=PermissionTypes.choices),
+        write_only=True
+    )
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name',
+            'last_name',
+            'phone_number',
+            'password',
+            'permissions',
+        ]
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            permissions = validated_data.pop('permissions')
+            password = validated_data.pop('password')
+            user = User.objects.create_user(**validated_data, password=password, is_admin=True)
+
+            UserPermissions.objects.bulk_create([
+                UserPermissions(user=user, permission=perm)
+                for perm in permissions
+            ])
+            return user
+
+    def update(self, instance: User, validated_data):
+        with transaction.atomic():
+            permissions = validated_data.pop('permissions', None)
+            password = validated_data.pop('password', None)
+            for key, value in validated_data.items():
+                setattr(instance, key, value)
+            if password:
+                instance.set_password(password)
+            if permissions:
+                instance.permissions.all().delete()
+                UserPermissions.objects.bulk_create([
+                    UserPermissions(user=instance, permission=perm)
+                    for perm in permissions
+                ])
+            instance.save()
+            return instance
