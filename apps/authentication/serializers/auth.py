@@ -14,10 +14,13 @@ class LoginWelcomeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         phone_number = only_phone_numbers(attrs.get('phone_number'))
-        user, _ = User.objects.get_or_create(phone_number=phone_number)
+        user, created = User.objects.get_or_create(phone_number=phone_number)
         user.is_active = False
         user.save()
-        sms_confirmation_open(user, 'login')
+        if created:
+            sms_confirmation_open(user, 'register')
+        else:
+            sms_confirmation_open(user, 'login')
         return super().validate(attrs)
 
 

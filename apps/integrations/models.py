@@ -8,7 +8,8 @@ from apps.authentication.models import User
 from config.models import BaseModel
 
 sms_message_purpose = {
-    'login': 'Ваш код для входа на sapi.uz: {code}',
+    'register': 'Ваш код для регистрации на платформе Sapi.uz: {code}',
+    'login': 'Ваш код для авторизации на платформе Sapi.uz: {code}',
     'forgot_password': 'Ваш код для восстановления пароля на sapi.uz: {code}',
     'password_reset': 'Ваш код для изменения пароля на sapi.uz: {code}',
     'phone_update': 'Ваш код для изменения номера телефона на sapi.uz: {code}',
@@ -20,7 +21,8 @@ def sms_message_purpose_tool(purpose, code):
 
 
 class PurposeEnum(models.TextChoices):
-    login = 'login', _("Регистрация")
+    register = 'register', _("Регистрация")
+    login = 'login', _("Авторизация")
     forgot_password = 'forgot_password', _("Забыли пароль")
     password_reset = 'password_reset', _("Сброс пароля")
     phone_update = 'phone_update', _("Обновление телефона")
