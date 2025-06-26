@@ -1,5 +1,6 @@
 from django.db import IntegrityError
-from django.db.models import Q, OuterRef, Exists, Count
+from django.db.models import Q, OuterRef, Exists
+from django.utils.translation import gettext_lazy as _
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, serializers
@@ -7,7 +8,6 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import UserFollow, UserSubscription, User
 from apps.authentication.services import create_activity
@@ -15,7 +15,7 @@ from apps.content.models import Post, Category, PostTypes, ReportTypes, Like, Co
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
     PostToggleLikeSerializer, PostShowSerializer, PostShowCommentListSerializer, PostShowCommentRepliesSerializer, \
-    PostLeaveCommentSerializer, ReportSerializer
+    PostLeaveCommentSerializer, ReportSerializer, ReportRetrieveSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
@@ -334,6 +334,12 @@ class ReportListView(ListAPIView):
     queryset = Report.objects.all().order_by('-created_at')
     serializer_class = ReportSerializer
     permission_classes = [IsAdmin, ]
+
+
+class ReportRetrieveAPIView(RetrieveAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportRetrieveSerializer
+    # permission_classes = [IsAdmin, ]
 
 
 class ResolveReportAPIView(APIView):
