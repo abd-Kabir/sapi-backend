@@ -176,7 +176,7 @@ AWS_S3_ENDPOINT_URL = getenv('MINIO_URL')
 AWS_S3_FILE_OVERWRITE = False
 AWS_S3_VERIFY = False  # Optional: disable SSL cert verification
 AWS_DEFAULT_ACL = None  # Optional: use None for default ACL
-# AWS_S3_CUSTOM_DOMAIN = 'localhost:8008'
+AWS_S3_CUSTOM_DOMAIN = 'api.sapi.uz'
 AWS_S3_USE_SSL = False
 AWS_QUERYSTRING_AUTH = False
 
