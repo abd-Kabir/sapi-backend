@@ -14,6 +14,7 @@ from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRe
     BecomeUserMultibankAddAccountSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
+from apps.files.serializers import FileSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
 from config.core.api_exceptions import APIValidation
 from config.core.swagger import query_search_swagger_param
@@ -476,18 +477,18 @@ class DonateAPIView(CreateAPIView):
         request_body=DonationCreateSerializer,
         responses={
             201: openapi.Response(
-                description="Donation created successfully",
+                description='Donation created successfully',
                 schema=DonationCreateSerializer,
                 examples={
-                    "application/json": {
-                        "amount": 10000,
-                        "message": None,
-                        "card": 12,
-                        "fundraising": None,
-                        "creator": 1,
-                        "payment_info": {
-                            "need_otp": False,
-                            "transaction_id": "9bf2385d-46a1-11f0-bdd5-005056b4367d"
+                    'application/json': {
+                        'amount': 10000,
+                        'message': None,
+                        'card': 12,
+                        'fundraising': None,
+                        'creator': 1,
+                        'payment_info': {
+                            'need_otp': False,
+                            'transaction_id': '9bf2385d-46a1-11f0-bdd5-005056b4367d'
                         }
                     }
                 }
@@ -496,3 +497,54 @@ class DonateAPIView(CreateAPIView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+class GetMeAPIView(APIView):
+    @staticmethod
+    def serialize_file(file):
+        return FileSerializer(file).data if file else None
+
+    @swagger_auto_schema(
+        responses={
+            201: openapi.Response(
+                description='Get data of authorized user.',
+                examples={
+                    'application/json': {
+                        "user_id": 1,
+                        "is_creator": True,
+                        "username": "ukabir",
+                        "phone_number": "998909903929",
+                        "profile_photo": {
+                            "name": "3. Леопард.jpg",
+                            "size": 2083432,
+                            "path": "media/uploads/17477393637271354228422af39d5b742b7918d3ad7e5d23c17.jpg"
+                        },
+                        "banner_photo": {
+                            "name": "3. Леопард.jpg",
+                            "size": 2083432,
+                            "path": "media/uploads/17477393637271354228422af39d5b742b7918d3ad7e5d23c17.jpg"
+                        },
+                        "category_id": 1,
+                        "category_name": "Test",
+                        "multibank_account": "22616000462176153001",
+                        "multibank_verified": True
+                    }
+                }
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        user: User = request.user
+
+        return Response({
+            'user_id': user.id,
+            'is_creator': user.is_creator,
+            'username': user.username,
+            'phone_number': user.phone_number,
+            'profile_photo': self.serialize_file(user.profile_photo),
+            'banner_photo': self.serialize_file(user.profile_banner_photo),
+            'category_id': user.category_id,
+            'category_name': user.category.name if user.category else None,
+            'multibank_account': user.multibank_account,
+            'multibank_verified': user.multibank_verified,
+        })

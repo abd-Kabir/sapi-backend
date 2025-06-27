@@ -4,7 +4,7 @@ from apps.authentication.routes.user import (BecomeUserMultibankAccountsAPIView,
                                              BecomeCreatorAPIView, ToggleFollowAPIView, UserRetrieveAPIView,
                                              UserSubscriptionPlanListAPIView, UserSubscribeCreateAPIView,
                                              PopularCreatorListAPIView, PopularCategoryCreatorListAPIView,
-                                             SearchCreatorAPIView, ToggleBlockAPIView, DonateAPIView)
+                                             SearchCreatorAPIView, ToggleBlockAPIView, DonateAPIView, GetMeAPIView)
 
 urlpatterns = [
     path('user/become-creator/multibank-accounts/', BecomeUserMultibankAccountsAPIView.as_view(),
@@ -24,4 +24,5 @@ urlpatterns = [
     path('user/search/creator/', SearchCreatorAPIView.as_view(), name='user_search_creator'),
     path('user/<int:user_id>/toggle-block/', ToggleBlockAPIView.as_view(), name='block_toggle'),
     path('user/donate/', DonateAPIView.as_view(), name='user_donate'),
+    path('user/get-me/', GetMeAPIView.as_view(), name='user_get_me'),
 ]
