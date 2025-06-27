@@ -85,9 +85,11 @@ class CategoryModelViewSet(BaseModelViewSet):
 
 
 class PostCreateAPIView(CreateAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
     permission_classes = [IsCreator, ]
+
+    def get_queryset(self):
+        return Post.objects.all()
 
 
 class PostAccessibilityAPIView(UpdateAPIView):
@@ -108,7 +110,6 @@ class QuestionnairePostAnswerAPIView(APIView):
 
 
 class PostByCategoryListAPIView(ListAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
     filter_backends = [OrderingFilter]
@@ -116,13 +117,12 @@ class PostByCategoryListAPIView(ListAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Post.objects.all()
         queryset = queryset.filter(category_id=self.kwargs['category_id'])
         return queryset
 
 
 class PostByUserListAPIView(ListAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
     filter_backends = [OrderingFilter, DjangoFilterBackend]
@@ -135,13 +135,12 @@ class PostByUserListAPIView(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Post.objects.all()
         queryset = queryset.filter(user_id=self.kwargs['user_id'])
         return queryset
 
 
 class PostByFollowedListAPIView(ListAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
     filter_backends = [OrderingFilter]
@@ -161,7 +160,7 @@ class PostByFollowedListAPIView(ListAPIView):
             is_active=True
         )
 
-        queryset = super().get_queryset()
+        queryset = Post.objects.all()
         queryset = (
             queryset
             .annotate(is_followed=Exists(followed), is_subscribed=Exists(subscribed))
@@ -171,8 +170,10 @@ class PostByFollowedListAPIView(ListAPIView):
 
 
 class PostShowAPIView(RetrieveAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostShowSerializer
+
+    def get_queryset(self):
+        return Post.objects.all()
 
 
 class PostShowCommentListAPIView(ListAPIView):

@@ -220,7 +220,6 @@ class MySubscriptionPlanRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
 
 class LikedPostListAPIView(ListAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
     filter_backends = [OrderingFilter]
@@ -229,13 +228,12 @@ class LikedPostListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset()
+        queryset = Post.objects.all()
         queryset = queryset.filter(likes__user=user)
         return queryset
 
 
 class SavedPostListAPIView(ListAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
     filter_backends = [OrderingFilter]
@@ -244,7 +242,7 @@ class SavedPostListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset()
+        queryset = Post.objects.all()
         queryset = queryset.filter(saved_by_users__user=user)
         return queryset
 
