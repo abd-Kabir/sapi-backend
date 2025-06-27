@@ -1,10 +1,12 @@
 from django.urls import path
+
 from apps.authentication.routes.admin import (AdminCreatorListAPIView, AdminCreatorSAPIShareAPIView,
                                               AdminCreatorRetrieveAPIView, AdminBlockCreatorAPIView,
                                               AdminIgnoreReportAPIView, AdminBlockPostAPIView,
                                               AdminReportCommentAPIView, AdminUserCreationAPIView,
                                               AdminUserPermissionListAPIView, AdminUserListAPIView,
-                                              AdminUserUpdateAPIView, AdminUserDeleteAPIView)
+                                              AdminUserUpdateAPIView, AdminUserDeleteAPIView, ReportListView,
+                                              ReportRetrieveAPIView)
 
 urlpatterns = [
     path('admin/block-creator/', AdminBlockCreatorAPIView.as_view(), name='admin_block_creator'),
@@ -19,6 +21,8 @@ urlpatterns = [
     path('admin/<int:report_id>/block-post/', AdminBlockPostAPIView.as_view(), name='admin_block_creator'),
     path('admin/<int:report_id>/add-report-comment/', AdminReportCommentAPIView.as_view(),
          name='admin_ignore_report_comment'),
+    path('admin/reports/list/', ReportListView.as_view(), name='admin_list_reports'),
+    path('admin/reports/<int:pk>/retrieve', ReportRetrieveAPIView.as_view(), name='admin_retrieve_post'),
 
     # admin user page
     path('admin/permission-list/', AdminUserPermissionListAPIView.as_view(), name='admin_permission_list'),

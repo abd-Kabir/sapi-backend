@@ -1,20 +1,25 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.exceptions import NotFound
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.authentication.filters import ReportFilter
 from apps.authentication.models import User, PermissionTypes
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
-    AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer
+    AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer, ReportListSerializer, ReportRetrieveSerializer
 from apps.content.models import Report, ReportStatusTypes, Post, ReportComment
 from apps.content.serializers import ReportCommentSerializer, AdminUserModifySerializer, AdminUserListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
+from config.swagger import status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
+    date_to_swagger_param
 
 
 class AdminCreatorListAPIView(ListAPIView):
@@ -261,3 +266,43 @@ class AdminUserDeleteAPIView(APIView):
         user = self.get_user(pk)
         user.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class ReportListView(ListAPIView):
+    queryset = Report.objects.all().order_by('-created_at')
+    serializer_class = ReportListSerializer
+    permission_classes = [IsAdmin, ]
+    pagination_class = APILimitOffsetPagination
+
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = ReportFilter
+
+    search_fields = [
+        'post__user__username',
+        'user__username',
+        'post__title'
+    ]
+    router_name = 'REPORTS'
+
+    @swagger_auto_schema(
+        operation_summary="List reports",
+        manual_parameters=[report_type_swagger_param, date_from_swagger_param, date_to_swagger_param,
+                           status_swagger_param]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @staticmethod
+    def get_action():
+        return 'list'
+
+
+class ReportRetrieveAPIView(RetrieveAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportRetrieveSerializer
+    permission_classes = [IsAdmin, ]
+    router_name = 'REPORTS'
+
+    @staticmethod
+    def get_action():
+        return 'list'

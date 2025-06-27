@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
-from apps.content.models import ReportTypes
+from apps.content.models import ReportTypes, Report, ReportComment
 from apps.files.serializers import FileSerializer
 
 
@@ -110,3 +110,105 @@ class AdminBlockCreatorSerializer(serializers.Serializer):
 
 class AdminCreatorUpdateSAPIShareSerializer(serializers.Serializer):
     sapi_share = serializers.IntegerField()
+
+
+class ReportListSerializer(serializers.ModelSerializer):
+    post_username = serializers.CharField(source='post.user.username', read_only=True)
+    post_title = serializers.CharField(source='post.title', read_only=True)
+    post_description = serializers.CharField(source='post.description', read_only=True)
+    reported_username = serializers.CharField(source='user.username', read_only=True)
+    report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Report
+        fields = [
+            'id',
+            'post',
+            'post_username',
+            'post_title',
+            'post_description',
+            'report_type',
+            'description',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by',
+            'status_display',
+            'reported_username',
+            'report_type_display',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by',
+            'user'
+        ]
+
+    def create(self, validated_data):
+        # Automatically set the user from the request
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class ReportRetrieveSerializer(serializers.ModelSerializer):
+    creator = serializers.SerializerMethodField()
+    post_uploaded_at = serializers.DateTimeField(source='post.created_at', read_only=True)
+    post_title = serializers.CharField(source='post.title', read_only=True)
+    post_description = serializers.CharField(source='post.description', read_only=True)
+    post_files = FileSerializer(source='post.files', many=True, read_only=True)
+
+    reporter = serializers.SerializerMethodField()
+    report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
+    report_description = serializers.CharField(source='description', read_only=True)
+    report_created_at = serializers.DateTimeField(source='created_at', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    admin_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Report
+        fields = [
+            'creator',
+            'post_uploaded_at',
+            'post_title',
+            'post_description',
+            'post_files',
+
+            'reporter',
+            'report_type',
+            'report_type_display',
+            'report_description',
+            'report_created_at',
+            'status',
+            'status_display',
+
+            'admin_comments',
+        ]
+
+    def get_creator(self, obj):
+        user = obj.post.user
+        return {
+            "id": user.id,
+            "username": user.username,
+            "profile_photo": FileSerializer(user.profile_photo).data if user.profile_photo else None
+        }
+
+    def get_reporter(self, obj):
+        user = obj.user
+        return {
+            "id": user.id,
+            "username": user.username,
+            "profile_photo": FileSerializer(user.profile_photo).data if user.profile_photo else None
+        }
+
+    def get_admin_comments(self, obj):
+        comments = ReportComment.objects.filter(report=obj.post).order_by('created_at')
+        return [
+            {
+                "username": c.user.username,
+                "text": c.text,
+                "created_at": c.created_at.strftime('%d %B, %Y')
+            }
+            for c in comments
+        ]

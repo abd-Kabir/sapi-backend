@@ -1,10 +1,9 @@
 from django.db import IntegrityError
 from django.db.models import Q, OuterRef, Exists
 from django.utils.translation import gettext_lazy as _
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status, serializers, filters
+from rest_framework import status, serializers
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -12,15 +11,14 @@ from rest_framework.views import APIView
 
 from apps.authentication.models import UserFollow, UserSubscription, User
 from apps.authentication.services import create_activity
-from apps.content.filter import ReportFilter
 from apps.content.models import Post, Category, PostTypes, ReportTypes, Like, Comment, Report
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
     PostToggleLikeSerializer, PostShowSerializer, PostShowCommentListSerializer, PostShowCommentRepliesSerializer, \
-    PostLeaveCommentSerializer, ReportSerializer, ReportRetrieveSerializer, ReportListSerializer
+    PostLeaveCommentSerializer, ReportSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
-from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
+from config.core.permissions import IsCreator, IsAdmin
 from config.core.swagger import query_choice_swagger_param
 from config.services import run_with_thread
 from config.views import BaseModelViewSet
@@ -329,52 +327,7 @@ class CreateReportAPIView(CreateAPIView):
         try:
             serializer.save()
         except IntegrityError:
-            raise serializers.ValidationError({"detail": "You have already reported this post."})
-
-
-class ReportListView(ListAPIView):
-    queryset = Report.objects.all().order_by('-created_at')
-    serializer_class = ReportListSerializer
-    permission_classes = [IsAdmin, ]
-    pagination_class = APILimitOffsetPagination
-
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_class = ReportFilter
-
-    search_fields = [
-        'post__user__username',
-        'user__username',
-        'post__title'
-    ]
-
-
-
-class ReportRetrieveAPIView(RetrieveAPIView):
-    queryset = Report.objects.all()
-    serializer_class = ReportRetrieveSerializer
-    permission_classes = [IsAdmin, ]
-
-
-class ResolveReportAPIView(APIView):
-    permission_classes = [IsAdmin, ]
-
-    def get_report(self, pk):
-        try:
-            return Report.objects.get(pk=pk)
-        except Report.DoesNotExist:
-            raise APIValidation(_('Жалоба не найден'), status_code=status.HTTP_404_NOT_FOUND)
-
-    def patch(self, request, pk, *args, **kwargs):
-        instance = self.get_report(pk)
-        if instance.is_resolved:
-            return Response(
-                {'detail': _('Этот отчёт уже закрыт.')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        user = request.user
-        instance.resolve(resolved_by_user=user)
-
-        return Response({'id': instance.id, 'is_resolved': instance.is_resolved})
+            raise serializers.ValidationError({'detail': _('Вы уже пожаловались на этот пост.')})
 
 
 class PostToggleSaveAPIView(APIView):
