@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.filters import ReportFilter
-from apps.authentication.models import User, PermissionTypes
+from apps.authentication.models import User, PermissionTypes, NotificationDistribution
 from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer
@@ -450,3 +450,7 @@ class ReportRetrieveAPIView(RetrieveAPIView):
     @staticmethod
     def get_action():
         return 'list'
+
+
+class AdminNotifDisAPIView(ListAPIView):
+    queryset = NotificationDistribution.objects.all().order_by('-created_at')

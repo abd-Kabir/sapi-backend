@@ -36,6 +36,19 @@ class ActivityType(models.TextChoices):
     liked_comment = 'liked_comment', _('Лайкнул комментарий')
 
 
+class NotifDisPlatformType(models.TextChoices):
+    push_notification = 'push_notification', _('Push-уведомление')
+
+
+class UserType(models.TextChoices):
+    all = 'all', _('Все пользователи')
+    creators = 'creators', _('Креаторы')
+    users = 'users', _('Обычные пользователи')
+
+class NotifDisStatus(models.TextChoices):
+    waiting = 'waiting', _('Ожидается')
+
+
 class PermissionTypes(models.TextChoices):
     VIEW_STATISTICS = 'VIEW_STATISTICS', _('Просмотр статистики')
     MODIFY_STATISTICS = 'MODIFY_STATISTICS', _('Редактирование статистики')
@@ -397,3 +410,19 @@ class UserActivity(BaseModel):
 
     class Meta:
         db_table = 'user_activity'
+
+
+class NotificationDistribution(BaseModel):
+    title_uz = models.CharField(max_length=155, null=True, blank=True)
+    title_ru = models.CharField(max_length=155, null=True, blank=True)
+    text_uz = models.TextField(null=True, blank=True)
+    text_ru = models.TextField(null=True, blank=True)
+    sending_date = models.DateTimeField(null=True, blank=True)
+
+    status = models.CharField(choices=NotifDisStatus.choices, default=NotifDisStatus.waiting, max_length=55)
+    user_type = models.CharField(choices=UserType.choices, default=UserType.all, max_length=55)
+    type = models.CharField(choices=NotifDisPlatformType.choices, default=NotifDisPlatformType.push_notification,
+                            max_length=55)
+
+    class Meta:
+        db_table = 'notification_distribution'

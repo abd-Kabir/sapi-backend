@@ -32,6 +32,7 @@ class PurposeEnum(models.TextChoices):
 class MultibankTransactionTypeEnum(models.TextChoices):
     donation = 'donation', _("Донат")
     fundraising = 'fundraising', _("Сбор средств")
+    subscription = 'subscription', _("Подписка")
 
 
 class MultibankTransactionStatusEnum(models.TextChoices):
@@ -74,7 +75,10 @@ class MultibankTransaction(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(choices=MultibankTransactionStatusEnum.choices,
                               default=MultibankTransactionStatusEnum.new, max_length=10, null=True)
-    amount = models.IntegerField(null=True)
+    amount = models.BigIntegerField(null=True)
+    sapi_amount = models.BigIntegerField(null=True)
+    creator_amount = models.BigIntegerField(null=True)
+
     store_id = models.SmallIntegerField(null=True)
     transaction_type = models.CharField(choices=MultibankTransactionTypeEnum.choices, max_length=15, null=True)
     transaction_id = models.CharField(max_length=55, null=True)
