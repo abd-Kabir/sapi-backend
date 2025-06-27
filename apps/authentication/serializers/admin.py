@@ -2,9 +2,10 @@ from django.db.models import Sum
 from rest_framework import serializers, status
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User
+from apps.authentication.models import User, NotificationDistribution, NotifDisStatus
 from apps.content.models import ReportTypes, Report, ReportComment
 from apps.files.serializers import FileSerializer
+from apps.integrations.api_integrations.firebase import send_notification_to_user
 from config.core.api_exceptions import APIValidation
 
 
@@ -240,4 +241,50 @@ class ReportRetrieveSerializer(serializers.ModelSerializer):
                 "created_at": c.created_at.strftime('%d %B, %Y')
             }
             for c in comments
+        ]
+
+
+class AdminNotifDisSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(read_only=True)
+    status = serializers.ChoiceField(choices=NotifDisStatus.choices, read_only=True)
+
+    def get_users(self, user_type):
+        if user_type == 'creators':
+            return User.objects.filter(is_creator=True)
+        elif user_type == 'users':
+            return User.objects.filter(is_creator=False)
+        elif user_type == 'all':
+            return User.objects.all()
+        else:
+            raise APIValidation(_('Тип юзера неправильный'), status_code=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        if validated_data.get('is_draft'):
+            instance.status = 'draft'
+            instance.save()
+            return instance
+        if not validated_data.get('sending_date'):
+            if validated_data.get('type') == 'push_notification':
+                users = self.get_users(validated_data.get('user_type'))
+                [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
+                 for user in users]
+        instance.status = 'sent'
+        instance.save()
+        return instance
+
+    class Meta:
+        model = NotificationDistribution
+        fields = [
+            'id',
+            'is_draft',
+            'created_at',
+            'title_ru',
+            'title_uz',
+            'text_ru',
+            'text_uz',
+            'status',
+            'type',
+            'user_type',
+            'sending_date',
         ]

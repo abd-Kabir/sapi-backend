@@ -16,7 +16,8 @@ from apps.authentication.filters import ReportFilter
 from apps.authentication.models import User, PermissionTypes, NotificationDistribution
 from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
-    AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer
+    AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer, \
+    AdminNotifDisSerializer
 from apps.authentication.services import creator_earnings, registered_accounts, active_subscriptions, \
     content_type_counts, platform_earnings
 from apps.content.models import Report, ReportStatusTypes, ReportComment
@@ -452,5 +453,23 @@ class ReportRetrieveAPIView(RetrieveAPIView):
         return 'list'
 
 
-class AdminNotifDisAPIView(ListAPIView):
+class AdminNotifDisListAPIView(ListAPIView):
     queryset = NotificationDistribution.objects.all().order_by('-created_at')
+    serializer_class = AdminNotifDisSerializer
+    permission_classes = [IsAdmin, ]
+    router_name = 'NOTIFICATIONS'
+
+    @staticmethod
+    def get_action():
+        return 'list'
+
+
+class AdminNotifDisCreateAPIView(CreateAPIView):
+    queryset = NotificationDistribution.objects.all().order_by('-created_at')
+    serializer_class = AdminNotifDisSerializer
+    permission_classes = [IsAdmin, ]
+    router_name = 'NOTIFICATIONS'
+
+    @staticmethod
+    def get_action():
+        return 'create'

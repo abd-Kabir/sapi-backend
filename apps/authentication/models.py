@@ -45,16 +45,19 @@ class UserType(models.TextChoices):
     creators = 'creators', _('Креаторы')
     users = 'users', _('Обычные пользователи')
 
+
 class NotifDisStatus(models.TextChoices):
     waiting = 'waiting', _('Ожидается')
+    draft = 'draft', _('Драфт')
+    sent = 'sent', _('Отправлен')
 
 
 class PermissionTypes(models.TextChoices):
     VIEW_STATISTICS = 'VIEW_STATISTICS', _('Просмотр статистики')
     MODIFY_STATISTICS = 'MODIFY_STATISTICS', _('Редактирование статистики')
 
-    VIEW_SENDING_NOTIFICATIONS = 'VIEW_SENDING_NOTIFICATIONS', _('Просмотр рассылок уведомлений')
-    MODIFY_SENDING_NOTIFICATIONS = 'MODIFY_SENDING_NOTIFICATIONS', _('Редактирование рассылок уведомлений')
+    VIEW_NOTIFICATIONS = 'VIEW_NOTIFICATIONS', _('Просмотр рассылок уведомлений')
+    MODIFY_NOTIFICATIONS = 'MODIFY_NOTIFICATIONS', _('Редактирование рассылок уведомлений')
 
     VIEW_REPORTS = 'VIEW_REPORTS', _('Просмотр жалоб')
     MODIFY_REPORTS = 'MODIFY_REPORTS', _('Редактирование жалоб')
@@ -413,6 +416,7 @@ class UserActivity(BaseModel):
 
 
 class NotificationDistribution(BaseModel):
+    is_draft = models.BooleanField(default=False)
     title_uz = models.CharField(max_length=155, null=True, blank=True)
     title_ru = models.CharField(max_length=155, null=True, blank=True)
     text_uz = models.TextField(null=True, blank=True)
