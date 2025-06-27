@@ -6,7 +6,7 @@ from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from config.views import MediaPath
 
@@ -21,8 +21,8 @@ schema_view = get_schema_view(
         license=openapi.License(name="SAPI License"),
     ),
     public=True,
-    permission_classes=[AllowAny, ],
-    # authentication_classes=[BasicAuthentication],
+    permission_classes=[IsAuthenticated, ],
+    authentication_classes=[BasicAuthentication],
 )
 
 urlpatterns = [
