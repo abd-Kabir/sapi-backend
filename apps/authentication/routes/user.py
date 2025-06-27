@@ -17,7 +17,7 @@ from apps.content.models import Category
 from apps.files.serializers import FileSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
 from config.core.api_exceptions import APIValidation
-from config.core.swagger import query_search_swagger_param
+from config.swagger import query_search_swagger_param
 from config.services import run_with_thread
 
 

@@ -121,24 +121,31 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
         return user_subs
 
     def create(self, validated_data):
-        request = self.context['request']
-        plan = validated_data.get('plan')
-        creator = plan.creator
-        end_date = now() + plan.duration
-        subscriber = request.user
+        with transaction.atomic():
+            request = self.context['request']
+            plan: SubscriptionPlan = validated_data.get('plan')
+            card = validated_data.get('subscriber_card')
+            creator = plan.creator
+            end_date = now() + plan.duration
+            subscriber = request.user
+            amount = plan.price
 
-        if self.check_subscription(validated_data):
-            raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
-        subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
-                                                       **validated_data)
-        run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
-        return subscription
+            if self.check_subscription(validated_data):
+                raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
+            subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
+                                                           **validated_data)
+            payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription')
+            subscription.payment_reference = payment_info
+            subscription.save(update_fields=['payment_reference'])
+            run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
+            return subscription
 
     class Meta:
         model = UserSubscription
         fields = [
             'id',
             'plan',
+            'subscriber_card',
             'commission_by_subscriber',
         ]
 

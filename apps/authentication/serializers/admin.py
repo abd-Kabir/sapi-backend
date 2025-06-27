@@ -1,9 +1,11 @@
-from rest_framework import serializers
+from django.db.models import Sum
+from rest_framework import serializers, status
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User
 from apps.content.models import ReportTypes, Report, ReportComment
 from apps.files.serializers import FileSerializer
+from config.core.api_exceptions import APIValidation
 
 
 class AdminCreatorListSerializer(serializers.ModelSerializer):
@@ -60,13 +62,25 @@ class AdminCreatorListSerializer(serializers.ModelSerializer):
 
 
 class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
+    first_content = serializers.SerializerMethodField(allow_null=True)
+    payment_data = serializers.SerializerMethodField(allow_null=True)
+
     subscribers_count = serializers.SerializerMethodField(allow_null=True)
     followers_count = serializers.SerializerMethodField(allow_null=True)
+    earned = serializers.SerializerMethodField(allow_null=True)
     status = serializers.SerializerMethodField(allow_null=True)
 
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+
+    @staticmethod
+    def get_first_content(obj):
+        return obj.posts.exists()
+
+    @staticmethod
+    def get_payment_data(obj):
+        return obj.cards.filter(is_active=True).exists()
 
     @staticmethod
     def get_subscribers_count(obj):
@@ -75,6 +89,10 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_followers_count(obj):
         return obj.followers_count()
+
+    @staticmethod
+    def get_earned(obj):
+        return obj.creator_multibank_transactions.filter(status='paid').aggregate(earned=Sum('amount'))['earned']
 
     @staticmethod
     def get_status(obj):
@@ -90,10 +108,15 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'phone_number',
-            'subscribers_count',
-            'followers_count',
             'sapi_share',
             'date_joined',
+
+            'first_content',
+            'payment_data',
+
+            'subscribers_count',
+            'followers_count',
+            'earned',
             'status',
 
             'profile_photo_info',
@@ -102,10 +125,16 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
         ]
 
 
-class AdminBlockCreatorSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
+class AdminBlockCreatorPostSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(required=False)
+    post_id = serializers.IntegerField(required=False)
     block_reason = serializers.ChoiceField(choices=ReportTypes.choices)
     block_desc = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get('user_id') and not attrs.get('post_id'):
+            raise APIValidation(_('Отправьте ID юзера или поста'), status_code=status.HTTP_400_BAD_REQUEST)
+        return super().validate(attrs)
 
 
 class AdminCreatorUpdateSAPIShareSerializer(serializers.Serializer):

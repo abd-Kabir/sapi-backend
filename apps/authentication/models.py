@@ -265,8 +265,9 @@ class SubscriptionPlan(BaseModel):
         db_table = 'subscription_plan'
 
 
-class UserSubscription(models.Model):
+class UserSubscription(BaseModel):
     """Active subscriptions of users to creators"""
+    subscriber_card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='subscriptions')
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)

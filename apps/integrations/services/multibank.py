@@ -41,7 +41,8 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'amount': int(sapi_amount),
         'details': 'Донат для креатора SAPI'
     }
-
+    transaction.sapi_amount = sapi_amount
+    transaction.creator_amount = creator_amount
     body = {
         'card': {
             'token': card.token
@@ -54,7 +55,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
     if not str(payment_sc).startswith('2'):
         transaction.status = 'failed'
-        transaction.save(update_fields=['status'])
+        transaction.save()
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     payment_transaction_id = payment_response.get('data', {}).get('uuid')
     transaction.transaction_id = payment_transaction_id
@@ -62,14 +63,16 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     # PAYMENT CONFIRMATION
     need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
     if need_otp_confirmation:
+        transaction.save()
         return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}
     payment_confirm_resp, payment_confirm_sc = multibank_prod_app.confirm_payment(
         transaction_id=payment_transaction_id
     )
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
+        transaction.save()
         raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
         transaction.status = 'paid'
-    transaction.save(update_fields=['transaction_id', 'status'])
+    transaction.save()
     return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}

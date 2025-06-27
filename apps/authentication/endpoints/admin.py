@@ -1,15 +1,18 @@
 from django.urls import path
-
 from apps.authentication.routes.admin import (AdminCreatorListAPIView, AdminCreatorSAPIShareAPIView,
-                                              AdminCreatorRetrieveAPIView, AdminBlockCreatorAPIView,
+                                              AdminCreatorRetrieveAPIView, AdminBlockCreatorPostAPIView,
                                               AdminIgnoreReportAPIView, AdminBlockPostAPIView,
                                               AdminReportCommentAPIView, AdminUserCreationAPIView,
                                               AdminUserPermissionListAPIView, AdminUserListAPIView,
                                               AdminUserUpdateAPIView, AdminUserDeleteAPIView, ReportListView,
-                                              ReportRetrieveAPIView)
+                                              ReportRetrieveAPIView, DashboardCreatorEarningsAPIView)
 
 urlpatterns = [
-    path('admin/block-creator/', AdminBlockCreatorAPIView.as_view(), name='admin_block_creator'),
+    # dashboard
+    path('admin/dashboard-analytics/', DashboardCreatorEarningsAPIView.as_view(), name='admin_dashboard_analytics'),
+
+    # --
+    path('admin/block-creator-post/', AdminBlockCreatorPostAPIView.as_view(), name='admin_block_creator'),
 
     # creator page
     path('admin/creators/', AdminCreatorListAPIView.as_view(), name='admin_creators'),

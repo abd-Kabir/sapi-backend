@@ -1,4 +1,7 @@
-from django.db.models import Q
+from datetime import timedelta
+
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
@@ -13,14 +16,148 @@ from apps.authentication.filters import ReportFilter
 from apps.authentication.models import User, PermissionTypes
 from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
-    AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer, ReportListSerializer, ReportRetrieveSerializer
+    AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer
+from apps.authentication.services import creator_earnings, registered_accounts, active_subscriptions, \
+    content_type_counts, platform_earnings
 from apps.content.models import Report, ReportStatusTypes, ReportComment
 from apps.content.serializers import ReportCommentSerializer, AdminUserModifySerializer, AdminUserListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
-    date_to_swagger_param, admin_creator_list_params
+    date_to_swagger_param, admin_creator_list_params, period_swagger_param, start_date_swagger_param, \
+    end_date_swagger_param, dashboard_user_type_swagger_param
+
+
+class DashboardCreatorEarningsAPIView(APIView):
+    permission_classes = [IsAdmin, ]
+    router_name = 'STATISTICS'
+
+    @staticmethod
+    def get_action():
+        return 'list'
+
+    @swagger_auto_schema(manual_parameters=[period_swagger_param, start_date_swagger_param, end_date_swagger_param,
+                                            dashboard_user_type_swagger_param],
+                         responses={
+                             200: openapi.Response(
+                                 description='Analytics data retrieved successfully',
+                                 examples={
+                                     'application/json': {
+                                         'creator_earnings': 35200,
+                                         'registered_accounts': {
+                                             'chart_data': [
+                                                 {
+                                                     'date': '2025-05-31',
+                                                     'count': 4
+                                                 },
+                                                 {
+                                                     'date': '2025-06-04',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-06',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-26',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-27',
+                                                     'count': 1
+                                                 }
+                                             ]
+                                         },
+                                         'active_accounts': {
+                                             'chart_data': [
+                                                 {
+                                                     'date': '2025-05-31',
+                                                     'count': 4
+                                                 },
+                                                 {
+                                                     'date': '2025-06-06',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-26',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-27',
+                                                     'count': 1
+                                                 }
+                                             ]
+                                         },
+                                         'new_registered_accounts': {
+                                             'chart_data': [
+                                                 {
+                                                     'date': '2025-06-26',
+                                                     'count': 1
+                                                 },
+                                                 {
+                                                     'date': '2025-06-27',
+                                                     'count': 1
+                                                 }
+                                             ]
+                                         },
+                                         'active_subscriptions': {
+                                             'chart_data': [
+                                                 {
+                                                     'date': '2025-06-27',
+                                                     'count': 1
+                                                 }
+                                             ]
+                                         },
+                                         'content_type_counts': {
+                                             'chart_data': [
+                                                 {
+                                                     'type': 'Музыка',
+                                                     'count': 1
+                                                 }
+                                             ]
+                                         },
+                                         'platform_earnings': {
+                                             'total_amount': 4800,
+                                             'chart_data': [
+                                                 {
+                                                     'date': '2025-06-11',
+                                                     'amount': 3600
+                                                 },
+                                                 {
+                                                     'date': '2025-06-12',
+                                                     'amount': 1200
+                                                 }
+                                             ]
+                                         }
+                                     }
+                                 })
+                         })
+    def get(self, request, *args, **kwargs):
+        period = request.query_params.get('period', 'day')
+        trunc_func = {  # TODO: not understood, end it later
+            'day': TruncDate,
+            'week': TruncWeek,
+            'month': TruncMonth
+        }.get(period, TruncDate)
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        user_type = request.query_params.get('user_type')
+
+        new_reg_start_date = (now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        new_reg_end_date = now().strftime('%Y-%m-%d')
+
+        return Response({
+            'creator_earnings': creator_earnings(),
+            'registered_accounts': registered_accounts(trunc_func, user_type, start_date, end_date, None),
+            'active_accounts': registered_accounts(trunc_func, user_type, start_date, end_date, True),
+            'new_registered_accounts': registered_accounts(trunc_func, user_type, new_reg_start_date, new_reg_end_date,
+                                                           None),
+            'active_subscriptions': active_subscriptions(trunc_func, start_date, end_date),
+            'content_type_counts': content_type_counts(),
+            'platform_earnings': platform_earnings(trunc_func, start_date, end_date),
+        })
 
 
 class AdminCreatorListAPIView(ListAPIView):
@@ -52,8 +189,8 @@ class AdminCreatorRetrieveAPIView(RetrieveAPIView):
         return 'retrieve'
 
 
-class AdminBlockCreatorAPIView(APIView):
-    serializer_class = AdminBlockCreatorSerializer
+class AdminBlockCreatorPostAPIView(APIView):
+    serializer_class = AdminBlockCreatorPostSerializer
     permission_classes = [IsAdmin, ]
     router_name = 'CREATORS_REPORTS'
 
@@ -68,7 +205,7 @@ class AdminBlockCreatorAPIView(APIView):
         except:
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
-    @swagger_auto_schema(request_body=AdminBlockCreatorSerializer,
+    @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer,
                          responses={200: AdminCreatorRetrieveSerializer()})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
