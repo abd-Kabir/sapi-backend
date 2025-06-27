@@ -1,6 +1,7 @@
 from django.db import IntegrityError
 from django.db.models import Q, OuterRef, Exists
 from django.utils.translation import gettext_lazy as _
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, serializers
@@ -11,6 +12,7 @@ from rest_framework.views import APIView
 
 from apps.authentication.models import UserFollow, UserSubscription, User
 from apps.authentication.services import create_activity
+from apps.content.filters import PostByUserFilter
 from apps.content.models import Post, Category, PostTypes, ReportTypes, Like, Comment, Report
 from apps.content.serializers import PostCreateSerializer, CategorySerializer, ChoiceTypeSerializer, \
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
@@ -18,8 +20,8 @@ from apps.content.serializers import PostCreateSerializer, CategorySerializer, C
     PostLeaveCommentSerializer, ReportSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
-from config.core.permissions import IsCreator, IsAdmin
-from config.core.swagger import query_choice_swagger_param
+from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
+from config.swagger import query_choice_swagger_param, post_type_swagger_param
 from config.services import run_with_thread
 from config.views import BaseModelViewSet
 
@@ -56,8 +58,7 @@ class ChoiceTypeListAPIView(APIView):
 class CategoryModelViewSet(BaseModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdmin, ]
-    router_name = 'CATEGORIES'
+    permission_classes = [IsAdminAllowGet, ]
 
     def get_action(self):
         return self.action
@@ -124,9 +125,14 @@ class PostByUserListAPIView(ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
-    filter_backends = [OrderingFilter]
+    filter_backends = [OrderingFilter, DjangoFilterBackend]
+    filterset_class = PostByUserFilter
     ordering_fields = ['created_at']
     ordering = ['-created_at']
+
+    @swagger_auto_schema(manual_parameters=[post_type_swagger_param])
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()
