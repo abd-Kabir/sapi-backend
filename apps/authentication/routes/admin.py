@@ -26,7 +26,7 @@ from config.swagger import report_status_swagger_param, report_type_swagger_para
 class AdminCreatorListAPIView(ListAPIView):
     queryset = User.all_objects.filter(is_admin=False).order_by('-date_joined')
     serializer_class = AdminCreatorListSerializer
-    # permission_classes = [IsAdmin, ]
+    permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = AdminCreatorFilter
