@@ -1,37 +1,44 @@
+from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from rest_framework.exceptions import NotFound
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404, CreateAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.filters import ReportFilter
 from apps.authentication.models import User, PermissionTypes
+from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorSerializer, ReportListSerializer, ReportRetrieveSerializer
-from apps.content.models import Report, ReportStatusTypes, Post, ReportComment
+from apps.content.models import Report, ReportStatusTypes, ReportComment
 from apps.content.serializers import ReportCommentSerializer, AdminUserModifySerializer, AdminUserListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
-    date_to_swagger_param
+    date_to_swagger_param, admin_creator_list_params
 
 
 class AdminCreatorListAPIView(ListAPIView):
     queryset = User.all_objects.filter(is_admin=False).order_by('-date_joined')
     serializer_class = AdminCreatorListSerializer
-    permission_classes = [IsAdmin, ]
+    # permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = AdminCreatorFilter
     router_name = 'CREATORS'
 
     @staticmethod
     def get_action():
         return 'list'
+
+    @swagger_auto_schema(manual_parameters=admin_creator_list_params)
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class AdminCreatorRetrieveAPIView(RetrieveAPIView):
