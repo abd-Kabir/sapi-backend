@@ -355,6 +355,47 @@ class ReportSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+
+class ReportListSerializer(serializers.ModelSerializer):
+    post_username = serializers.CharField(source='post.user.username', read_only=True)
+    post_title = serializers.CharField(source='post.title', read_only=True)
+    post_description = serializers.CharField(source='post.description', read_only=True)
+    reported_username = serializers.CharField(source='user.username', read_only=True)
+    report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Report
+        fields = [
+            'id',
+            'post',
+            'post_username',
+            'post_title',
+            'post_description',
+            'report_type',
+            'description',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by',
+            'status_display',
+            'reported_username',
+            'report_type_display',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id',
+            'is_resolved',
+            'resolved_at',
+            'resolved_by',
+            'user'
+        ]
+
+    def create(self, validated_data):
+        # Automatically set the user from the request
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
 class ReportCommentSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
