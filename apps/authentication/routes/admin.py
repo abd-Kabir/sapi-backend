@@ -18,7 +18,7 @@ from apps.content.serializers import ReportCommentSerializer, AdminUserModifySer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
-from config.swagger import status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
+from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
     date_to_swagger_param
 
 
@@ -287,7 +287,7 @@ class ReportListView(ListAPIView):
     @swagger_auto_schema(
         operation_summary="List reports",
         manual_parameters=[report_type_swagger_param, date_from_swagger_param, date_to_swagger_param,
-                           status_swagger_param]
+                           report_status_swagger_param]
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
