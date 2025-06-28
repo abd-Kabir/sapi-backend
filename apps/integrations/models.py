@@ -13,6 +13,7 @@ sms_message_purpose = {
     'forgot_password': 'Ваш код для восстановления пароля на sapi.uz: {code}',
     'password_reset': 'Ваш код для изменения пароля на sapi.uz: {code}',
     'phone_update': 'Ваш код для изменения номера телефона на sapi.uz: {code}',
+    'delete_account': 'Ваш код для удаления аккаунта на платформе Sapi.uz: {code}',
 }
 
 
