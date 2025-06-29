@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.services import create_activity
@@ -105,6 +105,11 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 
 class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
     banner = FileSerializer(read_only=True, allow_null=True)
+    is_subscribed = serializers.SerializerMethodField(allow_null=True)
+
+    def get_is_subscribed(self, obj):
+        user: User = self.context['request'].user
+        return user.subscriptions.filter(plan=obj).exists()
 
     class Meta:
         model = SubscriptionPlan
@@ -114,6 +119,7 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'banner',
+            'is_subscribed',
             'created_at',
         ]
 
@@ -144,6 +150,13 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             end_date__gte=timezone.now(),
         ).exists()
         return user_subs
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        card = attrs.get('subscriber_card')
+        if card.user != user:
+            raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_400_BAD_REQUEST)
+        return super().validate(attrs)
 
     def create(self, validated_data):
         with transaction.atomic():
