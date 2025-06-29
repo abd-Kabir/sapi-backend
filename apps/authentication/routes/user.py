@@ -221,7 +221,7 @@ class PopularCreatorListAPIView(APIView):
             .filter(is_creator=True)
             .annotate(follower_count=Count('followers'))
             .order_by('-follower_count')
-            .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+            .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
             [:limit]
         )
 
@@ -241,7 +241,7 @@ class PopularCreatorListAPIView(APIView):
                 .filter(category=category, is_creator=True)
                 .annotate(follower_count=Count('followers'))
                 .order_by('-follower_count')
-                .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+                .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
                 [:limit_per_category]
             )
             if creators:
@@ -295,13 +295,13 @@ class PopularCreatorListAPIView(APIView):
 
 class PopularCategoryCreatorListAPIView(APIView):
 
-    def most_popular_creators(self, limit: int = 10):
+    def most_popular_creators(self, category_id, limit: int = 10):
         return (
             User.objects
-            .filter(is_creator=True)
+            .filter(is_creator=True, category_id=category_id)
             .annotate(follower_count=Count('followers'))
             .order_by('-follower_count')
-            .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+            .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
             [:limit]
         )
 
@@ -321,7 +321,7 @@ class PopularCategoryCreatorListAPIView(APIView):
                 .filter(category=category, is_creator=True)
                 .annotate(follower_count=Count('followers'))
                 .order_by('-follower_count')
-                .values('username', 'follower_count', profile_photo_path=F('profile_photo__path'))
+                .values('id', 'username', 'follower_count', profile_photo_path=F('profile_photo__path'))
                 [:limit_per_category]
             )
             return {
@@ -363,7 +363,7 @@ class PopularCategoryCreatorListAPIView(APIView):
         }
     )
     def get(self, request, category_id, *args, **kwargs):
-        most_populars = self.most_popular_creators()
+        most_populars = self.most_popular_creators(category_id=category_id)
         most_populars_by_category = self.popular_creators_by_category(category_id)
         return Response({
             'most_populars': most_populars,
