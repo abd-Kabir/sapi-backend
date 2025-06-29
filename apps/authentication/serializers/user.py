@@ -45,11 +45,13 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
 class UserRetrieveSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
     posts_count = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     subscribers_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     is_followed_by_you = serializers.SerializerMethodField()
+    is_blocked_by_you = serializers.SerializerMethodField()
     has_subscription = serializers.SerializerMethodField()
 
     @staticmethod
@@ -72,6 +74,10 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return obj.is_followed_by(user)
 
+    def get_is_blocked_by_you(self, obj):
+        user = self.context['request'].user
+        return obj.is_blocked_by_user(user)
+
     def get_has_subscription(self, obj):
         user = self.context['request'].user
         return obj.has_subscription(user)
@@ -81,6 +87,10 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'username',
+            'is_creator',
+            'category_id',
+            'category_name',
+            'creator_description',
             'profile_photo_info',
             'profile_banner_photo_info',
             'posts_count',
@@ -88,6 +98,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'subscribers_count',
             'is_following',
             'is_followed_by_you',
+            'is_blocked_by_you',
             'has_subscription',
         ]
 
@@ -103,6 +114,7 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'banner',
+            'created_at',
         ]
 
 

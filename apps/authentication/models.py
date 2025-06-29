@@ -163,6 +163,10 @@ class User(AbstractUser):
         """Check if this user is followed by another user"""
         return self.followers.filter(follower=user).exists()
 
+    def is_blocked_by_user(self, user):
+        """Check if this user is blocked another user"""
+        return self.blocked_by.filter(blocker=user).exists()
+
     def toggle_follow(self, user_to_follow):
         """
         Toggle follow/unfollow another user
@@ -359,6 +363,9 @@ class BlockedUser(BaseModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.blocker} blocked {self.blocked}"
 
 
 class Fundraising(BaseModel):
