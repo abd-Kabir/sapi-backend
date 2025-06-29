@@ -130,6 +130,7 @@ class FundraisingSerializer(serializers.ModelSerializer):
             'deadline',
             'minimum_donation',
             'creator',
+            'current_amount',
         ]
 
 

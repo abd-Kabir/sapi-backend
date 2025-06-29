@@ -8,7 +8,7 @@ from config.core.api_exceptions import APIValidation
 from django.utils.translation import gettext_lazy as _
 
 
-def multibank_payment(user: User, creator: User, card: Card, amount, payment_type):
+def multibank_payment(user: User, creator: User, card: Card, amount, payment_type, fundraising=None):
     # SAPI TRANSACTION CREATION
     transaction = MultibankTransaction.objects.create(
         store_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'], amount=amount,
@@ -75,4 +75,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
         transaction.status = 'paid'
     transaction.save()
+    if fundraising:
+        fundraising.current_amount += creator_amount
+        fundraising.save(update_fields=['current_amount'])
     return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}

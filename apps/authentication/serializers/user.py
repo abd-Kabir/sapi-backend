@@ -134,6 +134,7 @@ class UserFundraisingListSerializer(serializers.ModelSerializer):
             'goal',
             'deadline',
             'minimum_donation',
+            'current_amount',
         ]
 
 
@@ -209,13 +210,6 @@ class DonationCreateSerializer(serializers.ModelSerializer):
         except:
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
-    @staticmethod
-    def get_fundraising(pk):
-        try:
-            return Fundraising.objects.get(pk=pk)
-        except:
-            raise APIValidation(_('Сбор средств не найден'), status_code=404)
-
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['payment_info'] = instance.payment_info
@@ -226,8 +220,8 @@ class DonationCreateSerializer(serializers.ModelSerializer):
             donator = self.context['request'].user
             creator = validated_data.get('creator')
             card = validated_data.get('card')
-            if validated_data.get('fundraising_id'):
-                fundraising = validated_data.get('fundraising')
+            fundraising = validated_data.get('fundraising')
+            if fundraising:
                 if fundraising.minimum_donation and fundraising.minimum_donation > validated_data.get('amount', 0):
                     raise APIValidation(_(f'Минимальный донат является: {validated_data.get("amount", 0)}'),
                                         status_code=400)
@@ -237,7 +231,7 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                 validated_data['message'] = None
             validated_data['donator'] = donator
             donation = super().create(validated_data)
-            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation')
+            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation', fundraising)
             donation.payment_info = payment_info
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation
