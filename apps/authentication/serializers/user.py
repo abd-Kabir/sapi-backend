@@ -118,6 +118,19 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
         ]
 
 
+class UserFundraisingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fundraising
+        fields = [
+            'id',
+            'title',
+            'description',
+            'goal',
+            'deadline',
+            'minimum_donation',
+        ]
+
+
 class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
 
     def check_subscription(self, validated_data):

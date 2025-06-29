@@ -8,10 +8,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
     UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer, DonationCreateSerializer, \
-    BecomeUserMultibankAddAccountSerializer
+    BecomeUserMultibankAddAccountSerializer, UserFundraisingListSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
 from apps.files.serializers import FileSerializer
@@ -191,6 +191,16 @@ class UserSubscriptionPlanListAPIView(ListAPIView):
     filter_backends = [OrderingFilter, ]
     ordering_fields = ['price']
     ordering = ['-price']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(creator=self.kwargs['user_id'])
+        return queryset
+
+
+class UserFundraisingListAPIView(ListAPIView):
+    queryset = Fundraising.objects.all()
+    serializer_class = UserFundraisingListSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()

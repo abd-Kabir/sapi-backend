@@ -252,6 +252,12 @@ class FundraisingListCreateAPIView(ListCreateAPIView):
     serializer_class = FundraisingSerializer
     permission_classes = [IsCreator, ]
 
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        queryset = queryset.filter(creator=user)
+        return queryset
+
 
 class FundraisingDeleteRetrieveUpdateAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Fundraising.objects.all()
