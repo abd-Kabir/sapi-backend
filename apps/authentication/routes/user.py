@@ -89,8 +89,8 @@ class BecomeCreatorAPIView(APIView):
             'category': openapi.Schema(type=openapi.TYPE_INTEGER),
             'username': openapi.Schema(type=openapi.TYPE_STRING),
             'creator_description': openapi.Schema(type=openapi.TYPE_STRING),
-            'profile_photo': openapi.Schema(type=openapi.TYPE_STRING),
-            'profile_banner_photo': openapi.Schema(type=openapi.TYPE_STRING),
+            'profile_photo': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'profile_banner_photo': openapi.Schema(type=openapi.TYPE_INTEGER),
         }),
         responses={status.HTTP_201_CREATED: BecomeCreatorSerializer()}
     )
