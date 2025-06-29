@@ -8,7 +8,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -456,6 +456,7 @@ class ReportRetrieveAPIView(RetrieveAPIView):
 class AdminNotifDisListAPIView(ListAPIView):
     queryset = NotificationDistribution.objects.all().order_by('-created_at')
     serializer_class = AdminNotifDisSerializer
+    pagination_class = APILimitOffsetPagination
     permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
 
@@ -465,7 +466,7 @@ class AdminNotifDisListAPIView(ListAPIView):
 
 
 class AdminNotifDisCreateAPIView(CreateAPIView):
-    queryset = NotificationDistribution.objects.all().order_by('-created_at')
+    queryset = NotificationDistribution.objects.all()
     serializer_class = AdminNotifDisSerializer
     permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
@@ -473,3 +474,14 @@ class AdminNotifDisCreateAPIView(CreateAPIView):
     @staticmethod
     def get_action():
         return 'create'
+
+
+class AdminNotifDisUpdateAPIView(UpdateAPIView):
+    queryset = NotificationDistribution.objects.all()
+    serializer_class = AdminNotifDisSerializer
+    permission_classes = [IsAdmin, ]
+    router_name = 'NOTIFICATIONS'
+
+    @staticmethod
+    def get_action():
+        return 'update'

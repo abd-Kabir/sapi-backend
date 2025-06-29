@@ -264,12 +264,35 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
             instance.status = 'draft'
             instance.save()
             return instance
-        if not validated_data.get('sending_date'):
-            if validated_data.get('type') == 'push_notification':
-                users = self.get_users(validated_data.get('user_type'))
-                [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
-                 for user in users]
-        instance.status = 'sent'
+        if not validated_data.get('sending_date') and not instance.is_draft:
+            if validated_data.get('types'):
+                for notif_type in validated_data.get('types', []):
+                    if notif_type == 'push_notification':
+                        users = self.get_users(validated_data.get('user_type'))
+                        [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
+                         for user in users]
+            instance.status = 'sent'
+        else:
+            pass
+            # TODO: add sending with task with sending_date
+        instance.save()
+        return instance
+
+    def update(self, instance: NotificationDistribution, validated_data):
+        if not instance.is_draft:
+            raise APIValidation(_('Можете обновлять только со статусом драфт'), status_code=status.HTTP_400_BAD_REQUEST)
+        instance = super().update(instance, validated_data)
+        if not validated_data.get('sending_date') and not instance.is_draft:
+            if validated_data.get('types'):
+                for notif_type in validated_data.get('types', []):
+                    if notif_type == 'push_notification':
+                        users = self.get_users(validated_data.get('user_type'))
+                        [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
+                         for user in users]
+            instance.status = 'sent'
+        else:
+            pass
+            # TODO: add sending with task with sending_date
         instance.save()
         return instance
 
@@ -284,7 +307,7 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
             'text_ru',
             'text_uz',
             'status',
-            'type',
+            'types',
             'user_type',
             'sending_date',
         ]

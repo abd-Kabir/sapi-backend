@@ -3,6 +3,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -425,8 +426,8 @@ class NotificationDistribution(BaseModel):
 
     status = models.CharField(choices=NotifDisStatus.choices, default=NotifDisStatus.waiting, max_length=55)
     user_type = models.CharField(choices=UserType.choices, default=UserType.all, max_length=55)
-    type = models.CharField(choices=NotifDisPlatformType.choices, default=NotifDisPlatformType.push_notification,
-                            max_length=55)
+    # type = models.CharField(choices=NotifDisPlatformType.choices, default=NotifDisPlatformType.push_notification, max_length=55)
+    types = ArrayField(models.CharField(max_length=55, choices=NotifDisPlatformType.choices), default=list)
 
     class Meta:
         db_table = 'notification_distribution'

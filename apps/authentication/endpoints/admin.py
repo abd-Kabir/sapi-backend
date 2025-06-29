@@ -6,7 +6,8 @@ from apps.authentication.routes.admin import (AdminCreatorListAPIView, AdminCrea
                                               AdminUserPermissionListAPIView, AdminUserListAPIView,
                                               AdminUserUpdateAPIView, AdminUserDeleteAPIView, ReportListView,
                                               ReportRetrieveAPIView, DashboardCreatorEarningsAPIView,
-                                              AdminNotifDisListAPIView, AdminNotifDisCreateAPIView)
+                                              AdminNotifDisListAPIView, AdminNotifDisCreateAPIView,
+                                              AdminNotifDisUpdateAPIView)
 
 urlpatterns = [
     # dashboard
@@ -39,4 +40,6 @@ urlpatterns = [
     path('admin/notification-distribution/list/', AdminNotifDisListAPIView.as_view(), name='admin_notif_dis_list'),
     path('admin/notification-distribution/create/', AdminNotifDisCreateAPIView.as_view(),
          name='admin_notif_dis_create'),
+    path('admin/notification-distribution/update/<int:pk>/', AdminNotifDisUpdateAPIView.as_view(),
+         name='admin_notif_dis_update'),
 ]
