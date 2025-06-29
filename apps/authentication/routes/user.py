@@ -261,6 +261,7 @@ class PopularCreatorListAPIView(APIView):
                     "application/json": {
                         "most_populars": [
                             {
+                                "id": 1,
                                 "username": "umarov",
                                 "follower_count": 1,
                                 "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
@@ -272,6 +273,7 @@ class PopularCreatorListAPIView(APIView):
                                 "category_name": "Music",
                                 "creators": [
                                     {
+                                        "id": 1,
                                         "username": "umarov",
                                         "follower_count": 1,
                                         "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
@@ -341,6 +343,7 @@ class PopularCategoryCreatorListAPIView(APIView):
                     "application/json": {
                         "most_populars": [
                             {
+                                "id": 1,
                                 "username": "umarov",
                                 "follower_count": 1,
                                 "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
@@ -351,6 +354,7 @@ class PopularCategoryCreatorListAPIView(APIView):
                             "category_name": "Music",
                             "creators": [
                                 {
+                                    "id": 1,
                                     "username": "umarov",
                                     "follower_count": 1,
                                     "profile_photo_path": "media/uploads/17464402879838739793815586f6f31465a94653c44aa5cfca1.jpg"
