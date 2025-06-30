@@ -36,6 +36,8 @@ class AddCardSerializer(serializers.ModelSerializer):
         is_main = validated_data.pop('is_main', False)
         expiration = validated_data.pop('expiration', None).replace('/', '')
         number = validated_data.pop('number', None)
+        if not Card.objects.filter(user=validated_data.get('user')).exists():
+            is_main = True
         card, _ = Card.objects.update_or_create(number=number, defaults={**validated_data})
         card.expiration = expiration
         card.set_main(is_main)

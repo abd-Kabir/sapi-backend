@@ -1,16 +1,11 @@
 from fcm_django.models import FCMDevice
+from firebase_admin.messaging import Message, Notification
 
 
 def send_notification_to_user(user, title, body):
     devices = FCMDevice.objects.filter(user=user)
     devices.send_message(
-        # title=title,
-        # body=body,
-        message={
-            "title": title,
-            "body": body,
-        },
-        data={"click_action": "FLUTTER_NOTIFICATION_CLICK"}  # required for foreground notifications
+        Message(notification=Notification(title=title, body=body))
     )
 
 
