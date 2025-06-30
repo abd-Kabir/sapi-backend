@@ -21,8 +21,8 @@ def only_phone_numbers(phone):
 
 
 def generate_sms_code() -> str:
-    return '111111'
-    # return str(random.randint(100000, 999999))
+    # return '111111'
+    return str(random.randint(100000, 999999))
 
 
 def can_request_sms(user, purpose):
@@ -54,7 +54,7 @@ def sms_confirmation_open(user, purpose):
         defaults={'code': code, 'expires_at': expires_at, 'requested_at': now(),
                   'phone_number': only_phone_numbers(user.phone_number)}
     )
-    # TODO: temp-commented | send_sms(user.phone_number, purpose, code)
+    send_sms(user.phone_number, purpose, code)
     return True
 
 
