@@ -248,7 +248,8 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     status = serializers.ChoiceField(choices=NotifDisStatus.choices, read_only=True)
 
-    def get_users(self, user_type):
+    @staticmethod
+    def get_users(user_type):
         if user_type == 'creators':
             return User.objects.filter(is_creator=True)
         elif user_type == 'users':
@@ -258,12 +259,8 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
         else:
             raise APIValidation(_('Тип юзера неправильный'), status_code=status.HTTP_400_BAD_REQUEST)
 
-    def create(self, validated_data):
-        instance = super().create(validated_data)
-        if validated_data.get('is_draft'):
-            instance.status = 'draft'
-            instance.save()
-            return instance
+    def manipulate_notification_sending(self, instance):
+        validated_data = self.validated_data
         if not validated_data.get('sending_date') and not instance.is_draft:
             if validated_data.get('types'):
                 for notif_type in validated_data.get('types', []):
@@ -275,6 +272,14 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
         else:
             pass
             # TODO: add sending with task with sending_date
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        if validated_data.get('is_draft'):
+            instance.status = 'draft'
+            instance.save()
+            return instance
+        self.manipulate_notification_sending(instance)
         instance.save()
         return instance
 
@@ -282,17 +287,9 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
         if not instance.is_draft:
             raise APIValidation(_('Можете обновлять только со статусом драфт'), status_code=status.HTTP_400_BAD_REQUEST)
         instance = super().update(instance, validated_data)
-        if not validated_data.get('sending_date') and not instance.is_draft:
-            if validated_data.get('types'):
-                for notif_type in validated_data.get('types', []):
-                    if notif_type == 'push_notification':
-                        users = self.get_users(validated_data.get('user_type'))
-                        [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
-                         for user in users]
-            instance.status = 'sent'
-        else:
-            pass
-            # TODO: add sending with task with sending_date
+        if not instance.is_draft:
+            instance.status = 'waiting'
+        self.manipulate_notification_sending(instance)
         instance.save()
         return instance
 

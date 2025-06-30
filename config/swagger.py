@@ -1,5 +1,6 @@
 from drf_yasg import openapi
 
+from apps.authentication.models import NotifDisStatus
 from apps.content.models import ReportStatusTypes, PostTypes
 
 query_choice_swagger_param = openapi.Parameter(
@@ -38,28 +39,48 @@ date_to_swagger_param = openapi.Parameter(
     format=openapi.FORMAT_DATE
 )
 
-status_choices_description = '\n'.join([
+report_status_choices_description = '\n'.join([
     f'{value} - {label}'
     for value, label in ReportStatusTypes.choices
 ])
 report_status_swagger_param = openapi.Parameter(
     'status',
     openapi.IN_QUERY,
-    description=f'Status code filter (integer):\n{status_choices_description}',
+    description=f'Status code filter (integer):\n{report_status_choices_description}',
     type=openapi.TYPE_INTEGER,
-    enum=[i for i, j in ReportStatusTypes.choices]
+    enum=[value for value, _ in ReportStatusTypes.choices]
 )
 
-status_choices_description = '\n'.join([
+post_type_choices_description = '\n'.join([
     f'{value} - {label}'
     for value, label in PostTypes.choices
 ])
 post_type_swagger_param = openapi.Parameter(
     'post_type',
     openapi.IN_QUERY,
-    description=f'Post type code filter, choices: \n{status_choices_description}',
+    description=f'Post type code filter, choices: \n{post_type_choices_description}',
     type=openapi.TYPE_STRING,
-    enum=[i for i, j in PostTypes.choices]
+    enum=[value for value, _ in PostTypes.choices]
+)
+
+notif_dis_status_choices_description = '\n'.join([
+    f'{value} - {label}'
+    for value, label in NotifDisStatus.choices
+])
+notif_dis_status_swagger_param = openapi.Parameter(
+    'status',
+    openapi.IN_QUERY,
+    description=f'Status filter, choices: \n{notif_dis_status_choices_description}',
+    type=openapi.TYPE_STRING,
+    enum=[value for value, _ in NotifDisStatus.choices]
+)
+notif_dis_type_swagger_param = openapi.Parameter(
+    'types',
+    openapi.IN_QUERY,
+    description='Notification type filter, choices: push_notification; If many values example: ?types=push_notification,sms',
+    type=openapi.TYPE_STRING,
+    # items=openapi.Items(type=openapi.TYPE_STRING, enum=['push_notification']),
+    # enum=['push_notification'],
 )
 admin_creator_list_params = [
     query_search_swagger_param,

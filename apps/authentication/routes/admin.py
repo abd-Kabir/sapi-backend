@@ -12,7 +12,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView,
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.authentication.filters import ReportFilter
+from apps.authentication.filters import ReportFilter, NotifDisFilter
 from apps.authentication.models import User, PermissionTypes, NotificationDistribution
 from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
@@ -27,7 +27,8 @@ from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
     date_to_swagger_param, admin_creator_list_params, period_swagger_param, start_date_swagger_param, \
-    end_date_swagger_param, dashboard_user_type_swagger_param
+    end_date_swagger_param, dashboard_user_type_swagger_param, notif_dis_status_swagger_param, \
+    notif_dis_type_swagger_param
 
 
 class DashboardCreatorEarningsAPIView(APIView):
@@ -326,6 +327,84 @@ class AdminUserPermissionListAPIView(APIView):
     def get_action():
         return 'list'
 
+    @swagger_auto_schema(operation_description='List of permissions for creating admin user.',
+                         responses={200: openapi.Response(
+                             description='Successful response.',
+                             examples={
+                                 'application/json': {
+                                     "STATISTICS": {
+                                         "name": "Статистика",
+                                         "permissions": [
+                                             {
+                                                 "code": "VIEW_STATISTICS",
+                                                 "name": "Просмотр статистики"
+                                             },
+                                             {
+                                                 "code": "MODIFY_STATISTICS",
+                                                 "name": "Редактирование статистики"
+                                             }
+                                         ]
+                                     },
+                                     "SENDING_NOTIFICATIONS": {
+                                         "name": "Рассылка уведомлений",
+                                         "permissions": []
+                                     },
+                                     "REPORTS": {
+                                         "name": "Жалобы",
+                                         "permissions": [
+                                             {
+                                                 "code": "VIEW_REPORTS",
+                                                 "name": "Просмотр жалоб"
+                                             },
+                                             {
+                                                 "code": "MODIFY_REPORTS",
+                                                 "name": "Редактирование жалоб"
+                                             }
+                                         ]
+                                     },
+                                     "CREATORS": {
+                                         "name": "Креаторы",
+                                         "permissions": [
+                                             {
+                                                 "code": "VIEW_CREATORS",
+                                                 "name": "Просмотр креаторов"
+                                             },
+                                             {
+                                                 "code": "MODIFY_CREATORS",
+                                                 "name": "Редактирование креаторов"
+                                             }
+                                         ]
+                                     },
+                                     "CHATS": {
+                                         "name": "Чаты",
+                                         "permissions": [
+                                             {
+                                                 "code": "VIEW_CHATS",
+                                                 "name": "Просмотр чата поддержки"
+                                             },
+                                             {
+                                                 "code": "MODIFY_CHATS",
+                                                 "name": "Редактирование чата поддержки"
+                                             }
+                                         ]
+                                     },
+                                     "ADMINS": {
+                                         "name": "Администраторы",
+                                         "permissions": [
+                                             {
+                                                 "code": "VIEW_ADMINS",
+                                                 "name": "Просмотр администраторов"
+                                             },
+                                             {
+                                                 "code": "MODIFY_ADMINS",
+                                                 "name": "Редактирование администраторов"
+                                             }
+                                         ]
+                                     }
+
+                                 }
+                             }
+                         )})
     def get(self, request, *args, **kwargs):
         permission_categories = PermissionTypes.categories()
         categories = {}
@@ -347,10 +426,17 @@ class AdminUserListAPIView(ListAPIView):
     permission_classes = [IsAdmin, ]
     router_name = 'ADMINS'
     pagination_class = APILimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = [
+        'first_name', 'last_name', 'phone_number'
+    ]
 
     @staticmethod
     def get_action():
         return 'list'
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(pk=self.request.user.id)
 
 
 class AdminUserCreationAPIView(APIView):
@@ -362,6 +448,27 @@ class AdminUserCreationAPIView(APIView):
     def get_action():
         return 'create'
 
+    @swagger_auto_schema(request_body=AdminUserModifySerializer(),
+                         responses={
+                             status.HTTP_200_OK: openapi.Response(
+                                 description="Success response",
+                                 schema=openapi.Schema(
+                                     type=openapi.TYPE_OBJECT,
+                                     properties={
+                                         'detail': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                  description='Information message about creation.'),
+                                         'id': openapi.Schema(type=openapi.TYPE_INTEGER,
+                                                              description='ID of created admin user.'),
+                                     }
+                                 ),
+                                 examples={
+                                     "application/json": {
+                                         'detail': 'Админ создан.',
+                                         'id': 1
+                                     }
+                                 }
+                             ),
+                         })
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -385,6 +492,27 @@ class AdminUserUpdateAPIView(APIView):
         except:
             raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(request_body=AdminUserModifySerializer(),
+                         responses={
+                             status.HTTP_200_OK: openapi.Response(
+                                 description="Success response",
+                                 schema=openapi.Schema(
+                                     type=openapi.TYPE_OBJECT,
+                                     properties={
+                                         'detail': openapi.Schema(type=openapi.TYPE_STRING,
+                                                                  description='Information message about update.'),
+                                         'id': openapi.Schema(type=openapi.TYPE_INTEGER,
+                                                              description='ID of updated admin user.'),
+                                     }
+                                 ),
+                                 examples={
+                                     "application/json": {
+                                         'detail': 'Изменение применены.',
+                                         'id': 1
+                                     }
+                                 }
+                             ),
+                         })
     def patch(self, request, pk, *args, **kwargs):
         serializer = self.serializer_class(instance=self.get_user(pk), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -407,6 +535,9 @@ class AdminUserDeleteAPIView(APIView):
         except:
             raise APIValidation(_('Пользователь не найден'), status_code=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(
+        operation_description='Just send delete request and admin user will be deleted. Response returns 200.',
+    )
     def delete(self, request, pk, *args, **kwargs):
         user = self.get_user(pk)
         user.delete()
@@ -457,12 +588,24 @@ class AdminNotifDisListAPIView(ListAPIView):
     queryset = NotificationDistribution.objects.all().order_by('-created_at')
     serializer_class = AdminNotifDisSerializer
     pagination_class = APILimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = NotifDisFilter
     permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
+
+    search_fields = ['title_uz', 'title_ru', 'text_uz']
 
     @staticmethod
     def get_action():
         return 'list'
+
+    @swagger_auto_schema(
+        operation_summary='List of notifications.',
+        manual_parameters=[date_from_swagger_param, date_to_swagger_param, notif_dis_status_swagger_param,
+                           notif_dis_type_swagger_param]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class AdminNotifDisCreateAPIView(CreateAPIView):
@@ -481,6 +624,7 @@ class AdminNotifDisUpdateAPIView(UpdateAPIView):
     serializer_class = AdminNotifDisSerializer
     permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
+    http_method_names = ['patch', ]
 
     @staticmethod
     def get_action():

@@ -23,6 +23,7 @@ class MyCardListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'card_pan',
+            'is_main',
             'type',
             'type_display',
         ]
