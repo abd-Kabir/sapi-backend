@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
 from apps.authentication.models import User, UserPermissions, PermissionTypes
+from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report, ReportComment
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
@@ -180,6 +181,7 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
 
 
 class PostListSerializer(serializers.ModelSerializer):
+    user = BecomeCreatorSerializer(allow_null=True, read_only=True)
     post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
     files = FileSerializer(read_only=True, allow_null=True, many=True)
     has_liked = serializers.SerializerMethodField()
@@ -212,7 +214,8 @@ class PostListSerializer(serializers.ModelSerializer):
                 'post_type_display': instance.get_post_type_display(),
                 'created_at': instance.created_at,
                 'can_view': False,
-                'is_saved': instance.is_saved_by(user)
+                'is_saved': instance.is_saved_by(user),
+                'user': BecomeCreatorSerializer(instance.user).data
             }
         return representation
 
@@ -231,6 +234,7 @@ class PostListSerializer(serializers.ModelSerializer):
             'can_view',
             'is_saved',
             'files',
+            'user',
         ]
 
 
