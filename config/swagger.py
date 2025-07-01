@@ -150,8 +150,17 @@ end_date_swagger_param = openapi.Parameter(
 dashboard_user_type_swagger_param = openapi.Parameter(
     'user_type',
     openapi.IN_QUERY,
-    description="Filter analytics by user type",
+    description='Filter analytics by user type',
     type=openapi.TYPE_STRING,
     enum=['all', 'creators', 'users'],
     default='all'
+)
+dashboard_type_swagger_param = openapi.Parameter(
+    'dashboard_type',
+    openapi.IN_QUERY,
+    description='Get needed dashboard analytics data',
+    type=openapi.TYPE_STRING,
+    required=True,
+    enum=['creator_earnings', 'registered_accounts', 'active_accounts', 'new_registered_accounts',
+          'active_subscriptions', 'content_type_counts', 'platform_earnings', ],
 )

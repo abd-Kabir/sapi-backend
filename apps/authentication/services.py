@@ -65,12 +65,13 @@ def authenticate_user(request):
 
 
 def creator_earnings():
-    return (
+    earnings = (
         MultibankTransaction.objects
         .filter(status='paid')
         .aggregate(creator_earnings=Sum('creator_amount'))
         .get('creator_earnings', 0)
     )
+    return {'data': earnings}
 
 
 def registered_accounts(trunc_func, user_type='all', start_date=None, end_date=None, is_active=True):
@@ -101,7 +102,7 @@ def registered_accounts(trunc_func, user_type='all', start_date=None, end_date=N
     ).order_by('period')
 
     return {
-        'chart_data': [
+        'data': [
             {
                 'date': item['period'].strftime('%Y-%m-%d'),
                 'count': item['count']
@@ -129,7 +130,7 @@ def active_subscriptions(trunc_func, start_date=None, end_date=None):
         count=Count('id')
     ).order_by('period')
     return {
-        'chart_data': [
+        'data': [
             {
                 'date': item['period'].strftime('%Y-%m-%d'),
                 'count': item['count']
@@ -157,7 +158,7 @@ def content_type_counts():
     }
 
     return {
-        'chart_data': [
+        'data': [
             {
                 'type': type_names.get(item['post_type'], item['post_type']),
                 'count': item['count']
@@ -193,7 +194,7 @@ def platform_earnings(trunc_func, start_date=None, end_date=None):
 
     return {
         'total_amount': total_revenue,
-        'chart_data': [
+        'data': [
             {
                 'date': item['period'].strftime('%Y-%m-%d'),
                 'amount': item['total_revenue'] or 0

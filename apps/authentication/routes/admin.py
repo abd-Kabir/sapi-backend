@@ -28,7 +28,7 @@ from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
     date_to_swagger_param, admin_creator_list_params, period_swagger_param, start_date_swagger_param, \
     end_date_swagger_param, dashboard_user_type_swagger_param, notif_dis_status_swagger_param, \
-    notif_dis_type_swagger_param
+    notif_dis_type_swagger_param, dashboard_type_swagger_param
 
 
 class DashboardCreatorEarningsAPIView(APIView):
@@ -40,15 +40,15 @@ class DashboardCreatorEarningsAPIView(APIView):
         return 'list'
 
     @swagger_auto_schema(manual_parameters=[period_swagger_param, start_date_swagger_param, end_date_swagger_param,
-                                            dashboard_user_type_swagger_param],
+                                            dashboard_user_type_swagger_param, dashboard_type_swagger_param],
                          responses={
                              200: openapi.Response(
                                  description='Analytics data retrieved successfully',
                                  examples={
                                      'application/json': {
-                                         'creator_earnings': 35200,
+                                         'creator_earnings': {'data': 35200},
                                          'registered_accounts': {
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'date': '2025-05-31',
                                                      'count': 4
@@ -72,7 +72,7 @@ class DashboardCreatorEarningsAPIView(APIView):
                                              ]
                                          },
                                          'active_accounts': {
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'date': '2025-05-31',
                                                      'count': 4
@@ -92,7 +92,7 @@ class DashboardCreatorEarningsAPIView(APIView):
                                              ]
                                          },
                                          'new_registered_accounts': {
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'date': '2025-06-26',
                                                      'count': 1
@@ -104,7 +104,7 @@ class DashboardCreatorEarningsAPIView(APIView):
                                              ]
                                          },
                                          'active_subscriptions': {
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'date': '2025-06-27',
                                                      'count': 1
@@ -112,7 +112,7 @@ class DashboardCreatorEarningsAPIView(APIView):
                                              ]
                                          },
                                          'content_type_counts': {
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'type': 'Музыка',
                                                      'count': 1
@@ -121,7 +121,7 @@ class DashboardCreatorEarningsAPIView(APIView):
                                          },
                                          'platform_earnings': {
                                              'total_amount': 4800,
-                                             'chart_data': [
+                                             'data': [
                                                  {
                                                      'date': '2025-06-11',
                                                      'amount': 3600
@@ -146,20 +146,26 @@ class DashboardCreatorEarningsAPIView(APIView):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         user_type = request.query_params.get('user_type')
+        dashboard_type = request.query_params.get('dashboard_type')
 
         new_reg_start_date = (now() - timedelta(days=7)).strftime('%Y-%m-%d')
         new_reg_end_date = now().strftime('%Y-%m-%d')
 
-        return Response({
-            'creator_earnings': creator_earnings(),
-            'registered_accounts': registered_accounts(trunc_func, user_type, start_date, end_date, None),
-            'active_accounts': registered_accounts(trunc_func, user_type, start_date, end_date, True),
-            'new_registered_accounts': registered_accounts(trunc_func, user_type, new_reg_start_date, new_reg_end_date,
-                                                           None),
-            'active_subscriptions': active_subscriptions(trunc_func, start_date, end_date),
-            'content_type_counts': content_type_counts(),
-            'platform_earnings': platform_earnings(trunc_func, start_date, end_date),
-        })
+        dashboard_funcs = {
+            'creator_earnings': lambda: creator_earnings(),
+            'registered_accounts': lambda: registered_accounts(trunc_func, user_type, start_date, end_date, None),
+            'active_accounts': lambda: registered_accounts(trunc_func, user_type, start_date, end_date, True),
+            'new_registered_accounts': lambda: registered_accounts(trunc_func, user_type, new_reg_start_date,
+                                                                   new_reg_end_date, None),
+            'active_subscriptions': lambda: active_subscriptions(trunc_func, start_date, end_date),
+            'content_type_counts': lambda: content_type_counts(),
+            'platform_earnings': lambda: platform_earnings(trunc_func, start_date, end_date),
+        }
+        if dashboard_type not in dashboard_funcs:
+            raise APIValidation(_('Invalid dashboard_type'), status_code=status.HTTP_400_BAD_REQUEST)
+
+        response = dashboard_funcs[dashboard_type]()
+        return Response(response)
 
 
 class AdminCreatorListAPIView(ListAPIView):
