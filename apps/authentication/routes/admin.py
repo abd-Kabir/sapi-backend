@@ -12,9 +12,8 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView,
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.authentication.filters import ReportFilter, NotifDisFilter
+from apps.authentication.filters import ReportFilter, NotifDisFilter, AdminCreatorFilter
 from apps.authentication.models import User, PermissionTypes, NotificationDistribution
-from apps.authentication.routes.filters import AdminCreatorFilter
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer, \
     AdminNotifDisSerializer
@@ -28,7 +27,8 @@ from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
     date_to_swagger_param, admin_creator_list_params, period_swagger_param, start_date_swagger_param, \
     end_date_swagger_param, dashboard_user_type_swagger_param, notif_dis_status_swagger_param, \
-    notif_dis_type_swagger_param, dashboard_type_swagger_param
+    notif_dis_type_swagger_param, dashboard_type_swagger_param, date_notification_swagger_param, \
+    date_report_swagger_param
 
 
 class DashboardCreatorEarningsAPIView(APIView):
@@ -171,7 +171,7 @@ class DashboardCreatorEarningsAPIView(APIView):
 class AdminCreatorListAPIView(ListAPIView):
     queryset = User.all_objects.filter(is_admin=False).order_by('-date_joined')
     serializer_class = AdminCreatorListSerializer
-    permission_classes = [IsAdmin, ]
+    # permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = AdminCreatorFilter
@@ -553,7 +553,7 @@ class AdminUserDeleteAPIView(APIView):
 class ReportListView(ListAPIView):
     queryset = Report.objects.all().order_by('-created_at')
     serializer_class = ReportListSerializer
-    permission_classes = [IsAdmin, ]
+    # permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
 
     filter_backends = [DjangoFilterBackend, SearchFilter]
@@ -568,7 +568,7 @@ class ReportListView(ListAPIView):
 
     @swagger_auto_schema(
         operation_summary="List reports",
-        manual_parameters=[report_type_swagger_param, date_from_swagger_param, date_to_swagger_param,
+        manual_parameters=[report_type_swagger_param, date_report_swagger_param,
                            report_status_swagger_param]
     )
     def get(self, request, *args, **kwargs):
@@ -596,7 +596,7 @@ class AdminNotifDisListAPIView(ListAPIView):
     pagination_class = APILimitOffsetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = NotifDisFilter
-    permission_classes = [IsAdmin, ]
+    # permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
 
     search_fields = ['title_uz', 'title_ru', 'text_uz']
@@ -607,7 +607,7 @@ class AdminNotifDisListAPIView(ListAPIView):
 
     @swagger_auto_schema(
         operation_summary='List of notifications.',
-        manual_parameters=[date_from_swagger_param, date_to_swagger_param, notif_dis_status_swagger_param,
+        manual_parameters=[date_notification_swagger_param, notif_dis_status_swagger_param,
                            notif_dis_type_swagger_param]
     )
     def get(self, request, *args, **kwargs):
