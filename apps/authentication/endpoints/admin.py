@@ -18,7 +18,6 @@ urlpatterns = [
 
     # creator page
     path('admin/creators/', AdminCreatorListAPIView.as_view(), name='admin_creators'),
-
     path('admin/creator/<int:pk>/', AdminCreatorRetrieveAPIView.as_view(), name='admin_creator'),
     path('admin/creator/<int:pk>/sapi-share', AdminCreatorSAPIShareAPIView.as_view(), name='admin_creators_sapi_share'),
 
@@ -27,9 +26,7 @@ urlpatterns = [
     path('admin/<int:report_id>/block-post/', AdminBlockPostAPIView.as_view(), name='admin_block_creator'),
     path('admin/<int:report_id>/add-report-comment/', AdminReportCommentAPIView.as_view(),
          name='admin_ignore_report_comment'),
-
     path('admin/reports/list/', ReportListView.as_view(), name='admin_list_reports'),
-
     path('admin/reports/<int:pk>/retrieve', ReportRetrieveAPIView.as_view(), name='admin_retrieve_post'),
 
     # admin user page

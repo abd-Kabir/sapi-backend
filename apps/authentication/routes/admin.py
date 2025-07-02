@@ -171,7 +171,7 @@ class DashboardCreatorEarningsAPIView(APIView):
 class AdminCreatorListAPIView(ListAPIView):
     queryset = User.all_objects.filter(is_admin=False).order_by('-date_joined')
     serializer_class = AdminCreatorListSerializer
-    # permission_classes = [IsAdmin, ]
+    permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = AdminCreatorFilter
@@ -553,7 +553,7 @@ class AdminUserDeleteAPIView(APIView):
 class ReportListView(ListAPIView):
     queryset = Report.objects.all().order_by('-created_at')
     serializer_class = ReportListSerializer
-    # permission_classes = [IsAdmin, ]
+    permission_classes = [IsAdmin, ]
     pagination_class = APILimitOffsetPagination
 
     filter_backends = [DjangoFilterBackend, SearchFilter]
@@ -596,7 +596,7 @@ class AdminNotifDisListAPIView(ListAPIView):
     pagination_class = APILimitOffsetPagination
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = NotifDisFilter
-    # permission_classes = [IsAdmin, ]
+    permission_classes = [IsAdmin, ]
     router_name = 'NOTIFICATIONS'
 
     search_fields = ['title_uz', 'title_ru', 'text_uz']
