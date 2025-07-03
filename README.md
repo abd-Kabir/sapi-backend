@@ -160,6 +160,3 @@ Authorization: Bearer <your-jwt-token>
 ---
 
 **Built with ❤️ SAPI Team**
-
-**Backend Developer abd-Kabir**  
-🌐 [GitHub](https://github.com/abd-Kabir) | 💬 [Telegram](https://t.me/umarov_kk)
