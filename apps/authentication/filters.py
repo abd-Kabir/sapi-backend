@@ -7,8 +7,7 @@ from apps.content.models import Report
 
 class AdminCreatorFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(method='filter_search')
-    date_from = django_filters.DateFilter(field_name='date_joined', lookup_expr='date__gte')
-    date_to = django_filters.DateFilter(field_name='date_joined', lookup_expr='date__lte')
+    date = django_filters.DateFilter(field_name='date_joined', lookup_expr='date')
     category = django_filters.NumberFilter(field_name='category_id')
     user_type = django_filters.NumberFilter(method='filter_user_type')
     status = django_filters.NumberFilter(method='filter_status')
@@ -45,14 +44,13 @@ class AdminCreatorFilter(django_filters.FilterSet):
 class ReportFilter(django_filters.FilterSet):
     report_type = django_filters.CharFilter(field_name='report_type', lookup_expr='iexact')
 
-    date_from = django_filters.DateFilter(field_name='created_at', lookup_expr='gte')
-    date_to = django_filters.DateFilter(field_name='created_at', lookup_expr='lte')
+    date = django_filters.DateFilter(field_name='created_at', lookup_expr='date')
 
     status = django_filters.NumberFilter(field_name='status')
 
     class Meta:
         model = Report
-        fields = ['report_type', 'date_from', 'date_to', 'status']
+        fields = ['report_type', 'date', 'status']
 
 
 class NotifDisFilter(django_filters.FilterSet):
@@ -60,8 +58,7 @@ class NotifDisFilter(django_filters.FilterSet):
     # types = django_filters.CharFilter(method='filter_types')
     types = django_filters.BaseInFilter(field_name='types', lookup_expr='overlap')
 
-    date_from = django_filters.DateFilter(field_name='created_at', lookup_expr='gte')
-    date_to = django_filters.DateFilter(field_name='created_at', lookup_expr='lte')
+    date = django_filters.DateFilter(field_name='created_at', lookup_expr='date')
 
     status = django_filters.CharFilter(field_name='status')
 
@@ -71,4 +68,4 @@ class NotifDisFilter(django_filters.FilterSet):
 
     class Meta:
         model = NotificationDistribution
-        fields = ['date_from', 'date_to', 'status', 'types', 'user_type']
+        fields = ['date', 'status', 'types', 'user_type']

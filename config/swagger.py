@@ -85,13 +85,8 @@ notif_dis_type_swagger_param = openapi.Parameter(
 admin_creator_list_params = [
     query_search_swagger_param,
     openapi.Parameter(
-        'date_from', openapi.IN_QUERY,
+        'date', openapi.IN_QUERY,
         description='Filter users registered from this date (format: YYYY-MM-DD)',
-        type=openapi.FORMAT_DATE
-    ),
-    openapi.Parameter(
-        'date_to', openapi.IN_QUERY,
-        description='Filter users registered up to this date (format: YYYY-MM-DD)',
         type=openapi.FORMAT_DATE
     ),
     openapi.Parameter(
@@ -163,4 +158,21 @@ dashboard_type_swagger_param = openapi.Parameter(
     required=True,
     enum=['creator_earnings', 'registered_accounts', 'active_accounts', 'new_registered_accounts',
           'active_subscriptions', 'content_type_counts', 'platform_earnings', ],
+)
+
+
+date_report_swagger_param = openapi.Parameter(
+    'date',
+    openapi.IN_QUERY,
+    description='Date (YYYY-MM-DD) to filter reports',
+    type=openapi.TYPE_STRING,
+    format=openapi.FORMAT_DATE
+)
+
+date_notification_swagger_param = openapi.Parameter(
+    'date',
+    openapi.IN_QUERY,
+    description='Date (YYYY-MM-DD) to filter reports',
+    type=openapi.TYPE_STRING,
+    format=openapi.FORMAT_DATE
 )
