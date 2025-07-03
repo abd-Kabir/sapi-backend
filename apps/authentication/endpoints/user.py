@@ -5,7 +5,7 @@ from apps.authentication.routes.user import (BecomeUserMultibankAccountsAPIView,
                                              UserSubscriptionPlanListAPIView, UserSubscribeCreateAPIView,
                                              PopularCreatorListAPIView, PopularCategoryCreatorListAPIView,
                                              SearchCreatorAPIView, ToggleBlockAPIView, DonateAPIView, GetMeAPIView,
-                                             UserFundraisingListAPIView)
+                                             UserFundraisingListAPIView, CalculatePaymentCommissionAPIView)
 
 urlpatterns = [
     path('user/become-creator/multibank-accounts/', BecomeUserMultibankAccountsAPIView.as_view(),
@@ -28,4 +28,5 @@ urlpatterns = [
     path('user/<int:user_id>/toggle-block/', ToggleBlockAPIView.as_view(), name='block_toggle'),
     path('user/donate/', DonateAPIView.as_view(), name='user_donate'),
     path('user/get-me/', GetMeAPIView.as_view(), name='user_get_me'),
+    path('user/calculate-commission/', CalculatePaymentCommissionAPIView.as_view(), name='user_calc_commission'),
 ]

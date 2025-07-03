@@ -8,7 +8,23 @@ from config.core.api_exceptions import APIValidation
 from django.utils.translation import gettext_lazy as _
 
 
-def multibank_payment(user: User, creator: User, card: Card, amount, payment_type, fundraising=None):
+def calculate_payment_amount(amount, sapi_share, commission_by_subscriber):
+    multicard_commission = amount * 0.02
+    sapi_amount = (sapi_share / 100) * amount
+
+    if commission_by_subscriber:
+        creator_amount = amount
+        amount = amount + sapi_amount + multicard_commission
+    else:
+        creator_amount = (((100 - sapi_share) / 100) * amount) - multicard_commission
+    return creator_amount, amount, sapi_amount
+
+
+def multibank_payment(user: User, creator: User, card: Card, amount, payment_type, fundraising=None,
+                      commission_by_subscriber=False):
+    # AMOUNT calculation:
+    creator_amount, amount, sapi_amount = calculate_payment_amount(amount, creator.sapi_share, commission_by_subscriber)
+
     # SAPI TRANSACTION CREATION
     transaction = MultibankTransaction.objects.create(
         store_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'], amount=amount,
@@ -26,15 +42,12 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
 
     # PAYMENT CREATION
-    multicard_commission = amount * 0.02
-    creator_amount = (((100 - creator.sapi_share) / 100) * amount) - multicard_commission
     creator_split = {
         'type': 'account',
         'receipient': creator_receipient.get('data', {}).get('uuid'),
         'amount': int(creator_amount),
         'details': 'Донат для креатора SAPI'
     }
-    sapi_amount = (creator.sapi_share / 100) * amount
     sapi_split = {
         'type': 'account',
         'receipient': '900addbc-4fed-11f0-8b0d-00505680eaf6',  # Hard coded SAPI's ID

@@ -11,11 +11,12 @@ from django.utils.translation import gettext_lazy as _
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.serializers.user import BecomeCreatorSerializer, UserRetrieveSerializer, \
     UserSubscriptionPlanListSerializer, UserSubscriptionCreateSerializer, DonationCreateSerializer, \
-    BecomeUserMultibankAddAccountSerializer, UserFundraisingListSerializer
+    BecomeUserMultibankAddAccountSerializer, UserFundraisingListSerializer, CalculatePaymentCommissionSerializer
 from apps.authentication.services import create_activity
 from apps.content.models import Category
 from apps.files.serializers import FileSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
+from apps.integrations.services.multibank import calculate_payment_amount
 from config.core.api_exceptions import APIValidation
 from config.swagger import query_search_swagger_param
 from config.services import run_with_thread
@@ -562,3 +563,40 @@ class GetMeAPIView(APIView):
             'multibank_account': user.multibank_account,
             'multibank_verified': user.multibank_verified,
         })
+
+
+class CalculatePaymentCommissionAPIView(APIView):
+    serializer_class = CalculatePaymentCommissionSerializer
+
+    @staticmethod
+    def get_creator(pk):
+        try:
+            return User.objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+
+    @swagger_auto_schema(request_body=CalculatePaymentCommissionSerializer(),
+                         responses={
+                             200: openapi.Response(
+                                 description="Calculated commission",
+                                 schema=openapi.Schema(
+                                     type=openapi.TYPE_OBJECT,
+                                     properties={
+                                         'commission': openapi.Schema(type=openapi.TYPE_NUMBER, format='float'),
+                                     },
+                                     required=['commission']
+                                 ),
+                             ),
+                             400: "Bad Request",
+                         })
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        creator = self.get_creator(data['creator_id'])
+
+        creator_amount, amount, sapi_amount = calculate_payment_amount(amount=data['amount'],
+                                                                       sapi_share=creator.sapi_share,
+                                                                       commission_by_subscriber=True)
+
+        return Response({'commission': amount - creator_amount})

@@ -8,7 +8,7 @@ from rest_framework import serializers, status
 from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
 from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
-from apps.integrations.services.multibank import multibank_payment
+from apps.integrations.services.multibank import multibank_payment, calculate_payment_amount
 from config.core.api_exceptions import APIValidation
 from config.services import run_with_thread
 
@@ -106,10 +106,18 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
 class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
     banner = FileSerializer(read_only=True, allow_null=True)
     is_subscribed = serializers.SerializerMethodField(allow_null=True)
+    commission = serializers.SerializerMethodField(allow_null=True)
 
     def get_is_subscribed(self, obj):
         user: User = self.context['request'].user
         return user.subscriptions.filter(plan=obj).exists()
+
+    @staticmethod
+    def get_commission(obj):
+        creator_amount, amount, sapi_amount = calculate_payment_amount(amount=obj.price,
+                                                                       sapi_share=obj.creator.sapi_share,
+                                                                       commission_by_subscriber=True)
+        return amount - creator_amount
 
     class Meta:
         model = SubscriptionPlan
@@ -120,6 +128,7 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
             'price',
             'banner',
             'is_subscribed',
+            'commission',
             'created_at',
         ]
 
@@ -231,7 +240,13 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                 validated_data['message'] = None
             validated_data['donator'] = donator
             donation = super().create(validated_data)
-            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation', fundraising)
+            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation',
+                                             fundraising)
             donation.payment_info = payment_info
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation
+
+
+class CalculatePaymentCommissionSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(required=True)
+    creator_id = serializers.IntegerField(required=True)
