@@ -542,7 +542,10 @@ class GetMeAPIView(APIView):
                         "category_id": 1,
                         "category_name": "Test",
                         "multibank_account": "22616000462176153001",
-                        "multibank_verified": True
+                        "multibank_verified": True,
+                        "subscribers_count": 0,
+                        "followers_count": 0,
+                        "following_count": 0,
                     }
                 }
             )
@@ -562,6 +565,9 @@ class GetMeAPIView(APIView):
             'category_name': user.category.name if user.category else None,
             'multibank_account': user.multibank_account,
             'multibank_verified': user.multibank_verified,
+            'subscribers_count': user.subscribers_count(),
+            'followers_count': user.followers_count(),
+            'following_count': user.following_count(),
         })
 
 
