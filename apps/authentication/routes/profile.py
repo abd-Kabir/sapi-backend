@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow
+from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User
 from apps.authentication.serializers.profile import (DeleteAccountVerifySerializer,
                                                      MyCardListSerializer, AddCardSerializer,
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
@@ -369,3 +369,33 @@ class FollowersDashboardByPlanAPIView(APIView):
             })
 
         return Response(response_data)
+
+
+class IFollowedUsersAPIView(ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = BecomeCreatorSerializer
+    pagination_class = APILimitOffsetPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(followers__follower=self.request.user)
+        return queryset
+
+
+class MyFollowersAPIView(ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = BecomeCreatorSerializer
+    pagination_class = APILimitOffsetPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(following__followed=self.request.user)
+        return queryset
+
+
+class MySubscribersAPIView(ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = BecomeCreatorSerializer
+    pagination_class = APILimitOffsetPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(subscriptions__creator=self.request.user)
+        return queryset

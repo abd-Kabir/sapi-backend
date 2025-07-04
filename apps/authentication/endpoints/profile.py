@@ -6,7 +6,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 AddSubscriptionPlanAPIView, MySubscriptionPlanRetrieveUpdateAPIView,
                                                 LikedPostListAPIView, SavedPostListAPIView,
                                                 FundraisingListCreateAPIView, FundraisingDeleteRetrieveUpdateAPIView,
-                                                FollowersDashboardAPIView, FollowersDashboardByPlanAPIView)
+                                                FollowersDashboardAPIView, FollowersDashboardByPlanAPIView,
+                                                IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView)
 
 urlpatterns = [
     # account
@@ -43,4 +44,9 @@ urlpatterns = [
     # dashboard
     path('profile/dashboard/followers/', FollowersDashboardAPIView.as_view(), name='profile_dashboard_followers'),
     path('profile/dashboard/followers-by-plan/', FollowersDashboardByPlanAPIView.as_view(), name='profile_dashboard_by_plan'),
+
+    # my followers/subscribes
+    path('profile/followed-users/', IFollowedUsersAPIView.as_view(), name='profile_followed_users'),
+    path('profile/my-followers/', MyFollowersAPIView.as_view(), name='profile_my_followers'),
+    path('profile/my-subscribers/', MySubscribersAPIView.as_view(), name='profile_my_subscribers'),
 ]
