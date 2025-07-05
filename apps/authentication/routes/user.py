@@ -546,6 +546,7 @@ class GetMeAPIView(APIView):
                         "subscribers_count": 0,
                         "followers_count": 0,
                         "following_count": 0,
+                        "post_count": 0,
                     }
                 }
             )
@@ -568,6 +569,7 @@ class GetMeAPIView(APIView):
             'subscribers_count': user.subscribers_count(),
             'followers_count': user.followers_count(),
             'following_count': user.following_count(),
+            'post_count': user.posts.count(),
         })
 
 
