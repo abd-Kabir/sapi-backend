@@ -82,6 +82,14 @@ notif_dis_type_swagger_param = openapi.Parameter(
     # items=openapi.Items(type=openapi.TYPE_STRING, enum=['push_notification']),
     # enum=['push_notification'],
 )
+notif_user_type_swagger_param = openapi.Parameter(
+    'user_type',
+    openapi.IN_QUERY,
+    description='User type filter, choices: all, creators, users.',
+    type=openapi.TYPE_STRING,
+    # items=openapi.Items(type=openapi.TYPE_STRING, enum=['push_notification']),
+    enum=['all', 'creators', 'users', ],
+)
 admin_creator_list_params = [
     query_search_swagger_param,
     openapi.Parameter(
@@ -123,7 +131,15 @@ period_swagger_param = openapi.Parameter(
     openapi.IN_QUERY,
     description='Time period for grouping data points',
     type=openapi.TYPE_STRING,
-    enum=['day', 'week', 'month'],
+    enum=['day', 'week', 'month', 'year'],
+    default='day'
+)
+group_swagger_param = openapi.Parameter(
+    'group',
+    openapi.IN_QUERY,
+    description='Group data by: day, week, month or year',
+    type=openapi.TYPE_STRING,
+    enum=['day', 'week', 'month', 'year'],
     default='day'
 )
 start_date_swagger_param = openapi.Parameter(
@@ -159,7 +175,6 @@ dashboard_type_swagger_param = openapi.Parameter(
     enum=['creator_earnings', 'registered_accounts', 'active_accounts', 'new_registered_accounts',
           'active_subscriptions', 'content_type_counts', 'platform_earnings', ],
 )
-
 
 date_report_swagger_param = openapi.Parameter(
     'date',

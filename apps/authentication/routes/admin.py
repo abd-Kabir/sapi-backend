@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
@@ -24,11 +24,10 @@ from apps.content.serializers import ReportCommentSerializer, AdminUserModifySer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsAdmin
-from config.swagger import report_status_swagger_param, report_type_swagger_param, date_from_swagger_param, \
-    date_to_swagger_param, admin_creator_list_params, period_swagger_param, start_date_swagger_param, \
-    end_date_swagger_param, dashboard_user_type_swagger_param, notif_dis_status_swagger_param, \
-    notif_dis_type_swagger_param, dashboard_type_swagger_param, date_notification_swagger_param, \
-    date_report_swagger_param
+from config.swagger import report_status_swagger_param, report_type_swagger_param, admin_creator_list_params, \
+    period_swagger_param, start_date_swagger_param, end_date_swagger_param, dashboard_user_type_swagger_param, \
+    notif_dis_status_swagger_param, notif_dis_type_swagger_param, dashboard_type_swagger_param, \
+    date_notification_swagger_param, date_report_swagger_param, notif_user_type_swagger_param, group_swagger_param
 
 
 class DashboardCreatorEarningsAPIView(APIView):
@@ -39,108 +38,111 @@ class DashboardCreatorEarningsAPIView(APIView):
     def get_action():
         return 'list'
 
-    @swagger_auto_schema(manual_parameters=[period_swagger_param, start_date_swagger_param, end_date_swagger_param,
-                                            dashboard_user_type_swagger_param, dashboard_type_swagger_param],
-                         responses={
-                             200: openapi.Response(
-                                 description='Analytics data retrieved successfully',
-                                 examples={
-                                     'application/json': {
-                                         'creator_earnings': {'data': 35200},
-                                         'registered_accounts': {
-                                             'data': [
-                                                 {
-                                                     'date': '2025-05-31',
-                                                     'count': 4
-                                                 },
-                                                 {
-                                                     'date': '2025-06-04',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-06',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-26',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-27',
-                                                     'count': 1
-                                                 }
-                                             ]
-                                         },
-                                         'active_accounts': {
-                                             'data': [
-                                                 {
-                                                     'date': '2025-05-31',
-                                                     'count': 4
-                                                 },
-                                                 {
-                                                     'date': '2025-06-06',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-26',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-27',
-                                                     'count': 1
-                                                 }
-                                             ]
-                                         },
-                                         'new_registered_accounts': {
-                                             'data': [
-                                                 {
-                                                     'date': '2025-06-26',
-                                                     'count': 1
-                                                 },
-                                                 {
-                                                     'date': '2025-06-27',
-                                                     'count': 1
-                                                 }
-                                             ]
-                                         },
-                                         'active_subscriptions': {
-                                             'data': [
-                                                 {
-                                                     'date': '2025-06-27',
-                                                     'count': 1
-                                                 }
-                                             ]
-                                         },
-                                         'content_type_counts': {
-                                             'data': [
-                                                 {
-                                                     'type': 'Музыка',
-                                                     'count': 1
-                                                 }
-                                             ]
-                                         },
-                                         'platform_earnings': {
-                                             'total_amount': 4800,
-                                             'data': [
-                                                 {
-                                                     'date': '2025-06-11',
-                                                     'amount': 3600
-                                                 },
-                                                 {
-                                                     'date': '2025-06-12',
-                                                     'amount': 1200
-                                                 }
-                                             ]
-                                         }
-                                     }
-                                 })
-                         })
+    @swagger_auto_schema(
+        manual_parameters=[group_swagger_param, period_swagger_param, start_date_swagger_param, end_date_swagger_param,
+                           dashboard_user_type_swagger_param, dashboard_type_swagger_param],
+        responses={
+            200: openapi.Response(
+                description='Analytics data retrieved successfully',
+                examples={
+                    'application/json': {
+                        'creator_earnings': {'data': 35200},
+                        'registered_accounts': {
+                            'data': [
+                                {
+                                    'date': '2025-05-31',
+                                    'count': 4
+                                },
+                                {
+                                    'date': '2025-06-04',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-06',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-26',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-27',
+                                    'count': 1
+                                }
+                            ]
+                        },
+                        'active_accounts': {
+                            'data': [
+                                {
+                                    'date': '2025-05-31',
+                                    'count': 4
+                                },
+                                {
+                                    'date': '2025-06-06',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-26',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-27',
+                                    'count': 1
+                                }
+                            ]
+                        },
+                        'new_registered_accounts': {
+                            'data': [
+                                {
+                                    'date': '2025-06-26',
+                                    'count': 1
+                                },
+                                {
+                                    'date': '2025-06-27',
+                                    'count': 1
+                                }
+                            ]
+                        },
+                        'active_subscriptions': {
+                            'data': [
+                                {
+                                    'date': '2025-06-27',
+                                    'count': 1
+                                }
+                            ]
+                        },
+                        'content_type_counts': {
+                            'data': [
+                                {
+                                    'type': 'Музыка',
+                                    'count': 1
+                                }
+                            ]
+                        },
+                        'platform_earnings': {
+                            'total_amount': 4800,
+                            'data': [
+                                {
+                                    'date': '2025-06-11',
+                                    'amount': 3600
+                                },
+                                {
+                                    'date': '2025-06-12',
+                                    'amount': 1200
+                                }
+                            ]
+                        }
+                    }
+                })
+        })
     def get(self, request, *args, **kwargs):
-        period = request.query_params.get('period', 'day')
-        trunc_func = {  # TODO: not understood, end it later
+        group = request.query_params.get('group', 'day')
+        period = request.query_params.get('period', 'month')
+        trunc_func = {
             'day': TruncDate,
             'week': TruncWeek,
-            'month': TruncMonth
+            'month': TruncMonth,
+            'year': TruncYear
         }.get(period, TruncDate)
 
         start_date = request.query_params.get('start_date')
@@ -152,10 +154,10 @@ class DashboardCreatorEarningsAPIView(APIView):
         new_reg_end_date = now().strftime('%Y-%m-%d')
 
         dashboard_funcs = {
-            'creator_earnings': lambda: creator_earnings(),
-            'registered_accounts': lambda: registered_accounts(trunc_func, user_type, start_date, end_date, None),
-            'active_accounts': lambda: registered_accounts(trunc_func, user_type, start_date, end_date, True),
-            'new_registered_accounts': lambda: registered_accounts(trunc_func, user_type, new_reg_start_date,
+            'creator_earnings': lambda: creator_earnings(period),
+            'registered_accounts': lambda: registered_accounts(group, period, user_type, start_date, end_date, None),
+            'active_accounts': lambda: registered_accounts(group, period, user_type, start_date, end_date, True),
+            'new_registered_accounts': lambda: registered_accounts(group, period, user_type, new_reg_start_date,
                                                                    new_reg_end_date, None),
             'active_subscriptions': lambda: active_subscriptions(trunc_func, start_date, end_date),
             'content_type_counts': lambda: content_type_counts(),
@@ -608,7 +610,7 @@ class AdminNotifDisListAPIView(ListAPIView):
     @swagger_auto_schema(
         operation_summary='List of notifications.',
         manual_parameters=[date_notification_swagger_param, notif_dis_status_swagger_param,
-                           notif_dis_type_swagger_param]
+                           notif_dis_type_swagger_param, notif_user_type_swagger_param]
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
