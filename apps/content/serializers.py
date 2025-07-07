@@ -280,6 +280,8 @@ class PostShowSerializer(serializers.ModelSerializer):
 
 
 class PostShowCommentListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    profile_photo = FileSerializer(source='user.profile_photo', read_only=True, allow_null=True)
     replies = serializers.SerializerMethodField()
     has_liked = serializers.SerializerMethodField()
 
@@ -301,10 +303,14 @@ class PostShowCommentListSerializer(serializers.ModelSerializer):
             'has_liked',
             'replies',
             'created_at',
+            'username',
+            'profile_photo',
         ]
 
 
 class PostShowCommentRepliesSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    profile_photo = FileSerializer(source='user.profile_photo', read_only=True, allow_null=True)
     has_liked = serializers.SerializerMethodField()
 
     def get_has_liked(self, obj):
@@ -319,6 +325,8 @@ class PostShowCommentRepliesSerializer(serializers.ModelSerializer):
             'like_count',
             'has_liked',
             'created_at',
+            'username',
+            'profile_photo',
         ]
 
 

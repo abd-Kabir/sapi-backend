@@ -19,6 +19,7 @@ class AdminCreatorListSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    block_reason_display = serializers.CharField(source='get_block_reason_display', read_only=True, allow_null=True)
 
     @staticmethod
     def get_subscribers_count(obj):
@@ -55,6 +56,8 @@ class AdminCreatorListSerializer(serializers.ModelSerializer):
             'sapi_share',
             'date_joined',
             'status',
+            'block_reason',
+            'block_reason_display',
 
             'profile_photo_info',
             'profile_banner_photo_info',
