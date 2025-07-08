@@ -273,6 +273,8 @@ class PostToggleLikeAPIView(APIView):
 
 class PostLeaveCommentAPIView(APIView):
     serializer_class = PostLeaveCommentSerializer
+    response_serializer_class = PostShowCommentListSerializer
+    response_replies_serializer_class = PostShowCommentRepliesSerializer
 
     @staticmethod
     def get_post(post_id):
@@ -295,7 +297,9 @@ class PostLeaveCommentAPIView(APIView):
         comment = Comment.objects.create(user=user, post=post, text=text)
         if user != post.user:
             run_with_thread(create_activity, ('commented', None, comment.id, user, post.user))
-        return {'detail': _('Вы оставили комментарий')}
+        response_serializer = self.response_serializer_class(comment, context={'request': self.request})
+        return response_serializer.data
+        # return {'detail': _('Вы оставили комментарий')}
 
     def leave_reply(self, post_id, comment_id, text):
         user = self.request.user
@@ -305,7 +309,9 @@ class PostLeaveCommentAPIView(APIView):
         comment = Comment.objects.create(user=user, post=post, parent=parent, text=text)
         if user != post.user:
             run_with_thread(create_activity, ('replied', None, comment.id, user, post.user))
-        return {'detail': _('Вы оставили ответ на комментарий')}
+        response_serializer = self.response_replies_serializer_class(comment, context={'request': self.request})
+        return response_serializer.data
+        # return {'detail': _('Вы оставили ответ на комментарий')}
 
     @swagger_auto_schema(request_body=PostLeaveCommentSerializer)
     def post(self, request, *args, **kwargs):
