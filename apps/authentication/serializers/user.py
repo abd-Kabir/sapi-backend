@@ -100,6 +100,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_followed_by_you',
             'is_blocked_by_you',
             'has_subscription',
+            'minimum_message_donation',
         ]
 
 
@@ -207,6 +208,7 @@ class DonationCreateSerializer(serializers.ModelSerializer):
         fields = [
             'amount',
             'message',
+            'commission_by_subscriber',
             'card',
             'fundraising',
             'creator',
@@ -228,6 +230,7 @@ class DonationCreateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             donator = self.context['request'].user
             creator = validated_data.get('creator')
+            commission_by_subscriber = validated_data.get('commission_by_subscriber')
             card = validated_data.get('card')
             fundraising = validated_data.get('fundraising')
             if fundraising:
@@ -241,7 +244,7 @@ class DonationCreateSerializer(serializers.ModelSerializer):
             validated_data['donator'] = donator
             donation = super().create(validated_data)
             payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation',
-                                             fundraising)
+                                             fundraising, commission_by_subscriber)
             donation.payment_info = payment_info
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation

@@ -73,6 +73,8 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField(allow_null=True)
     earned = serializers.SerializerMethodField(allow_null=True)
     status = serializers.SerializerMethodField(allow_null=True)
+    username = serializers.SerializerMethodField(allow_null=True)
+    phone_number = serializers.SerializerMethodField(allow_null=True)
 
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
@@ -105,6 +107,14 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
         else:
             status = _('Активен') if obj.is_creator else _('Не активен')
         return status
+
+    @staticmethod
+    def get_username(obj):
+        return obj.username if obj.username else obj.temp_username
+
+    @staticmethod
+    def get_phone_number(obj):
+        return obj.phone_number if obj.phone_number else obj.temp_phone_number
 
     class Meta:
         model = User

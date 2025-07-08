@@ -387,6 +387,8 @@ class Fundraising(BaseModel):
 class Donation(BaseModel):
     amount = models.PositiveBigIntegerField()
     message = models.TextField(null=True, blank=True)
+    commission_by_subscriber = models.BooleanField(default=False)
+
     card = models.ForeignKey(Card, on_delete=models.SET_NULL, null=True, related_name='donations')
     fundraising = models.ForeignKey(Fundraising, on_delete=models.SET_NULL, null=True, related_name='donations')
 
