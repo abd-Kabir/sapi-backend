@@ -222,8 +222,7 @@ class AdminBlockCreatorPostAPIView(APIView):
         except:
             raise APIValidation(_('Пост не найден'), status_code=404)
 
-    @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer,
-                         responses={200: AdminCreatorRetrieveSerializer()})
+    @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer)
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
