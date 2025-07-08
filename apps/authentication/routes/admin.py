@@ -19,7 +19,7 @@ from apps.authentication.serializers.admin import AdminCreatorListSerializer, Ad
     AdminNotifDisSerializer
 from apps.authentication.services import creator_earnings, registered_accounts, active_subscriptions, \
     content_type_counts, platform_earnings
-from apps.content.models import Report, ReportStatusTypes, ReportComment
+from apps.content.models import Report, ReportStatusTypes, ReportComment, Post
 from apps.content.serializers import ReportCommentSerializer, AdminUserModifySerializer, AdminUserListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
@@ -215,6 +215,13 @@ class AdminBlockCreatorPostAPIView(APIView):
         except:
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
+    @staticmethod
+    def get_post(pk):
+        try:
+            return Post.all_objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Пост не найден'), status_code=404)
+
     @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer,
                          responses={200: AdminCreatorRetrieveSerializer()})
     def post(self, request, *args, **kwargs):
@@ -222,16 +229,21 @@ class AdminBlockCreatorPostAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        user = self.get_creator(data.get('user_id'))
-        user.is_blocked_by = request.user
-        user.block_desc = data.get('block_desc')
-        user.block_reason = data.get('block_reason')
-        user.temp_phone_number = user.phone_number
-        user.phone_number = None
-        user.temp_username = user.username
-        user.username = None
-        user.save(update_fields=['is_blocked_by', 'block_desc', 'block_reason', 'temp_phone_number', 'phone_number',
-                                 'temp_username', 'username'])
+        if data.get('user_id'):
+            user = self.get_creator(data.get('user_id'))
+            user.is_blocked_by = request.user
+            user.block_desc = data.get('block_desc')
+            user.block_reason = data.get('block_reason')
+            user.temp_phone_number = user.phone_number
+            user.phone_number = None
+            user.temp_username = user.username
+            user.username = None
+            user.save(update_fields=['is_blocked_by', 'block_desc', 'block_reason', 'temp_phone_number', 'phone_number',
+                                     'temp_username', 'username'])
+        elif data.get('post_id'):
+            post = self.get_post(data.get('post_id'))
+            post.is_blocked = True
+            post.save(update_fields=['is_blocked'])
 
         return Response(status=status.HTTP_200_OK)
 
