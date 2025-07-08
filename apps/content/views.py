@@ -135,7 +135,11 @@ class PostByUserListAPIView(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = Post.objects.all()
+        user = self.request.user
+        if user.is_admin:
+            queryset = Post.all_objects.all()
+        else:
+            queryset = Post.objects.all()
         queryset = queryset.filter(user_id=self.kwargs['user_id'])
         return queryset
 

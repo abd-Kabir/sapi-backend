@@ -187,6 +187,7 @@ class PostListSerializer(serializers.ModelSerializer):
     has_liked = serializers.SerializerMethodField()
     can_view = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     def get_has_liked(self, obj):
         user = self.context.get('request').user
@@ -197,6 +198,10 @@ class PostListSerializer(serializers.ModelSerializer):
         return obj.can_view(user)
 
     def get_is_saved(self, obj: Post):
+        user = self.context.get('request').user
+        return obj.is_saved_by(user)
+
+    def get_status(self, obj: Post):
         user = self.context.get('request').user
         return obj.is_saved_by(user)
 
@@ -235,6 +240,7 @@ class PostListSerializer(serializers.ModelSerializer):
             'is_saved',
             'files',
             'user',
+            'status',
         ]
 
 

@@ -104,6 +104,9 @@ class Post(BaseModel):
         if not self.is_premium:
             return True
 
+        if user.is_admin:
+            return True
+
         if not user.is_authenticated:
             return False
 
@@ -153,6 +156,12 @@ class Post(BaseModel):
     def get_saved_count(self):
         """Get total number of saves for this post"""
         return self.saved_by_users.count()
+    def get_status(self):
+        if self.is_blocked:
+            return _('Заблокирован')
+        if self.is_posted:
+            return _('Опубликован')
+        return _('Не опубликован')
 
     class Meta:
         db_table = "post"
