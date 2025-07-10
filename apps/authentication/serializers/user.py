@@ -120,6 +120,14 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
                                                                        commission_by_subscriber=True)
         return amount - creator_amount
 
+    def to_representation(self, instance):
+        user = self.context['request'].user
+        representation = super().to_representation(instance)
+        if user.is_admin:
+            representation['is_deleted'] = instance.is_deleted
+            representation['is_active'] = instance.is_active
+        return representation
+
     class Meta:
         model = SubscriptionPlan
         fields = [

@@ -73,6 +73,7 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField(allow_null=True)
     earned = serializers.SerializerMethodField(allow_null=True)
     status = serializers.SerializerMethodField(allow_null=True)
+    block_reason_display = serializers.CharField(source='get_block_reason_display', allow_null=True)
     username = serializers.SerializerMethodField(allow_null=True)
     phone_number = serializers.SerializerMethodField(allow_null=True)
 
@@ -132,6 +133,11 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
             'followers_count',
             'earned',
             'status',
+            'multibank_verified',
+            'multibank_account',
+            'block_reason',
+            'block_reason_display',
+            'block_desc',
 
             'profile_photo_info',
             'profile_banner_photo_info',

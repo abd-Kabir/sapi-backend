@@ -64,6 +64,9 @@ class Post(BaseModel):
     publication_time = models.DateTimeField(null=True, blank=True)
 
     is_blocked = models.BooleanField(default=False)
+    block_reason = models.CharField(choices=ReportTypes.choices, max_length=20, null=True)
+    block_desc = models.TextField(null=True, blank=True)
+
     is_deleted = models.BooleanField(default=False)
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255, blank=True, null=True)

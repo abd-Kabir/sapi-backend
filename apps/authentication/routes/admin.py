@@ -222,12 +222,27 @@ class AdminBlockCreatorPostAPIView(APIView):
         except:
             raise APIValidation(_('Пост не найден'), status_code=404)
 
-    @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer)
+    @swagger_auto_schema(request_body=AdminBlockCreatorPostSerializer,
+                         responses={
+                             200: openapi.Response(
+                                 description='Успешный ответ',
+                                 examples={
+                                     'application/json': {
+                                         'user_id': 1,
+                                         'post_id': 1,
+                                         'block_desc': 'Спам',
+                                         'block_reason': 'Нарушение правил',
+                                         'status': 'Заблокирован'
+                                     }
+                                 }
+                             ),
+                         })
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        response = {}
         if data.get('user_id'):
             user = self.get_creator(data.get('user_id'))
             user.is_blocked_by = request.user
@@ -239,12 +254,33 @@ class AdminBlockCreatorPostAPIView(APIView):
             user.username = None
             user.save(update_fields=['is_blocked_by', 'block_desc', 'block_reason', 'temp_phone_number', 'phone_number',
                                      'temp_username', 'username'])
+            if user.is_blocked_by:
+                user_status = _('Заблокирован')
+            else:
+                user_status = _('Активен') if user.is_creator else _('Не активен')
+            response = {
+                'user_id': user.id,
+                'post_id': None,
+                'block_desc': user.block_desc,
+                'block_reason': user.block_reason,
+                'status': user_status
+            }
         elif data.get('post_id'):
             post = self.get_post(data.get('post_id'))
             post.is_blocked = True
-            post.save(update_fields=['is_blocked'])
+            post.block_desc = data.get('block_desc')
+            post.block_reason = data.get('block_reason')
+            post.save(update_fields=['is_blocked', 'block_desc', 'block_reason'])
+            post_status = post.get_status()
+            response = {
+                'user_id': None,
+                'post_id': post.id,
+                'block_desc': post.block_desc,
+                'block_reason': post.block_reason,
+                'status': post_status
+            }
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(response, status=status.HTTP_200_OK)
 
 
 class AdminCreatorSAPIShareAPIView(APIView):
