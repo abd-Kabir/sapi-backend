@@ -201,9 +201,9 @@ class PostListSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         return obj.is_saved_by(user)
 
-    def get_status(self, obj: Post):
-        user = self.context.get('request').user
-        return obj.is_saved_by(user)
+    @staticmethod
+    def get_status(obj: Post):
+        return obj.get_status()
 
     def to_representation(self, instance: Post):
         user = self.context.get('request').user

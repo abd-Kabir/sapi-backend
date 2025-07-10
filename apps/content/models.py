@@ -156,6 +156,7 @@ class Post(BaseModel):
     def get_saved_count(self):
         """Get total number of saves for this post"""
         return self.saved_by_users.count()
+
     def get_status(self):
         if self.is_blocked:
             return _('Заблокирован')
@@ -274,6 +275,7 @@ class Report(BaseModel):
         constraints = [
             models.UniqueConstraint(fields=['user', 'post'], name='reports_unique_user_post')
         ]
+
 
 class ReportComment(BaseModel):
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='report_comments')
