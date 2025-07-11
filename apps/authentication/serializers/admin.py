@@ -168,11 +168,13 @@ class ReportListSerializer(serializers.ModelSerializer):
     reported_username = serializers.CharField(source='user.username', read_only=True)
     report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    category_name = serializers.CharField(source='post.category.name', read_only=True)
 
     class Meta:
         model = Report
         fields = [
             'id',
+            'category_name',
             'post',
             'post_username',
             'post_title',

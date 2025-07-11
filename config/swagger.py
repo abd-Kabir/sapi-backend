@@ -2,7 +2,16 @@ from drf_yasg import openapi
 
 from apps.authentication.models import NotifDisStatus
 from apps.content.models import ReportStatusTypes, PostTypes
-
+query_category_swagger_param = openapi.Parameter(
+        'category', openapi.IN_QUERY,
+        description='Filter by Category ID',
+        type=openapi.TYPE_INTEGER
+    )
+query_category_id_swagger_param = openapi.Parameter(
+        'category_id', openapi.IN_QUERY,
+        description='Filter by Category ID. Get list of categories from this API: /content/category/',
+        type=openapi.TYPE_INTEGER
+    )
 query_choice_swagger_param = openapi.Parameter(
     'type',
     openapi.IN_QUERY,
@@ -97,11 +106,7 @@ admin_creator_list_params = [
         description='Filter users registered from this date (format: YYYY-MM-DD)',
         type=openapi.FORMAT_DATE
     ),
-    openapi.Parameter(
-        'category', openapi.IN_QUERY,
-        description='Filter by Category ID',
-        type=openapi.TYPE_INTEGER
-    ),
+    query_category_swagger_param,
     openapi.Parameter(
         'user_type', openapi.IN_QUERY,
         description='User type: 0 - User, 1 - Creator',
@@ -183,7 +188,6 @@ date_report_swagger_param = openapi.Parameter(
     type=openapi.TYPE_STRING,
     format=openapi.FORMAT_DATE
 )
-
 date_notification_swagger_param = openapi.Parameter(
     'date',
     openapi.IN_QUERY,
