@@ -162,6 +162,7 @@ class AdminCreatorUpdateSAPIShareSerializer(serializers.Serializer):
 
 
 class ReportListSerializer(serializers.ModelSerializer):
+    post_files = FileSerializer(source='post.files', read_only=True, allow_null=True, many=True)
     post_username = serializers.CharField(source='post.user.username', read_only=True)
     post_title = serializers.CharField(source='post.title', read_only=True)
     post_description = serializers.CharField(source='post.description', read_only=True)
@@ -176,6 +177,7 @@ class ReportListSerializer(serializers.ModelSerializer):
             'id',
             'category_name',
             'post',
+            'post_files',
             'post_username',
             'post_title',
             'post_description',
