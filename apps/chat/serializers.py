@@ -28,12 +28,20 @@ class UserChatRoomListSerializer(serializers.ModelSerializer):
     def get_last_message(self, room):
         user = self.context['request'].user
         message = room.messages.order_by('-id').first()
-        file = FileSerializer(message.file).data if message.file else None
-        if message.sender != user:
-            is_read = message.is_read
-        else:
-            is_read = True
-        return {'id': message.id, 'content': message.content, 'file': file, 'is_read': is_read}
+        file = None
+        is_read = None
+        message_id = None
+        content = None
+        if message:
+            message_id = message.id
+            content = message.content
+
+            file = FileSerializer(message.file).data if message.file else None
+            if message.sender != user:
+                is_read = message.is_read
+            else:
+                is_read = True
+        return {'id': message_id, 'content': content, 'file': file, 'is_read': is_read}
 
     class Meta:
         model = ChatRoom
