@@ -20,7 +20,9 @@ class UserChatRoomListAPIView(ListAPIView):
     serializer_class = UserChatRoomListSerializer
 
     def get_queryset(self):
+        user = self.request.user
         queryset = super().get_queryset()
+        queryset = queryset.filter(Q(creator=user) | Q(subscriber=user))
         return queryset
 
 
