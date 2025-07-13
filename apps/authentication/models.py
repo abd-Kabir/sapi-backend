@@ -123,7 +123,13 @@ class User(AbstractUser):
     creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
     multibank_verified = models.BooleanField(default=False)
+
     minimum_message_donation = models.PositiveBigIntegerField(default=0)
+    max_donation_letters = models.PositiveBigIntegerField(default=None, null=True, blank=True)
+    show_donation_amount = models.PositiveBigIntegerField(default=None, null=True, blank=True)
+    donation_banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+                                           related_name='donation_banner')
+
     sapi_share = models.PositiveSmallIntegerField(default=10)
     pinfl = models.CharField(null=True, blank=True, max_length=14)
 

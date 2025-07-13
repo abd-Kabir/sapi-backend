@@ -28,7 +28,7 @@ class UserChatRoomListSerializer(serializers.ModelSerializer):
     def get_last_message(self, room):
         user = self.context['request'].user
         message = room.messages.order_by('-id').first()
-        file = FileSerializer(message.file).data
+        file = FileSerializer(message.file).data if message.file else None
         if message.sender != user:
             is_read = message.is_read
         else:
@@ -70,6 +70,7 @@ class MessageListSerializer(serializers.ModelSerializer):
 
 
 class ChatSettingsSerializer(serializers.ModelSerializer):
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
     subscription_plans = serializers.ListField(child=serializers.IntegerField(), required=False, write_only=True)
     minimum_message_donation = serializers.IntegerField(required=False, write_only=True)
 
@@ -88,4 +89,5 @@ class ChatSettingsSerializer(serializers.ModelSerializer):
             'can_chat',
             'subscription_plans',
             'minimum_message_donation',
+            'creator',
         ]

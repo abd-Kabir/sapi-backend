@@ -21,7 +21,7 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
                                                      MySubscriptionPlanRetrieveUpdateSerializer,
                                                      FundraisingSerializer, FollowersDashboardByPlanSerializer)
-from apps.authentication.serializers.user import BecomeCreatorSerializer
+from apps.authentication.serializers.user import BecomeCreatorSerializer, ConfigureDonationSettingsSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
@@ -399,3 +399,27 @@ class MySubscribersAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset().filter(subscriptions__creator=self.request.user)
         return queryset
+
+
+class ConfigureDonationSettingsAPIView(APIView):
+    serializer_class = ConfigureDonationSettingsSerializer
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(request_body=ConfigureDonationSettingsSerializer,
+                         responses={status.HTTP_200_OK: ConfigureDonationSettingsSerializer()})
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.validated_data)
+
+
+class ConfigurationDonationSettingsAPIView(APIView):
+    serializer_class = ConfigureDonationSettingsSerializer
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: ConfigureDonationSettingsSerializer()})
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user)
+        return Response(serializer.data)

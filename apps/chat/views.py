@@ -88,8 +88,9 @@ class GetChatSettingsAPIView(APIView):
 class ConfigureChatSettingsAPIView(APIView):
     serializer_class = ChatSettingsSerializer
 
-    @swagger_auto_schema(request_body=ChatSettingsSerializer(), responses=chat_settings_swagger)
+    @swagger_auto_schema(request_body=ChatSettingsSerializer(many=True), responses=chat_settings_swagger)
     def post(self, request, *args, **kwargs):
+        ChatSettings.objects.filter(creator=request.user).delete()
         serializer = self.serializer_class(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()

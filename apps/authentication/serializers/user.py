@@ -43,6 +43,7 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
 
 
 class UserRetrieveSerializer(serializers.ModelSerializer):
+    donation_banner_info = FileSerializer(read_only=True, allow_null=True, source='donation_banner')
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
@@ -100,7 +101,11 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_followed_by_you',
             'is_blocked_by_you',
             'has_subscription',
+
             'minimum_message_donation',
+            'max_donation_letters',
+            'show_donation_amount',
+            'donation_banner_info',
         ]
 
 
@@ -249,6 +254,8 @@ class DonationCreateSerializer(serializers.ModelSerializer):
                     raise APIValidation(_('Срок сбора средств прошел'), status_code=400)
             if creator.minimum_message_donation > validated_data.get('amount', 0):
                 validated_data['message'] = None
+            if creator.max_donation_letters:
+                validated_data['message'] = validated_data['message'][:creator.max_donation_letters]
             validated_data['donator'] = donator
             donation = super().create(validated_data)
             payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation',
@@ -261,3 +268,30 @@ class DonationCreateSerializer(serializers.ModelSerializer):
 class CalculatePaymentCommissionSerializer(serializers.Serializer):
     amount = serializers.IntegerField(required=True)
     creator_id = serializers.IntegerField(required=True)
+
+
+class ConfigureDonationSettingsSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        user.minimum_message_donation = validated_data.get('minimum_message_donation', user.minimum_message_donation)
+        user.donation_banner = validated_data.get('donation_banner', user.donation_banner)
+        user.max_donation_letters = validated_data.get('max_donation_letters', user.max_donation_letters)
+        user.show_donation_amount = validated_data.get('show_donation_amount', user.show_donation_amount)
+        user.save(update_fields=['minimum_message_donation', 'donation_banner', 'max_donation_letters'])
+        return user
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['donation_banner'] = FileSerializer(instance.donation_banner).data if instance.donation_banner else None
+        return representation
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'minimum_message_donation',
+            'donation_banner',
+            'max_donation_letters',
+            'show_donation_amount',
+        ]

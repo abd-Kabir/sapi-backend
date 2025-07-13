@@ -574,6 +574,11 @@ class GetMeAPIView(APIView):
             'followers_count': user.followers_count(),
             'following_count': user.following_count(),
             'post_count': user.posts.count(),
+
+            'minimum_message_donation': user.minimum_message_donation,
+            'max_donation_letters': user.max_donation_letters,
+            'show_donation_amount': user.show_donation_amount,
+            'donation_banner': self.serialize_file(user.donation_banner),
         })
 
 
