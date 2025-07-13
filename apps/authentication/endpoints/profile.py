@@ -8,7 +8,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 FundraisingListCreateAPIView, FundraisingDeleteRetrieveUpdateAPIView,
                                                 FollowersDashboardAPIView, FollowersDashboardByPlanAPIView,
                                                 IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView,
-                                                ConfigureDonationSettingsAPIView, ConfigurationDonationSettingsAPIView)
+                                                ConfigureDonationSettingsAPIView, ConfigurationDonationSettingsAPIView,
+                                                FollowersDashboardEarnedAPIView, DeleteSubscriptionPlanAPIView)
 
 urlpatterns = [
     # account
@@ -30,8 +31,9 @@ urlpatterns = [
     path('profile/subscription-plan/add-subscription-plan/', AddSubscriptionPlanAPIView.as_view(),
          name='profile_add_subscription_plan'),
     path('profile/subscription-plan/<int:pk>/exact-subscription-plan/',
-         MySubscriptionPlanRetrieveUpdateAPIView.as_view(),
-         name='profile_add_subscription_plan'),
+         MySubscriptionPlanRetrieveUpdateAPIView.as_view(), name='profile_get_update_subscription_plan'),
+    path('profile/subscription-plan/<int:pk>/delete-subscription-plan/',
+         DeleteSubscriptionPlanAPIView.as_view(), name='profile_delete_subscription_plan'),
 
     # saved/liked posts
     path('profile/interested/liked-posts/', LikedPostListAPIView.as_view(), name='own_liked_posts'),
@@ -43,6 +45,7 @@ urlpatterns = [
          name='profile_fundraising_get_destroy_update'),
 
     # dashboard
+    path('profile/dashboard/earned/', FollowersDashboardEarnedAPIView.as_view(), name='profile_dashboard_earned'),
     path('profile/dashboard/followers/', FollowersDashboardAPIView.as_view(), name='profile_dashboard_followers'),
     path('profile/dashboard/followers-by-plan/', FollowersDashboardByPlanAPIView.as_view(),
          name='profile_dashboard_by_plan'),

@@ -195,10 +195,11 @@ class UserSubscriptionPlanListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset()
         if not user.is_admin:
-            queryset = queryset.filter(is_active=True, is_deleted=False)
-
+            queryset = SubscriptionPlan.objects.all()
+            queryset = queryset.filter(is_active=True)
+        else:
+            queryset = SubscriptionPlan.all_objects.all()
         queryset = queryset.filter(creator=self.kwargs['user_id'])
         return queryset
 

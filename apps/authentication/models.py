@@ -6,10 +6,11 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.managers import CardManager, UserManager, AllUserManager
+from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager
 from apps.content.models import ReportTypes
 from config.models import BaseModel
 
@@ -279,8 +280,11 @@ class SubscriptionPlan(BaseModel):
     banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='subscription_plans')
 
-    # def subscribers_count(self):
-    #     return self.user
+    objects = SubscriptionPlanManager()
+    all_objects = models.Manager()
+
+    def subscribers_count(self):
+        return self.subscriptions.filter(is_active=True, end_date__gte=now()).count()
 
     def set_duration(self):
         today = date.today()
@@ -297,7 +301,7 @@ class UserSubscription(BaseModel):
     subscriber_card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='subscriptions')
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
-    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='subscriptions')
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)

@@ -1,5 +1,6 @@
 from django.db import IntegrityError
 from django.db.models import Q, OuterRef, Exists
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
@@ -161,7 +162,8 @@ class PostByFollowedListAPIView(ListAPIView):
         subscribed = UserSubscription.objects.filter(
             subscriber=user,
             creator_id=OuterRef('user_id'),
-            is_active=True
+            is_active=True,
+            end_date__gte=now()
         )
 
         queryset = Post.objects.all()

@@ -28,7 +28,7 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class AnswerOptionCreateSerializer(serializers.ModelSerializer):
+class AnswerOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnswerOption
         fields = [
@@ -39,7 +39,7 @@ class AnswerOptionCreateSerializer(serializers.ModelSerializer):
 
 class PostCreateSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    answers = AnswerOptionCreateSerializer(required=False, many=True)
+    answers = AnswerOptionSerializer(required=False, many=True)
     files = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=File.objects.all(),
@@ -188,6 +188,7 @@ class PostListSerializer(serializers.ModelSerializer):
     can_view = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    answers = AnswerOptionSerializer(many=True, read_only=True)
 
     def get_has_liked(self, obj):
         user = self.context.get('request').user
@@ -241,6 +242,8 @@ class PostListSerializer(serializers.ModelSerializer):
             'files',
             'user',
             'status',
+            'answers',
+            'allow_multiple_answers',
         ]
 
 

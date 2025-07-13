@@ -57,6 +57,11 @@ class AddCardSerializer(serializers.ModelSerializer):
 
 class MySubscriptionPlanListSerializer(serializers.ModelSerializer):
     banner = FileSerializer(read_only=True, allow_null=True)
+    subscribers_count = serializers.SerializerMethodField(allow_null=True)
+
+    @staticmethod
+    def get_subscribers_count(obj):
+        return obj.subscribers_count()
 
     class Meta:
         model = SubscriptionPlan
@@ -67,6 +72,7 @@ class MySubscriptionPlanListSerializer(serializers.ModelSerializer):
             'description',
             'price',
             # 'duration',
+            'subscribers_count',
             'banner',
         ]
 
