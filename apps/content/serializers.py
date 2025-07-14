@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
@@ -5,6 +7,7 @@ from rest_framework import serializers, status
 from apps.authentication.models import User, UserPermissions, PermissionTypes
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report, ReportComment
+from apps.content.services import calculate_correct_answers
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -32,6 +35,7 @@ class AnswerOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnswerOption
         fields = [
+            'id',
             'text',
             'is_correct',
         ]
@@ -177,6 +181,13 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
             .first()
             .answers
         )
+
+        answer_options = instance.answers.values_list('id', flat=True)
+        post_answers_queryset = instance.post_answers.values_list('answers', flat=True)
+        post_answers_list = list(chain.from_iterable(post_answers_queryset))
+        correct_answers = calculate_correct_answers(answer_options, post_answers_list)
+        representation['correct_answers'] = correct_answers
+        representation['total_answers_count'] = len(post_answers_list)
         return representation
 
 

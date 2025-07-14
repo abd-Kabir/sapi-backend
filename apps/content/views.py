@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.db import IntegrityError
 from django.db.models import Q, OuterRef, Exists
 from django.utils.timezone import now
@@ -19,6 +21,7 @@ from apps.content.serializers import PostCreateSerializer, CategorySerializer, C
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
     PostToggleLikeSerializer, PostShowSerializer, PostShowCommentListSerializer, PostShowCommentRepliesSerializer, \
     PostLeaveCommentSerializer, ReportSerializer
+from apps.content.services import calculate_correct_answers
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
@@ -108,6 +111,60 @@ class QuestionnairePostAnswerAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class CalculateQuestionnaireAnswersAPIView(APIView):
+    @staticmethod
+    def get_post(pk):
+        try:
+            return Post.objects.get(id=pk)
+        except:
+            raise APIValidation(_('Пост не найден'), status_code=status.HTTP_404_NOT_FOUND)
+
+    @swagger_auto_schema(
+        operation_description="Calculate and retrieve the correct answers for a questionnaire post.",
+        responses={
+            200: openapi.Response(
+                description="Correct answers with percentages and total count",
+                examples={
+                    "application/json": {
+                        "correct_answers": {
+                            "9": {"answers_count": 1, "percent": 25},
+                            "10": {"answers_count": 1, "percent": 25},
+                            "11": {"answers_count": 2, "percent": 50},
+                        },
+                        "total_answers_count": 4,
+                    }
+                },
+            )
+        },
+    )
+    def get(self, request, post_id, *args, **kwargs):
+        post = self.get_post(post_id)
+
+        answer_options = post.answers.values_list('id', flat=True)
+        post_answers_queryset = post.post_answers.values_list('answers', flat=True)
+        post_answers_list = list(chain.from_iterable(post_answers_queryset))
+        correct_answers = calculate_correct_answers(answer_options, post_answers_list)
+        return Response({'correct_answers': correct_answers, 'total_answers_count': len(post_answers_list)})
+
+
+class CancelQuestionnaireAnswerAPIView(APIView):
+    @staticmethod
+    def get_post(pk):
+        try:
+            return Post.objects.get(id=pk)
+        except:
+            raise APIValidation(_('Пост не найден'), status_code=status.HTTP_404_NOT_FOUND)
+
+    @swagger_auto_schema(
+        operation_description="Cancel a user's answer to a specific questionnaire post.",
+        responses={204: "No Content - Successfully canceled the questionnaire answer"}
+    )
+    def post(self, request, post_id, *args, **kwargs):
+        post = self.get_post(post_id)
+        post.post_answers.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PostByCategoryListAPIView(ListAPIView):
