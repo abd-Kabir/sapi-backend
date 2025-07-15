@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory
+from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory, UserActivity
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
 
@@ -164,6 +164,17 @@ class UserViewCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
-       model = UserViewHistory
-       fields = ['id', 'username', 'content', 'post', 'created_at']
-       read_only_fields = ['id', 'user', 'created_at']
+        model = UserViewHistory
+        fields = ['id', 'username', 'content', 'post', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+
+
+class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserActivity
+        fields = [
+            'type',
+            'content_id',
+            'content_owner',
+            'initiator',
+        ]
