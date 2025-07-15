@@ -1,10 +1,11 @@
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from datetime import timedelta
 
 from django.conf import settings
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now, localtime
+from django.utils.translation import gettext_lazy as _
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -13,15 +14,16 @@ from rest_framework.generics import CreateAPIView, ListAPIView, DestroyAPIView, 
     ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User, UserSubscription
+from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User, UserViewHistory
+from apps.authentication.models import UserSubscription
 from apps.authentication.serializers.profile import (DeleteAccountVerifySerializer,
                                                      MyCardListSerializer, AddCardSerializer,
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
                                                      MySubscriptionPlanRetrieveUpdateSerializer,
-                                                     FundraisingSerializer, FollowersDashboardByPlanSerializer)
-from apps.authentication.serializers.user import BecomeCreatorSerializer, ConfigureDonationSettingsSerializer
+                                                     FundraisingSerializer, FollowersDashboardByPlanSerializer,
+                                                     UserViewHistorySerializer, UserViewCreateSerializer)
+from apps.authentication.serializers.user import (BecomeCreatorSerializer, ConfigureDonationSettingsSerializer)
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
@@ -490,3 +492,31 @@ class ConfigurationDonationSettingsAPIView(APIView):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data)
+
+
+class UserViewHistoryListCreateAPIView(ListCreateAPIView):
+    serializer_class = UserViewHistorySerializer
+    pagination_class = APILimitOffsetPagination
+
+    def get_queryset(self):
+        return UserViewHistory.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return UserViewCreateSerializer
+        return UserViewHistorySerializer
+
+
+class UserViewHistoryDeleteAPIView(DestroyAPIView):
+    queryset = UserViewHistory.objects.all()
+    serializer_class = UserViewHistorySerializer
+
+    def delete(self, request, *args, **kwargs):
+        history = self.get_object()
+        if history.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        history.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

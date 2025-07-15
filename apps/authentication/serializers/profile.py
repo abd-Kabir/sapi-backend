@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.authentication.models import SubscriptionPlan, Card, Fundraising
+from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
 
@@ -148,3 +148,22 @@ class FollowersDashboardByPlanSerializer(serializers.Serializer):
     name = serializers.CharField()
     subscriber_count = serializers.IntegerField()
     percent = serializers.FloatField()
+
+
+class UserViewHistorySerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    file = FileSerializer(source='content', read_only=True)
+
+    class Meta:
+        model = UserViewHistory
+        fields = ['id', 'username', 'file', 'post', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+
+
+class UserViewCreateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+       model = UserViewHistory
+       fields = ['id', 'username', 'content', 'post', 'created_at']
+       read_only_fields = ['id', 'user', 'created_at']

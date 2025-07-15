@@ -11,7 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager
-from apps.content.models import ReportTypes
+from apps.content.models import ReportTypes, Post
+from apps.files.models import File
 from config.models import BaseModel
 
 
@@ -450,3 +451,12 @@ class NotificationDistribution(BaseModel):
 
     class Meta:
         db_table = 'notification_distribution'
+
+
+class UserViewHistory(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_history')
+    content = models.ForeignKey(File, on_delete=models.CASCADE, related_name='user_file_history')
+    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, related_name='user_post_history')
+
+    class Meta:
+        db_table = 'user_view_history'
