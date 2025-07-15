@@ -162,18 +162,22 @@ class AdminCreatorUpdateSAPIShareSerializer(serializers.Serializer):
 
 
 class ReportListSerializer(serializers.ModelSerializer):
+    post_files = FileSerializer(source='post.files', read_only=True, allow_null=True, many=True)
     post_username = serializers.CharField(source='post.user.username', read_only=True)
     post_title = serializers.CharField(source='post.title', read_only=True)
     post_description = serializers.CharField(source='post.description', read_only=True)
     reported_username = serializers.CharField(source='user.username', read_only=True)
     report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    category_name = serializers.CharField(source='post.category.name', read_only=True)
 
     class Meta:
         model = Report
         fields = [
             'id',
+            'category_name',
             'post',
+            'post_files',
             'post_username',
             'post_title',
             'post_description',

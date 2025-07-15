@@ -2,7 +2,7 @@ from collections import defaultdict, OrderedDict
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now, localtime
 from drf_yasg import openapi
@@ -15,16 +15,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User
+from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User, UserSubscription
 from apps.authentication.serializers.profile import (DeleteAccountVerifySerializer,
                                                      MyCardListSerializer, AddCardSerializer,
                                                      MySubscriptionPlanListSerializer, AddSubscriptionPlanSerializer,
                                                      MySubscriptionPlanRetrieveUpdateSerializer,
                                                      FundraisingSerializer, FollowersDashboardByPlanSerializer)
-from apps.authentication.serializers.user import BecomeCreatorSerializer
+from apps.authentication.serializers.user import BecomeCreatorSerializer, ConfigureDonationSettingsSerializer
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
 from apps.integrations.api_integrations.multibank import multibank_prod_app
+from apps.integrations.models import MultibankTransaction
 from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
@@ -219,6 +220,48 @@ class MySubscriptionPlanRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         return queryset
 
 
+class DeleteSubscriptionPlanAPIView(DestroyAPIView):
+    queryset = SubscriptionPlan.objects.all()
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(
+        operation_description='API for deleting a subscription plan.',
+        responses={
+            status.HTTP_204_NO_CONTENT: 'Subscription plan deleted successfully.',
+            status.HTTP_400_BAD_REQUEST: openapi.Response(
+                description=_('Unable to delete the subscription plan as it has active subscribers.'),
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            example='Вы не можете удалить уровень подписки пока у него есть хотя бы один подписчик.'
+                        )
+                    }
+                )
+            )
+        }
+    )
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # self.perform_destroy(instance)
+        available_subs_plans = UserSubscription.objects.filter(
+            creator=instance.creator, plan=instance, end_date__gte=now(), is_active=True
+        )
+        if available_subs_plans.exists():
+            instance.is_deleted = True
+            instance.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(
+                {'detail': _('Вы не можете удалить уровень подписки пока у него есть хотя бы один подписчик.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class LikedPostListAPIView(ListAPIView):
     serializer_class = PostListSerializer
     pagination_class = APILimitOffsetPagination
@@ -263,6 +306,30 @@ class FundraisingDeleteRetrieveUpdateAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Fundraising.objects.all()
     serializer_class = FundraisingSerializer
     permission_classes = [IsCreator, ]
+
+
+class FollowersDashboardEarnedAPIView(APIView):
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(
+        operation_description="Get total amount earned by the creator through transactions.",
+        responses={
+            200: openapi.Response(
+                description="Total amount earned by the creator",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'earned': openapi.Schema(type=openapi.TYPE_NUMBER, example=35000000)
+                    }
+                ),
+            )
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        transactions = MultibankTransaction.objects.filter(creator=user)
+        total_amount = transactions.aggregate(total_amount=Sum('creator_amount')).get('total_amount')
+        return Response({'earned': total_amount})
 
 
 class FollowersDashboardAPIView(APIView):
@@ -399,3 +466,27 @@ class MySubscribersAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset().filter(subscriptions__creator=self.request.user)
         return queryset
+
+
+class ConfigureDonationSettingsAPIView(APIView):
+    serializer_class = ConfigureDonationSettingsSerializer
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(request_body=ConfigureDonationSettingsSerializer,
+                         responses={status.HTTP_200_OK: ConfigureDonationSettingsSerializer()})
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.validated_data)
+
+
+class ConfigurationDonationSettingsAPIView(APIView):
+    serializer_class = ConfigureDonationSettingsSerializer
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: ConfigureDonationSettingsSerializer()})
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user)
+        return Response(serializer.data)

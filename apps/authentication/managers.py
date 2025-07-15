@@ -58,3 +58,8 @@ class AllUserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(phone_number, password, **extra_fields)
+
+class SubscriptionPlanManager(Manager):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(is_deleted=False)

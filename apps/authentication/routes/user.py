@@ -195,10 +195,11 @@ class UserSubscriptionPlanListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset()
         if not user.is_admin:
-            queryset = queryset.filter(is_active=True, is_deleted=False)
-
+            queryset = SubscriptionPlan.objects.all()
+            queryset = queryset.filter(is_active=True)
+        else:
+            queryset = SubscriptionPlan.all_objects.all()
         queryset = queryset.filter(creator=self.kwargs['user_id'])
         return queryset
 
@@ -574,6 +575,11 @@ class GetMeAPIView(APIView):
             'followers_count': user.followers_count(),
             'following_count': user.following_count(),
             'post_count': user.posts.count(),
+
+            'minimum_message_donation': user.minimum_message_donation,
+            'max_donation_letters': user.max_donation_letters,
+            'show_donation_amount': user.show_donation_amount,
+            'donation_banner': self.serialize_file(user.donation_banner),
         })
 
 

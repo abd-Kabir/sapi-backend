@@ -27,7 +27,8 @@ from config.core.permissions import IsAdmin
 from config.swagger import report_status_swagger_param, report_type_swagger_param, admin_creator_list_params, \
     period_swagger_param, start_date_swagger_param, end_date_swagger_param, dashboard_user_type_swagger_param, \
     notif_dis_status_swagger_param, notif_dis_type_swagger_param, dashboard_type_swagger_param, \
-    date_notification_swagger_param, date_report_swagger_param, notif_user_type_swagger_param, group_swagger_param
+    date_notification_swagger_param, date_report_swagger_param, notif_user_type_swagger_param, group_swagger_param, \
+    query_category_swagger_param, query_category_id_swagger_param
 
 
 class DashboardCreatorEarningsAPIView(APIView):
@@ -617,8 +618,8 @@ class ReportListView(ListAPIView):
 
     @swagger_auto_schema(
         operation_summary="List reports",
-        manual_parameters=[report_type_swagger_param, date_report_swagger_param,
-                           report_status_swagger_param]
+        manual_parameters=[report_type_swagger_param, date_report_swagger_param, report_status_swagger_param,
+                           query_category_id_swagger_param]
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)

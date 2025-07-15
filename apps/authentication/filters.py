@@ -48,9 +48,11 @@ class ReportFilter(django_filters.FilterSet):
 
     status = django_filters.NumberFilter(field_name='status')
 
+    category_id = django_filters.NumberFilter(field_name='post__category__id')
+
     class Meta:
         model = Report
-        fields = ['report_type', 'date', 'status']
+        fields = ['report_type', 'date', 'status', 'category_id']
 
 
 class NotifDisFilter(django_filters.FilterSet):

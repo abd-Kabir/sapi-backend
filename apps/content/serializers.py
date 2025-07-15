@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
@@ -5,6 +7,7 @@ from rest_framework import serializers, status
 from apps.authentication.models import User, UserPermissions, PermissionTypes
 from apps.authentication.serializers.user import BecomeCreatorSerializer
 from apps.content.models import Post, Category, AnswerOption, PostAnswer, Comment, Report, ReportComment
+from apps.content.services import calculate_correct_answers
 from apps.files.models import File
 from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
@@ -28,10 +31,11 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class AnswerOptionCreateSerializer(serializers.ModelSerializer):
+class AnswerOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnswerOption
         fields = [
+            'id',
             'text',
             'is_correct',
         ]
@@ -39,7 +43,7 @@ class AnswerOptionCreateSerializer(serializers.ModelSerializer):
 
 class PostCreateSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    answers = AnswerOptionCreateSerializer(required=False, many=True)
+    answers = AnswerOptionSerializer(required=False, many=True)
     files = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=File.objects.all(),
@@ -177,6 +181,13 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
             .first()
             .answers
         )
+
+        answer_options = instance.answers.values_list('id', flat=True)
+        post_answers_queryset = instance.post_answers.values_list('answers', flat=True)
+        post_answers_list = list(chain.from_iterable(post_answers_queryset))
+        correct_answers = calculate_correct_answers(answer_options, post_answers_list)
+        representation['correct_answers'] = correct_answers
+        representation['total_answers_count'] = len(post_answers_list)
         return representation
 
 
@@ -188,6 +199,7 @@ class PostListSerializer(serializers.ModelSerializer):
     can_view = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    answers = AnswerOptionSerializer(many=True, read_only=True)
 
     def get_has_liked(self, obj):
         user = self.context.get('request').user
@@ -241,6 +253,8 @@ class PostListSerializer(serializers.ModelSerializer):
             'files',
             'user',
             'status',
+            'answers',
+            'allow_multiple_answers',
         ]
 
 

@@ -5,7 +5,8 @@ from apps.content.views import (PostCreateAPIView, CategoryModelViewSet, ChoiceT
                                 PostAccessibilityAPIView, QuestionnairePostAnswerAPIView, PostByCategoryListAPIView,
                                 PostToggleLikeAPIView, PostShowAPIView, PostShowCommentListAPIView,
                                 PostShowRepliesListAPIView, PostLeaveCommentAPIView, CreateReportAPIView,
-                                PostToggleSaveAPIView, PostByUserListAPIView, PostByFollowedListAPIView)
+                                PostToggleSaveAPIView, PostByUserListAPIView, PostByFollowedListAPIView,
+                                CalculateQuestionnaireAnswersAPIView, CancelQuestionnaireAnswerAPIView)
 
 router = DefaultRouter()
 router.register('category', CategoryModelViewSet, basename='category')
@@ -16,6 +17,10 @@ urlpatterns = [
     path('post/create/', PostCreateAPIView.as_view(), name='post_create'),
     path('post/<int:pk>/accessibility/', PostAccessibilityAPIView.as_view(), name='post_accessibility'),
     path('questionnaire-post/answer/', QuestionnairePostAnswerAPIView.as_view(), name='questionnaire_post_answer'),
+    path('questionnaire-post/calculate-answers/<int:post_id>/', CalculateQuestionnaireAnswersAPIView.as_view(),
+         name='questionnaire_calculate_answers'),
+    path('questionnaire-post/cancel-answer/<int:post_id>/', CancelQuestionnaireAnswerAPIView.as_view(),
+         name='questionnaire_cancel_answer'),
 
     path('post/by-category/<int:category_id>/', PostByCategoryListAPIView.as_view(), name='post_by_category'),
     path('post/by-user/<int:user_id>/', PostByUserListAPIView.as_view(), name='post_by_user'),

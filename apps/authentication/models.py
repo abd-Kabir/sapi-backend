@@ -6,10 +6,11 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.managers import CardManager, UserManager, AllUserManager
+from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager
 from apps.content.models import ReportTypes
 from config.models import BaseModel
 
@@ -123,7 +124,13 @@ class User(AbstractUser):
     creator_description = models.TextField(null=True, blank=True)
     multibank_account = models.CharField(max_length=20, null=True, blank=True)
     multibank_verified = models.BooleanField(default=False)
+
     minimum_message_donation = models.PositiveBigIntegerField(default=0)
+    max_donation_letters = models.PositiveBigIntegerField(default=None, null=True, blank=True)
+    show_donation_amount = models.PositiveBigIntegerField(default=None, null=True, blank=True)
+    donation_banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
+                                           related_name='donation_banner')
+
     sapi_share = models.PositiveSmallIntegerField(default=10)
     pinfl = models.CharField(null=True, blank=True, max_length=14)
 
@@ -273,8 +280,11 @@ class SubscriptionPlan(BaseModel):
     banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='subscription_plans')
 
-    # def subscribers_count(self):
-    #     return self.user
+    objects = SubscriptionPlanManager()
+    all_objects = models.Manager()
+
+    def subscribers_count(self):
+        return self.subscriptions.filter(is_active=True, end_date__gte=now()).count()
 
     def set_duration(self):
         today = date.today()
@@ -291,7 +301,7 @@ class UserSubscription(BaseModel):
     subscriber_card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='subscriptions')
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
-    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='subscriptions')
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
