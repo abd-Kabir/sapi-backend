@@ -10,7 +10,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 ConfigureDonationSettingsAPIView, ConfigurationDonationSettingsAPIView,
                                                 FollowersDashboardEarnedAPIView, DeleteSubscriptionPlanAPIView,
                                                 IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView,
-                                                UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView)
+                                                UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView,
+                                                ProfileUserActivitiesAPIView)
 
 urlpatterns = [
     # account
@@ -62,4 +63,7 @@ urlpatterns = [
 
     path('profile/view-history/', UserViewHistoryListCreateAPIView.as_view(), name='user_view_list_history'),
     path('profile/view-history/<int:pk>/', UserViewHistoryDeleteAPIView.as_view(), name='user_view_history_delete'),
+
+    # activities
+    path('profile/notification/activities/', ProfileUserActivitiesAPIView.as_view(), name='profile_activities'),
 ]
