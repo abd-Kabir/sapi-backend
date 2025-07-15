@@ -11,7 +11,8 @@ services:
              daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - .:/app  # Mount the app directory into the container
-      - ./media:/app/media  # Mount the media folder to persist data
+      - ./media:/app/media
+      - ./logs.log:/app/logs.log
     env_file:
       - .env  # Load environment variables from the .env file
     ports:
