@@ -7,7 +7,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 LikedPostListAPIView, SavedPostListAPIView,
                                                 FundraisingListCreateAPIView, FundraisingDeleteRetrieveUpdateAPIView,
                                                 FollowersDashboardAPIView, FollowersDashboardByPlanAPIView,
-                                                IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView)
+                                                IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView,
+                                                UserVIewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView)
 
 urlpatterns = [
     # account
@@ -49,4 +50,7 @@ urlpatterns = [
     path('profile/followed-users/', IFollowedUsersAPIView.as_view(), name='profile_followed_users'),
     path('profile/my-followers/', MyFollowersAPIView.as_view(), name='profile_my_followers'),
     path('profile/my-subscribers/', MySubscribersAPIView.as_view(), name='profile_my_subscribers'),
+
+    path('profile/view-history/', UserVIewHistoryListCreateAPIView.as_view(), name='user_view_list_history'),
+    path('profile/view-history/<int:pk>/', UserViewHistoryDeleteAPIView.as_view(), name='user_view_history_delete'),
 ]
