@@ -7,7 +7,7 @@ from apps.authentication.routes.admin import (AdminCreatorListAPIView, AdminCrea
                                               AdminUserUpdateAPIView, AdminUserDeleteAPIView, ReportListView,
                                               ReportRetrieveAPIView, DashboardCreatorEarningsAPIView,
                                               AdminNotifDisListAPIView, AdminNotifDisCreateAPIView,
-                                              AdminNotifDisUpdateAPIView)
+                                              AdminNotifDisUpdateAPIView, AdminUnblockCreatorPostAPIView)
 
 urlpatterns = [
     # dashboard
@@ -15,6 +15,7 @@ urlpatterns = [
 
     # --
     path('admin/block-creator-post/', AdminBlockCreatorPostAPIView.as_view(), name='admin_block_creator'),
+    path('admin/unblock-creator-post/',AdminUnblockCreatorPostAPIView.as_view(), name='admin_unblock_creator'),
 
     # creator page
     path('admin/creators/', AdminCreatorListAPIView.as_view(), name='admin_creators'),

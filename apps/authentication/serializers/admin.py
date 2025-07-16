@@ -157,6 +157,16 @@ class AdminBlockCreatorPostSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
+class AdminUnblockCreatorPostSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(required=False)
+    post_id = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get('user_id') and not attrs.get('post_id'):
+            raise APIValidation(_('Отправьте ID юзера или поста'), status_code=status.HTTP_400_BAD_REQUEST)
+        return attrs
+
+
 class AdminCreatorUpdateSAPIShareSerializer(serializers.Serializer):
     sapi_share = serializers.IntegerField()
 
