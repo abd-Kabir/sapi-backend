@@ -16,7 +16,7 @@ from apps.authentication.filters import ReportFilter, NotifDisFilter, AdminCreat
 from apps.authentication.models import User, PermissionTypes, NotificationDistribution
 from apps.authentication.serializers.admin import AdminCreatorListSerializer, AdminCreatorUpdateSAPIShareSerializer, \
     AdminCreatorRetrieveSerializer, AdminBlockCreatorPostSerializer, ReportListSerializer, ReportRetrieveSerializer, \
-    AdminNotifDisSerializer
+    AdminNotifDisSerializer, AdminUnblockCreatorPostSerializer
 from apps.authentication.services import creator_earnings, registered_accounts, active_subscriptions, \
     content_type_counts, platform_earnings
 from apps.content.models import Report, ReportStatusTypes, ReportComment, Post
@@ -281,6 +281,86 @@ class AdminBlockCreatorPostAPIView(APIView):
                 'status': post_status
             }
 
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class AdminUnblockCreatorPostAPIView(APIView):
+    permission_classes = [IsAdmin, ]
+    serializer_class = AdminUnblockCreatorPostSerializer
+    router_name = 'CREATORS_REPORTS'
+
+    @staticmethod
+    def get_action():
+        return 'update'
+
+    @staticmethod
+    def get_creator(pk):
+        try:
+            return User.all_objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+
+    @staticmethod
+    def get_post(pk):
+        try:
+            return Post.all_objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Пост не найден'), status_code=404)
+
+    @swagger_auto_schema(
+        request_body=AdminUnblockCreatorPostSerializer,
+        responses={
+            200: openapi.Response(
+                description='Unblocked',
+                examples={
+                    'application/json': {
+                        'user_id': 1,
+                        'post_id': 2,
+                        'status': 'Разблокирован'
+                    }
+                }
+            )
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if not data.get('user_id') and not data.get('post_id'):
+            raise APIValidation(_('Нужно передать user_id или post_id'), status_code=400)
+
+        response = {}
+
+        if data.get('user_id'):
+            user = self.get_creator(data.get('user_id'))
+            user.phone_number = user.temp_phone_number
+            user.temp_phone_number = None
+            user.username = user.temp_username
+            user.temp_username = None
+            user.is_blocked_by = None
+            user.block_desc = None
+            user.block_reason = None
+            user.save(update_fields=['phone_number', 'temp_phone_number', 'username', 'temp_username', 'is_blocked_by',
+                                     'block_desc', 'block_reason'])
+
+            response = {
+                'user_id': user.id,
+                'post_id': None,
+                'status': _('Разблокирован')
+            }
+
+        elif data.get('post_id'):
+            post = self.get_post(data.get('post_id'))
+            post.is_blocked = False
+            post.block_desc = None
+            post.block_reason = None
+            post.save(update_fields=['is_blocked', 'block_desc', 'block_reason'])
+            response = {
+                'user_id': None,
+                'post_id': post.id,
+                'status': _('Разблокирован')
+            }
         return Response(response, status=status.HTTP_200_OK)
 
 
