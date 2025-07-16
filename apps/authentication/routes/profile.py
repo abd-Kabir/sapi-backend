@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.models import Card, SubscriptionPlan, Fundraising, UserFollow, User, UserViewHistory, \
-    UserActivity
+    UserActivity, NotificationDistribution
 from apps.authentication.models import UserSubscription
 from apps.authentication.serializers.profile import (DeleteAccountVerifySerializer,
                                                      MyCardListSerializer, AddCardSerializer,
@@ -24,7 +24,8 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      MySubscriptionPlanRetrieveUpdateSerializer,
                                                      FundraisingSerializer, FollowersDashboardByPlanSerializer,
                                                      UserViewHistorySerializer, UserViewCreateSerializer,
-                                                     ProfileUserActivitiesSerializer)
+                                                     ProfileUserActivitiesSerializer,
+                                                     ProfileUserNotificationDistributionsSerializer)
 from apps.authentication.serializers.user import (BecomeCreatorSerializer, ConfigureDonationSettingsSerializer)
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -531,4 +532,19 @@ class ProfileUserActivitiesAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(content_owner=self.request.user)
-        return queryset
+        return queryset.order_by('-created_at')
+
+
+class ProfileUserAnnouncementsAPIView(ListAPIView):
+    queryset = NotificationDistribution.objects.all()
+    serializer_class = ProfileUserNotificationDistributionsSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        queryset = queryset.filter(status='sent', )
+        if user.is_creator:
+            queryset = queryset.filter(user_type='creators')
+        elif not user.is_creator:
+            queryset = queryset.filter(user_type='users')
+        return queryset.order_by('-created_at')
