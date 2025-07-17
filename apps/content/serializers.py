@@ -32,6 +32,25 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class AnswerOptionSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        user = self.context['request'].user
+        representation = super().to_representation(instance)
+        post_answers_queryset = instance.questionnaire_post.post_answers
+
+        answers_count_query = post_answers_queryset.filter(answers__contains=instance.id)
+        answers_count = answers_count_query.count()
+        representation['answers_count'] = answers_count
+
+        total_answers_query = post_answers_queryset.values_list('answers', flat=True)
+        total_answers_count = len(list(chain.from_iterable(total_answers_query)))
+        answers_percent = (answers_count / total_answers_count) * 100 if total_answers_count else 0
+        representation['percent'] = answers_percent
+
+        is_selected = answers_count_query.filter(user=user).exists()
+        representation['is_selected'] = is_selected
+        return representation
+
     class Meta:
         model = AnswerOption
         fields = [

@@ -11,7 +11,8 @@ services:
              daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - .:/app  # Mount the app directory into the container
-      - ./media:/app/media  # Mount the media folder to persist data
+      - ./media:/app/media
+      - ./logs.log:/app/logs.log
     env_file:
       - .env  # Load environment variables from the .env file
     ports:
@@ -35,57 +36,46 @@ services:
     networks:
       - app_network
 
-  # Celery worker
-#  celery:
-#    image: sapi-backend-web:latest
-##    build:
-##      context: .
-#    command: celery -A config worker -l INFO
-#    volumes:
-#      - .:/app
-#    env_file:
-#      - .env
-#    depends_on:
-#      - web
-#      - redis
-#    networks:
-#      - app_network
-#
-#  celery-beat:
-#    image: sapi-backend-web:latest
-##    build:
-##      context: .
-#    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-#    volumes:
-#      - .:/app
-#    env_file:
-#      - .env
-#    depends_on:
-#      - web
-#      - redis
-#    networks:
-#      - app_network
-#  flower:
-#    image: sapi-backend-web:latest
-##    build:
-##      context: .
-#    command: celery --broker=redis://redis:6379/0 flower --port=5555
-#    env_file:
-#      - .env
-#    ports:
-#      - "5555:5555"
-#    depends_on:
-#      - celery
-#    networks:
-#      - app_network
-#
-#  # Redis broker
-#  redis:
-#    image: redis:7
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - app_network
+
+  redis:
+    image: redis:6-alpine
+    restart: always
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "5002:8081"
+
+  celery:
+    build:
+      context: .
+    entrypoint: [ "/bin/sh", "-c", "celery -A config worker" ]
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - web
+
+  celery-beat:
+    build:
+      context: .
+    entrypoint: [ "/bin/sh", "-c", "celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler" ]
+    env_file:
+      - .env
+
+  flower:
+    image: mher/flower:0.9.7
+    command: [ 'flower', '--broker=redis://redis:6379', '--port=5555' ]
+    ports:
+      - "5001:5555"
+    environment:
+      CELERY_BROKER_URL: ${BROKER_URL}
+    depends_on:
+      - redis
+      - celery
+
 
   # MINIO service
   minio:
