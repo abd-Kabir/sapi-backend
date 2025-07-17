@@ -77,6 +77,8 @@ services:
       - redis
     networks:
       - app_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   flower:
     image: mher/flower:0.9.7
