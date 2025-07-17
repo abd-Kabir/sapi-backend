@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'storages',
     'fcm_django',
+    'django_celery_beat',
 
     # apps
     'apps.authentication',
@@ -230,6 +231,11 @@ FCM_DJANGO_SETTINGS = {
     "ONE_DEVICE_PER_USER": True,
     "DELETE_INACTIVE_DEVICES": True,
 }
+
+# Celery
+CELERY_BROKER_URL = getenv('BROKER_URL')
+CELERY_RESULT_BACKEND = getenv('BROKER_URL')
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Debug Toolbar
 if DEBUG:
