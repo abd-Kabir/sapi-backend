@@ -19,7 +19,7 @@ from apps.authentication.serializers.admin import AdminCreatorListSerializer, Ad
     AdminNotifDisSerializer, AdminUnblockCreatorPostSerializer
 from apps.authentication.services import creator_earnings, registered_accounts, active_subscriptions, \
     content_type_counts, platform_earnings
-from apps.content.models import Report, ReportStatusTypes, ReportComment, Post
+from apps.content.models import Report, ReportStatusTypes, ReportComment, Post, ReportTypes
 from apps.content.serializers import ReportCommentSerializer, AdminUserModifySerializer, AdminUserListSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
@@ -232,7 +232,8 @@ class AdminBlockCreatorPostAPIView(APIView):
                                          'user_id': 1,
                                          'post_id': 1,
                                          'block_desc': 'Спам',
-                                         'block_reason': 'Нарушение правил',
+                                         'block_reason': 'extremism',
+                                         'block_reason_display': 'Материалы экстремистского, террористического характера',
                                          'status': 'Заблокирован'
                                      }
                                  }
@@ -264,6 +265,7 @@ class AdminBlockCreatorPostAPIView(APIView):
                 'post_id': None,
                 'block_desc': user.block_desc,
                 'block_reason': user.block_reason,
+                'block_reason_display': user.get_block_reason_display(),
                 'status': user_status
             }
         elif data.get('post_id'):
@@ -278,6 +280,7 @@ class AdminBlockCreatorPostAPIView(APIView):
                 'post_id': post.id,
                 'block_desc': post.block_desc,
                 'block_reason': post.block_reason,
+                'block_reason_display': post.get_block_reason_display(),
                 'status': post_status
             }
 
