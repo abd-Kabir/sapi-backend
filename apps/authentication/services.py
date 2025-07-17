@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.authentication.models import UserActivity, User, UserSubscription
 from apps.content.models import Post
+from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
 from config.core.api_exceptions import APIValidation
 
@@ -308,3 +309,8 @@ def platform_earnings(trunc_func, start_date=None, end_date=None):
             for item in revenue_data
         ]
     }
+
+
+def send_notification_to_users(users, title, text):
+    for user in users:
+        send_notification_to_user(user, title, text)

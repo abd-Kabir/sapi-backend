@@ -3,6 +3,7 @@ from rest_framework import serializers, status
 from django.utils.translation import gettext_lazy as _
 
 from apps.authentication.models import User, NotificationDistribution, NotifDisStatus
+from apps.authentication.tasks import send_notification_task
 from apps.content.models import ReportTypes, Report, ReportComment
 from apps.files.serializers import FileSerializer
 from apps.integrations.api_integrations.firebase import send_notification_to_user
@@ -299,12 +300,29 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
                 for notif_type in validated_data.get('types', []):
                     if notif_type == 'push_notification':
                         users = self.get_users(validated_data.get('user_type'))
-                        [send_notification_to_user(user, validated_data.get('title_ru'), validated_data.get('text_ru'))
-                         for user in users]
+                        user_ids = list(users.values_list('id', flat=True))
+                        send_notification_task.delay(
+                            user_ids,
+                            validated_data.get('title_ru'),
+                            validated_data.get('text_ru')
+                        )
             instance.status = 'sent'
         else:
-            pass
-            # TODO: add sending with task with sending_date
+            if validated_data.get('types') and not instance.is_draft:
+                for notif_type in validated_data.get('types', []):
+                    if notif_type == 'push_notification':
+                        users = self.get_users(validated_data.get('user_type'))
+                        user_ids = list(users.values_list('id', flat=True))
+                        send_notification_task.apply_async(
+                            args=(
+                                user_ids,
+                                validated_data.get('title_ru'),
+                                validated_data.get('text_ru')
+                            ),
+                            eta=validated_data.get('sending_date')
+                        )
+                instance.status = 'waiting'
+                instance.save()
 
     def create(self, validated_data):
         instance = super().create(validated_data)
