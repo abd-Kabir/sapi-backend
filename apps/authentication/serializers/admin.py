@@ -304,7 +304,8 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
                         send_notification_task.delay(
                             user_ids,
                             validated_data.get('title_ru'),
-                            validated_data.get('text_ru')
+                            validated_data.get('text_ru'),
+                            instance.id
                         )
             instance.status = 'sent'
         else:
@@ -317,7 +318,8 @@ class AdminNotifDisSerializer(serializers.ModelSerializer):
                             args=(
                                 user_ids,
                                 validated_data.get('title_ru'),
-                                validated_data.get('text_ru')
+                                validated_data.get('text_ru'),
+                                instance.id
                             ),
                             eta=validated_data.get('sending_date')
                         )
