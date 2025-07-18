@@ -238,6 +238,7 @@ class Card(BaseModel):
     cvc_cvv = models.CharField(max_length=5, null=True, blank=True)
     type = models.CharField(max_length=10, choices=CardType.choices, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards', null=True)
+    multibank_session_id = models.CharField(max_length=100, null=True, blank=True)
 
     objects = CardManager()
     all_objects = models.Manager()
