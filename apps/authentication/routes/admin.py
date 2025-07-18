@@ -255,7 +255,7 @@ class AdminBlockCreatorPostAPIView(APIView):
         response = {}
 
         report = self.get_report(data.get('report_id'))
-
+        report_id = None
         if data.get('user_id'):
             user = self.get_creator(data.get('user_id'))
             user.is_blocked_by = request.user
@@ -271,6 +271,7 @@ class AdminBlockCreatorPostAPIView(APIView):
             if report:
                 report.status = ReportStatusTypes.blocked_user
                 report.resolve(request.user)
+                report_id = report.id
 
             if user.is_blocked_by:
                 user_status = _('Заблокирован')
@@ -279,7 +280,7 @@ class AdminBlockCreatorPostAPIView(APIView):
             response = {
                 'user_id': user.id,
                 'post_id': None,
-                'report_id': report.id,
+                'report_id': report_id,
                 'block_desc': user.block_desc,
                 'block_reason': user.block_reason,
                 'block_reason_display': user.get_block_reason_display(),
@@ -295,12 +296,13 @@ class AdminBlockCreatorPostAPIView(APIView):
             if report:
                 report.status = ReportStatusTypes.blocked_post
                 report.resolve(request.user)
+                report_id = report.id
 
             post_status = post.get_status()
             response = {
                 'user_id': None,
                 'post_id': post.id,
-                'report_id': report.id,
+                'report_id': report_id,
                 'block_desc': post.block_desc,
                 'block_reason': post.block_reason,
                 'block_reason_display': post.get_block_reason_display(),
