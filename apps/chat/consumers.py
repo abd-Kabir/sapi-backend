@@ -2,12 +2,14 @@
 import base64
 import json
 import logging
-
-from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
+from django.db.models import Sum
+from django.utils import timezone
 
+from apps.authentication.models import Donation, UserSubscription
 from apps.chat.models import ChatRoom, Message, BlockedUser
 from apps.files.utils import upload_file
 
@@ -61,16 +63,36 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if BlockedUser.is_blocked(room.creator, room.subscriber):
             return False
 
-        # If chatting with creator, check subscription
-        # if room.creator.is_creator and self.user == room.subscriber:
-        #     return UserSubscription.objects.filter(
-        #         subscriber=self.user,
-        #         creator=room.creator,
-        #         is_active=True,
-        #         end_date__gt=timezone.now()
-        #     ).exists()
+        another_user = room.creator if self.user != room.creator else room.subscriber
+        another_user_configs = another_user.chat_settings.all()
 
-        return True
+        if not another_user_configs.filter(can_chat='everyone').exists():
+            if not another_user_configs.filter(can_chat='nobody').exists():
+                if another_user_configs.filter(can_chat='subscribers').exists():
+                    is_subscribed = UserSubscription.objects.filter(
+                        subscriber=self.user,
+                        creator=another_user,
+                        is_active=True,
+                        end_date__gt=timezone.now()
+                    ).exists()
+
+                    if not is_subscribed:
+                        return False
+                if another_user_configs.filter(can_chat='donations').exists():
+                    donation_settings = another_user_configs.filter(can_chat='donations').first()
+                    if donation_settings.minimum_message_donation <= 0:
+                        return False
+                    total_donation = Donation.objects.filter(
+                        donator=self.user,
+                        creator=another_user,
+                    ).aggregate(total=Sum('amount'))['total']
+                    if total_donation < donation_settings.minimum_message_donation:
+                        return False
+                return True
+            else:
+                return False
+        else:
+            return True
 
     @database_sync_to_async
     def create_message(self, content=None, file_data=None, file_name=None):
