@@ -282,7 +282,7 @@ class Report(BaseModel):
 
 class ReportComment(BaseModel):
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='report_comments')
-    report = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='report_comments')
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='report_comments')
     text = models.TextField()
 
     class Meta:
