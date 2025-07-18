@@ -453,6 +453,11 @@ class AdminReportCommentAPIView(CreateAPIView):
     permission_classes = [IsAdmin, ]
     router_name = 'REPORTS'
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['kwargs'] = self.kwargs
+        return context
+
     @staticmethod
     def get_action():
         return 'create'
