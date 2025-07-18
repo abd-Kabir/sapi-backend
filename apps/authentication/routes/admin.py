@@ -217,6 +217,13 @@ class AdminBlockCreatorPostAPIView(APIView):
             raise APIValidation(_('Контент креатор не найден'), status_code=404)
 
     @staticmethod
+    def get_report(pk):
+        try:
+            return Report.objects.get(pk=pk)
+        except:
+            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+
+    @staticmethod
     def get_post(pk):
         try:
             return Post.all_objects.get(pk=pk)
@@ -231,6 +238,7 @@ class AdminBlockCreatorPostAPIView(APIView):
                                      'application/json': {
                                          'user_id': 1,
                                          'post_id': 1,
+                                         'report_id': 1,
                                          'block_desc': 'Спам',
                                          'block_reason': 'extremism',
                                          'block_reason_display': 'Материалы экстремистского, террористического характера',
@@ -245,6 +253,9 @@ class AdminBlockCreatorPostAPIView(APIView):
         data = serializer.validated_data
 
         response = {}
+
+        report = self.get_report(data.get('report_id'))
+
         if data.get('user_id'):
             user = self.get_creator(data.get('user_id'))
             user.is_blocked_by = request.user
@@ -256,6 +267,11 @@ class AdminBlockCreatorPostAPIView(APIView):
             user.username = None
             user.save(update_fields=['is_blocked_by', 'block_desc', 'block_reason', 'temp_phone_number', 'phone_number',
                                      'temp_username', 'username'])
+
+            if report:
+                report.status = ReportStatusTypes.blocked_user
+                report.resolve(request.user)
+
             if user.is_blocked_by:
                 user_status = _('Заблокирован')
             else:
@@ -263,6 +279,7 @@ class AdminBlockCreatorPostAPIView(APIView):
             response = {
                 'user_id': user.id,
                 'post_id': None,
+                'report_id': report.id,
                 'block_desc': user.block_desc,
                 'block_reason': user.block_reason,
                 'block_reason_display': user.get_block_reason_display(),
@@ -274,10 +291,16 @@ class AdminBlockCreatorPostAPIView(APIView):
             post.block_desc = data.get('block_desc')
             post.block_reason = data.get('block_reason')
             post.save(update_fields=['is_blocked', 'block_desc', 'block_reason'])
+
+            if report:
+                report.status = ReportStatusTypes.blocked_post
+                report.resolve(request.user)
+
             post_status = post.get_status()
             response = {
                 'user_id': None,
                 'post_id': post.id,
+                'report_id': report.id,
                 'block_desc': post.block_desc,
                 'block_reason': post.block_reason,
                 'block_reason_display': post.get_block_reason_display(),

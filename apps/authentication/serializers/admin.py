@@ -149,6 +149,7 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
 class AdminBlockCreatorPostSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(required=False)
     post_id = serializers.IntegerField(required=False)
+    report_id = serializers.IntegerField(required=False)
     block_reason = serializers.ChoiceField(choices=ReportTypes.choices)
     block_desc = serializers.CharField(required=False)
 
