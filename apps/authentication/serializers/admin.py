@@ -272,7 +272,7 @@ class ReportRetrieveSerializer(serializers.ModelSerializer):
         }
 
     def get_admin_comments(self, obj):
-        comments = ReportComment.objects.filter(report=obj.post).order_by('created_at')
+        comments = ReportComment.objects.filter(report=obj).order_by('created_at')
         return [
             {
                 "username": c.user.username,

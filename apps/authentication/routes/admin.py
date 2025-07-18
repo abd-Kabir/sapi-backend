@@ -221,7 +221,7 @@ class AdminBlockCreatorPostAPIView(APIView):
         try:
             return Report.objects.get(pk=pk)
         except:
-            raise APIValidation(_('Контент креатор не найден'), status_code=404)
+            return None
 
     @staticmethod
     def get_post(pk):
