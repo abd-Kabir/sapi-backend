@@ -47,8 +47,11 @@ class AnswerOptionSerializer(serializers.ModelSerializer):
         answers_percent = (answers_count / total_answers_count) * 100 if total_answers_count else 0
         representation['percent'] = answers_percent
 
-        is_selected = answers_count_query.filter(user=user).exists()
-        representation['is_selected'] = is_selected
+        if user.is_authenticated:
+            is_selected = answers_count_query.filter(user=user).exists()
+            representation['is_selected'] = is_selected
+        else:
+            representation['is_selected'] = False
         return representation
 
     class Meta:
@@ -222,15 +225,23 @@ class PostListSerializer(serializers.ModelSerializer):
 
     def get_has_liked(self, obj):
         user = self.context.get('request').user
-        return obj.has_liked(user)
+        if user.is_authenticated:
+            has_liked = obj.has_liked(user)
+        else:
+            has_liked = False
+        return has_liked
 
     def get_can_view(self, obj):
-        user = self.context['request'].user if self.context['request'].user.is_authenticated else None
+        user = self.context['request'].user
         return obj.can_view(user)
 
     def get_is_saved(self, obj: Post):
         user = self.context.get('request').user
-        return obj.is_saved_by(user)
+        if user.is_authenticated:
+            is_saved = obj.is_saved_by(user)
+        else:
+            is_saved = False
+        return is_saved
 
     @staticmethod
     def get_status(obj: Post):
@@ -250,7 +261,7 @@ class PostListSerializer(serializers.ModelSerializer):
                 'post_type_display': instance.get_post_type_display(),
                 'created_at': instance.created_at,
                 'can_view': False,
-                'is_saved': instance.is_saved_by(user),
+                'is_saved': instance.is_saved_by(user) if user.is_authenticated else False,
                 'user': BecomeCreatorSerializer(instance.user).data
             }
         return representation
@@ -281,10 +292,15 @@ class PostShowSerializer(serializers.ModelSerializer):
     post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
     files = FileSerializer(read_only=True, allow_null=True, many=True)
     has_liked = serializers.SerializerMethodField()
+    answers = AnswerOptionSerializer(many=True, read_only=True)
 
     def get_has_liked(self, obj):
         user = self.context.get('request').user
-        return obj.has_liked(user)
+        if user.is_authenticated:
+            has_liked = obj.has_liked(user)
+        else:
+            has_liked = False
+        return has_liked
 
     def to_representation(self, instance: Post):
         user = self.context.get('request').user
@@ -298,7 +314,7 @@ class PostShowSerializer(serializers.ModelSerializer):
                 'comment_count': instance.comment_count,
                 'post_type': instance.post_type,
                 'post_type_display': instance.get_post_type_display(),
-                'created_at': instance.created_at
+                'created_at': instance.created_at,
             }
         return representation
 
@@ -315,6 +331,7 @@ class PostShowSerializer(serializers.ModelSerializer):
             'created_at',
             'has_liked',
             'files',
+            'answers',
         ]
 
 

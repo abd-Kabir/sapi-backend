@@ -127,26 +127,77 @@ class CalculateQuestionnaireAnswersAPIView(APIView):
             200: openapi.Response(
                 description="Correct answers with percentages and total count",
                 examples={
-                    "application/json": {
-                        "correct_answers": {
-                            "9": {"answers_count": 1, "percent": 25},
-                            "10": {"answers_count": 1, "percent": 25},
-                            "11": {"answers_count": 2, "percent": 50},
-                        },
-                        "total_answers_count": 4,
-                    }
+                    "application/json":
+                        [
+                            {
+                                "id": 1,
+                                "text": "test",
+                                "is_correct": False,
+                                "answers_count": 0,
+                                "percent": 0,
+                                "is_selected": False
+                            },
+                            {
+                                "id": 2,
+                                "text": "test2",
+                                "is_correct": True,
+                                "answers_count": 1,
+                                "percent": 100,
+                                "is_selected": True
+                            },
+                            {
+                                "id": 3,
+                                "text": "test3",
+                                "is_correct": False,
+                                "answers_count": 0,
+                                "percent": 0,
+                                "is_selected": False
+                            },
+                            {
+                                "id": 4,
+                                "text": "test4",
+                                "is_correct": False,
+                                "answers_count": 0,
+                                "percent": 0,
+                                "is_selected": False
+                            }
+                        ]
                 },
             )
         },
     )
     def get(self, request, post_id, *args, **kwargs):
+        user = request.user
         post = self.get_post(post_id)
+        answer_options = post.answers.all()
+        post_answers_queryset = post.post_answers
+        response = []
+        for answer_option in answer_options:
+            answer_option_id = answer_option.id
+            obj = {'id': answer_option_id, 'text': answer_option.text, 'is_correct': answer_option.is_correct}
 
-        answer_options = post.answers.values_list('id', flat=True)
-        post_answers_queryset = post.post_answers.values_list('answers', flat=True)
-        post_answers_list = list(chain.from_iterable(post_answers_queryset))
-        correct_answers = calculate_correct_answers(answer_options, post_answers_list)
-        return Response({'correct_answers': correct_answers, 'total_answers_count': len(post_answers_list)})
+            answers_count_query = post_answers_queryset.filter(answers__contains=answer_option_id)
+            answers_count = answers_count_query.count()
+            obj['answers_count'] = answers_count
+
+            total_answers_query = post_answers_queryset.values_list('answers', flat=True)
+            total_answers_count = len(list(chain.from_iterable(total_answers_query)))
+            answers_percent = (answers_count / total_answers_count) * 100 if total_answers_count else 0
+            obj['percent'] = answers_percent
+
+            if user.is_authenticated:
+                is_selected = answers_count_query.filter(user=user).exists()
+                obj['is_selected'] = is_selected
+            else:
+                obj['is_selected'] = False
+            response.append(obj)
+        return Response(response)
+
+        # answer_options = post.answers.values_list('id', flat=True)
+        # post_answers_queryset = post.post_answers.values_list('answers', flat=True)
+        # post_answers_list = list(chain.from_iterable(post_answers_queryset))
+        # correct_answers = calculate_correct_answers(answer_options, post_answers_list)
+        # return Response({'correct_answers': correct_answers, 'total_answers_count': len(post_answers_list)})
 
 
 class CancelQuestionnaireAnswerAPIView(APIView):
