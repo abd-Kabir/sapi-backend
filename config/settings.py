@@ -299,6 +299,9 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'file',
             'filename': join_path(BASE_DIR, 'logs.log')
+        },
+        'null': {
+            'class': 'logging.NullHandler',
         }
     },
     'loggers': {
@@ -309,7 +312,24 @@ LOGGING = {
         'django.request': {
             'level': 'DEBUG',
             'handlers': ['file']
-        }
+        },
+        # Add this section to ignore noisy loggers
+        'daphne': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'botocore': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'boto3': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        's3transfer': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
     }
 }
 
