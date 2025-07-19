@@ -130,27 +130,49 @@ class MyCardListAPIView(ListAPIView):
         return queryset
 
 
-class AddCardAPIView(CreateAPIView):
+class AddCardAPIView(APIView):
     queryset = Card.objects.all()
     serializer_class = AddCardSerializer
 
-    def create(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        operation_description='Create a card for the user, redirect to multibank. No request body is required.',
+        request_body=None,
+        responses={
+            status.HTTP_200_OK: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'bind_card_url': openapi.Schema(
+                        type=openapi.TYPE_STRING,
+                        description='URL for binding the card',
+                    )
+                }
+            )
+        }
+    )
+    def post(self, request, *args, **kwargs):
         user = request.user
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # card = serializer.save()
+        # headers = self.get_success_headers(serializer.data)
+        card = Card.objects.create(user=user)
+        if not Card.objects.filter(user=user).exists():
+            is_main = True
+            card.set_main(is_main)
 
         multibank_response, m_bank_status = multibank_prod_app.bind_card(
             data={
                 'store_id': settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'],
-                'callback_url': 'https://api.sapi.uz/api/multibank/bind-card/webhook/',
+                'callback_url': 'https://b85bfb7fd98b.ngrok-free.app/api/multibank/bind-card/webhook/',
+                # 'callback_url': 'https://api.sapi.uz/api/multibank/bind-card/webhook/',
                 'phone': user.phone_number
             }
         )
         if str(m_bank_status).startswith('2'):
+            card.multibank_session_id = multibank_response.get('data', {}).get('session_id')
+            card.save()
             bind_card_url = multibank_response.get('data', {}).get('form_url')
-            return Response({'bind_card_url': bind_card_url}, headers=headers)
+            return Response({'bind_card_url': bind_card_url})
         return Response(multibank_response, status=m_bank_status)
 
 

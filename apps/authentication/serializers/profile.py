@@ -34,24 +34,29 @@ class AddCardSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     def create(self, validated_data):
-        is_main = validated_data.pop('is_main', False)
-        expiration = validated_data.pop('expiration', None).replace('/', '')
-        number = validated_data.pop('number', None)
+        # is_main = validated_data.pop('is_main', False)
+        user = validated_data.pop('user')
+        # expiration = validated_data.pop('expiration', None).replace('/', '')
+        # number = validated_data.pop('number', None)
+        card = Card.objects.create(user=user)
         if not Card.objects.filter(user=validated_data.get('user')).exists():
             is_main = True
-        card, _ = Card.objects.update_or_create(number=number, defaults={**validated_data})
-        card.expiration = expiration
-        card.set_main(is_main)
+            card.set_main(is_main)
+
+        # card, _ = Card.objects.update_or_create(number=number, defaults={**validated_data})
+        # card = Card.objects.create(user=user)
+        # card.expiration = expiration
+        # card.set_main(is_main)
         return card
 
     class Meta:
         model = Card
         fields = [
             'id',
-            'is_main',
-            'number',
-            'expiration',
-            'cvc_cvv',
+            # 'is_main',
+            # 'number',
+            # 'expiration',
+            # 'cvc_cvv',
             'user',
         ]
 

@@ -12,11 +12,12 @@ class MultiBankBindCardCallbackWebhookAPIView(APIView):
         data = request.data
         print(data)
         card = (
-            Card.objects
-            .filter(user__phone_number=data.get('phone'), number__endswith=data.get('card_pan')[12:], is_active=False)
+            Card.all_objects
+            .filter(multibank_session_id=data.get('payer_id'), user__phone_number=data.get('phone'))
         )
         if card.exists():
             card = card.first()
+            card.number = data.get('card_pan')
             card.card_owner = data.get('holder_name')
             card.token = data.get('card_token')
             card.is_active = True

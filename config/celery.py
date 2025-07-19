@@ -20,14 +20,19 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 # Schedule your task here
-# app.conf.beat_schedule = {
-#     # 'run-cron-crop-contracts': {
-#     #     'task': 'apps.integrations.tasks.cron_crop_contracts',
-#     #     'schedule': crontab(minute='*/5'),
-#     # },
-#     # 'run-cron-test-task': {
-#     #     'task': 'apps.authentication.tasks.print_hello',
-#     #     # 'schedule': crontab(minute='*/5'),
-#     #     'schedule': timedelta(seconds=30),
-#     # },
-# }
+app.conf.beat_schedule = {
+    # 'run-cron-crop-contracts': {
+    #     'task': 'apps.integrations.tasks.cron_crop_contracts',
+    #     'schedule': crontab(minute='*/5'),
+    # },
+    # 'run-cron-test-task': {
+    #     'task': 'apps.authentication.tasks.print_hello',
+    #     # 'schedule': crontab(minute='*/5'),
+    #     'schedule': timedelta(seconds=30),
+    # },
+    # 'run-cron-test-task': {
+    #     'task': 'apps.authentication.tasks.print_hello',
+    #     # 'schedule': crontab(minute='*/5'),
+    #     'schedule': crontab(minute=0, hour='0,12'),
+    # },
+}
