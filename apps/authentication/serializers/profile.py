@@ -1,9 +1,22 @@
 from rest_framework import serializers
 
 from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory, UserActivity, \
-    NotificationDistribution
+    NotificationDistribution, UserSubscription, User
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
+
+
+class CreatorInfoSerializer(serializers.ModelSerializer):
+    profile_photo = FileSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'phone_number',
+            'profile_photo',
+        ]
 
 
 class DeleteAccountVerifySerializer(serializers.Serializer):
@@ -198,4 +211,19 @@ class ProfileUserNotificationDistributionsSerializer(serializers.ModelSerializer
             'text_uz',
             'text_ru',
             'created_at',
+        ]
+
+
+class MySubscriptionsSerializer(serializers.ModelSerializer):
+    price = serializers.IntegerField(source='plan.price', read_only=True, allow_null=True)
+    creator = CreatorInfoSerializer(allow_null=True)
+
+    class Meta:
+        model = UserSubscription
+        fields = [
+            'id',
+            'is_active',
+            'end_date',
+            'price',
+            'creator',
         ]

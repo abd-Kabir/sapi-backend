@@ -270,7 +270,6 @@ class PostByFollowedListAPIView(ListAPIView):
         subscribed = UserSubscription.objects.filter(
             subscriber=user,
             creator_id=OuterRef('user_id'),
-            is_active=True,
             end_date__gte=now()
         )
 

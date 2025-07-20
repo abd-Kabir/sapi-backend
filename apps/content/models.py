@@ -120,7 +120,6 @@ class Post(BaseModel):
         user_subscription = UserSubscription.objects.filter(
             subscriber=user,
             creator=self.user,
-            is_active=True,
             end_date__gte=timezone.now(),
         )
         if not user_subscription.exists():

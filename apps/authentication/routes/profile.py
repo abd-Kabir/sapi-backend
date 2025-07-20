@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
+from django.utils import timezone
 from django.utils.timezone import now, localtime
 from django.utils.translation import gettext_lazy as _
 from drf_yasg import openapi
@@ -25,7 +26,8 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      FundraisingSerializer, FollowersDashboardByPlanSerializer,
                                                      UserViewHistorySerializer, UserViewCreateSerializer,
                                                      ProfileUserActivitiesSerializer,
-                                                     ProfileUserNotificationDistributionsSerializer)
+                                                     ProfileUserNotificationDistributionsSerializer,
+                                                     MySubscriptionsSerializer)
 from apps.authentication.serializers.user import (BecomeCreatorSerializer, ConfigureDonationSettingsSerializer)
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -276,7 +278,7 @@ class DeleteSubscriptionPlanAPIView(DestroyAPIView):
         instance = self.get_object()
         # self.perform_destroy(instance)
         available_subs_plans = UserSubscription.objects.filter(
-            creator=instance.creator, plan=instance, end_date__gte=now(), is_active=True
+            creator=instance.creator, plan=instance, end_date__gte=now()
         )
         if available_subs_plans.exists():
             instance.is_deleted = True
@@ -493,6 +495,62 @@ class MySubscribersAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset().filter(subscriptions__creator=self.request.user)
         return queryset
+
+
+class MySubscriptionsAPIView(ListAPIView):
+    queryset = UserSubscription.objects.all()
+    serializer_class = MySubscriptionsSerializer
+    pagination_class = APILimitOffsetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset().filter(subscriber=user, end_date__gte=timezone.now())
+        return queryset
+
+
+class CancelSubscriptionAPIView(APIView):
+
+    @swagger_auto_schema(
+        operation_description="API to cancel a user's active subscription by its ID.",
+        manual_parameters=[
+            openapi.Parameter(
+                'subscription_id',
+                in_=openapi.IN_PATH,
+                type=openapi.TYPE_INTEGER,
+                description='ID of the subscription to cancel.',
+            )
+        ],
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description='Successfully canceled subscription',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Подписка отменена'),
+                        'end_date': openapi.Schema(type=openapi.TYPE_STRING, example='2025-07-20 16:14:31.678000 +05:00'),
+                    }
+                )
+            ),
+            status.HTTP_404_NOT_FOUND: openapi.Response(
+                description='Subscription not found',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Подписка не найдена'),
+                    }
+                )
+            ),
+        }
+    )
+    def post(self, subscription_id, request, *args, **kwargs):
+        user = self.request.user
+        subscription = UserSubscription.objects.filter(id=subscription_id, subscriber=user)
+
+        if subscription.exists():
+            subscription.update(is_active=False)
+            return Response({'detail': _('Подписка отменена'), 'end_date': subscription.first().end_date},
+                            status=status.HTTP_200_OK)
+        return Response({'detail': _('Подписка не найдена')}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ConfigureDonationSettingsAPIView(APIView):

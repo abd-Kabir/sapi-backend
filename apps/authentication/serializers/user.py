@@ -170,7 +170,6 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
         user_subs = UserSubscription.objects.filter(
             subscriber=subscriber,
             plan=plan,
-            is_active=True,
             end_date__gte=timezone.now(),
         ).exists()
         return user_subs
@@ -191,12 +190,14 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             end_date = now() + plan.duration
             subscriber = request.user
             amount = plan.price
+            commission_by_subscriber = validated_data.get('commission_by_subscriber')
 
             if self.check_subscription(validated_data):
                 raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
             subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                            **validated_data)
-            payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription')
+            payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
+                                             commission_by_subscriber=commission_by_subscriber)
             subscription.payment_reference = payment_info
             subscription.save(update_fields=['payment_reference'])
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
@@ -283,7 +284,8 @@ class ConfigureDonationSettingsSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['donation_banner'] = FileSerializer(instance.donation_banner).data if instance.donation_banner else None
+        representation['donation_banner'] = FileSerializer(
+            instance.donation_banner).data if instance.donation_banner else None
         return representation
 
     class Meta:

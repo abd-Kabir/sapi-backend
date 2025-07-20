@@ -2,6 +2,7 @@ from datetime import timedelta, date
 
 from django.db.models import Sum, Q, Count
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
+from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -10,6 +11,7 @@ from apps.authentication.models import UserActivity, User, UserSubscription
 from apps.content.models import Post
 from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
+from apps.integrations.services.multibank import multibank_payment
 from config.core.api_exceptions import APIValidation
 
 
@@ -229,7 +231,6 @@ def active_subscriptions(trunc_func, start_date=None, end_date=None):
     subs_data = UserSubscription.objects.filter(
         start_date_filter,
         end_date_filter,
-        is_active=True,
         end_date__date__gte=now(),
     ).annotate(
         period=trunc_func('created_at')
@@ -314,3 +315,9 @@ def platform_earnings(trunc_func, start_date=None, end_date=None):
 def send_notification_to_users(users, title, text):
     for user in users:
         send_notification_to_user(user, title, text)
+
+
+def resubscribe(user):
+    subs = UserSubscription.objects.filter(subscriber=user)
+    
+    return

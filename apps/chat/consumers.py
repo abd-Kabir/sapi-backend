@@ -72,7 +72,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     is_subscribed = UserSubscription.objects.filter(
                         subscriber=self.user,
                         creator=another_user,
-                        is_active=True,
                         end_date__gt=timezone.now()
                     ).exists()
 

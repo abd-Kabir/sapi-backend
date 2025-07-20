@@ -11,7 +11,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 FollowersDashboardEarnedAPIView, DeleteSubscriptionPlanAPIView,
                                                 IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView,
                                                 UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView,
-                                                ProfileUserActivitiesAPIView)
+                                                ProfileUserActivitiesAPIView, MySubscriptionsAPIView,
+                                                CancelSubscriptionAPIView)
 
 urlpatterns = [
     # account
@@ -56,6 +57,9 @@ urlpatterns = [
     path('profile/followed-users/', IFollowedUsersAPIView.as_view(), name='profile_followed_users'),
     path('profile/my-followers/', MyFollowersAPIView.as_view(), name='profile_my_followers'),
     path('profile/my-subscribers/', MySubscribersAPIView.as_view(), name='profile_my_subscribers'),
+    path('profile/my-subscriptions/', MySubscriptionsAPIView.as_view(), name='profile_my_subscriptions'),
+    path('profile/cancel-subscription/<int:subscription_id>/', CancelSubscriptionAPIView.as_view(),
+         name='profile_cancel_subscription'),
     path('profile/configure-donation/', ConfigureDonationSettingsAPIView.as_view(),
          name='profile_configure_donation_settings'),
     path('profile/configuration-donation/', ConfigurationDonationSettingsAPIView.as_view(),
