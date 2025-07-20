@@ -27,7 +27,7 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      UserViewHistorySerializer, UserViewCreateSerializer,
                                                      ProfileUserActivitiesSerializer,
                                                      ProfileUserNotificationDistributionsSerializer,
-                                                     MySubscriptionsSerializer)
+                                                     MySubscriptionsSerializer, IFollowedUsersSerializer)
 from apps.authentication.serializers.user import (BecomeCreatorSerializer, ConfigureDonationSettingsSerializer)
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -165,8 +165,8 @@ class AddCardAPIView(APIView):
         multibank_response, m_bank_status = multibank_prod_app.bind_card(
             data={
                 'store_id': settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'],
-                'callback_url': 'https://b85bfb7fd98b.ngrok-free.app/api/multibank/bind-card/webhook/',
-                # 'callback_url': 'https://api.sapi.uz/api/multibank/bind-card/webhook/',
+                # 'callback_url': 'https://b85bfb7fd98b.ngrok-free.app/api/multibank/bind-card/webhook/',
+                'callback_url': 'https://api.sapi.uz/api/multibank/bind-card/webhook/',
                 'phone': user.phone_number
             }
         )
@@ -469,7 +469,7 @@ class FollowersDashboardByPlanAPIView(APIView):
 
 class IFollowedUsersAPIView(ListAPIView):
     queryset = User.objects.all()
-    serializer_class = BecomeCreatorSerializer
+    serializer_class = IFollowedUsersSerializer
     pagination_class = APILimitOffsetPagination
 
     def get_queryset(self):

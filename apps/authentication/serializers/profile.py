@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory, UserActivity, \
     NotificationDistribution, UserSubscription, User
+from apps.content.models import Post
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
 
@@ -226,4 +227,37 @@ class MySubscriptionsSerializer(serializers.ModelSerializer):
             'end_date',
             'price',
             'creator',
+        ]
+
+
+class IFollowedUsersSerializer(serializers.ModelSerializer):
+    profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
+    profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
+    category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    new_posts_count = serializers.SerializerMethodField(allow_null=True)
+
+    def get_new_posts_count(self, obj):
+        request_user = self.context['request'].user
+
+        posts = (
+            Post.objects
+            .filter(user=obj)
+            .exclude(id__in=UserViewHistory.objects.filter(user=request_user).values_list('post_id', flat=True))
+        )
+
+        return posts.count()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'category',
+            'category_name',
+            'username',
+            'creator_description',
+            'new_posts_count',
+            'profile_photo',
+            'profile_photo_info',
+            'profile_banner_photo',
+            'profile_banner_photo_info',
         ]
