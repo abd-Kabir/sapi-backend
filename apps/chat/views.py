@@ -10,7 +10,9 @@ from django.utils.translation import gettext_lazy as _
 from apps.authentication.models import User, BlockedUser
 from apps.chat.models import ChatRoom, Message, ChatSettings
 from apps.chat.serializers import MessageListSerializer, UserChatRoomListSerializer, ChatSettingsSerializer
+from apps.chat.services import check_chatting_verification
 from apps.chat.swagger import chat_settings_swagger
+from apps.files.serializers import FileSerializer
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 
@@ -37,6 +39,8 @@ class UserGetChatRoomAPIView(APIView):
     def get(self, request, user_id, *args, **kwargs):
         chat_started_user = request.user
         writing_to = self.get_user(user_id)
+        if not check_chatting_verification(chat_started_user, writing_to):
+            raise APIValidation(_('Нет доступа общаться с этим пользователем'), status_code=status.HTTP_403_FORBIDDEN)
 
         if BlockedUser.is_blocked(writing_to, chat_started_user):
             raise APIValidation(_('Вы заблокированы этим пользователем'), status_code=status.HTTP_403_FORBIDDEN)
@@ -51,12 +55,19 @@ class UserGetChatRoomAPIView(APIView):
 
         if not room:
             room = ChatRoom.objects.create(creator=writing_to, subscriber=chat_started_user)
+
+        chat_started_profile_photo = (FileSerializer(chat_started_user.profile_photo).data
+                                      if chat_started_user.profile_photo else None)
+        writing_to_profile_photo = (FileSerializer(writing_to.profile_photo).data
+                                    if writing_to.profile_photo else None)
         return Response({
             'room_id': room.id,
             'chat_started': chat_started_user.id,
             'chat_started_username': chat_started_user.username,
+            'chat_started_profile_photo': chat_started_profile_photo,
             'writing_to': writing_to.id,
             'writing_to_username': writing_to.username,
+            'writing_to_profile_photo': writing_to_profile_photo,
         }, status=status.HTTP_200_OK)
 
 

@@ -527,7 +527,8 @@ class CancelSubscriptionAPIView(APIView):
                     type=openapi.TYPE_OBJECT,
                     properties={
                         'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Подписка отменена'),
-                        'end_date': openapi.Schema(type=openapi.TYPE_STRING, example='2025-07-20 16:14:31.678000 +05:00'),
+                        'end_date': openapi.Schema(type=openapi.TYPE_STRING,
+                                                   example='2025-07-20 16:14:31.678000 +05:00'),
                     }
                 )
             ),
@@ -622,9 +623,9 @@ class ProfileUserAnnouncementsAPIView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = super().get_queryset()
-        queryset = queryset.filter(status='sent', )
+        queryset = queryset.filter(status='sent', types__contains=['push_notification'])
         if user.is_creator:
-            queryset = queryset.filter(user_type='creators')
+            queryset = queryset.filter(user_type__in=['creators', 'all'])
         elif not user.is_creator:
-            queryset = queryset.filter(user_type='users')
+            queryset = queryset.filter(user_type__in=['users', 'all'])
         return queryset.order_by('-created_at')
