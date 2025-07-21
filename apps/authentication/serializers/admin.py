@@ -223,12 +223,14 @@ class ReportListSerializer(serializers.ModelSerializer):
 
 class ReportRetrieveSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
-    post_uploaded_at = serializers.DateTimeField(source='post.created_at', read_only=True)
-    post_title = serializers.CharField(source='post.title', read_only=True)
-    post_description = serializers.CharField(source='post.description', read_only=True)
-    post_files = FileSerializer(source='post.files', many=True, read_only=True)
-    post_type = serializers.CharField(source='post.post_type', read_only=True)
-    post_type_display = serializers.CharField(source='post.get_post_type_display', read_only=True)
+    post_uploaded_at = serializers.DateTimeField(source='post.created_at', read_only=True, allow_null=True)
+    post_title = serializers.CharField(source='post.title', read_only=True, allow_null=True)
+    post_description = serializers.CharField(source='post.description', read_only=True, allow_null=True)
+    post_files = FileSerializer(source='post.files', many=True, read_only=True, allow_null=True)
+    post_type = serializers.CharField(source='post.post_type', read_only=True, allow_null=True)
+    post_type_display = serializers.CharField(source='post.get_post_type_display', read_only=True, allow_null=True)
+    report_user = serializers.CharField(source='report_user.username', read_only=True)
+    report_user_description = serializers.CharField(source='report_user.creator_description', read_only=True)
 
     reporter = serializers.SerializerMethodField()
     report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
@@ -247,6 +249,8 @@ class ReportRetrieveSerializer(serializers.ModelSerializer):
             'post_files',
             'post_type',
             'post_type_display',
+            'report_user',
+            'report_user_description',
 
             'reporter',
             'report_type',
@@ -260,7 +264,12 @@ class ReportRetrieveSerializer(serializers.ModelSerializer):
         ]
 
     def get_creator(self, obj):
-        user = obj.post.user
+        if obj.post:
+            user = obj.post.user
+        elif obj.report_user:
+            user = obj.report_user
+        else:
+            return None
         return {
             "id": user.id,
             "username": user.username,
