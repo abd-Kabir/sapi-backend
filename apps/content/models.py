@@ -257,7 +257,7 @@ class Like(BaseModel):
 
 class Report(BaseModel):
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='reports')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports', null=True, blank=True)
     report_user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='reported_reports',
                                     null=True, blank=True)
     report_type = models.CharField(max_length=20, choices=ReportTypes.choices)
