@@ -17,3 +17,9 @@ def register_device(user, registration_id, device_type='android'):
     if not created:
         device.user = user
         device.save()
+
+
+def delete_device(user):
+    FCMDevice.objects.filter(
+        user=user,
+    ).delete()
