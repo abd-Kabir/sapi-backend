@@ -4,7 +4,7 @@ from fcm_django.models import FCMDevice
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.integrations.api_integrations.firebase import register_device
+from apps.integrations.api_integrations.firebase import register_device, delete_device
 
 
 class SendNotificationAPIView(APIView):
@@ -45,3 +45,21 @@ class RegisterDeviceAPIView(APIView):
         registration_id = request.data.get('registration_id')
         register_device(user=user, registration_id=registration_id)
         return Response({'status': 'registered'})
+
+
+class DeleteDeviceAPIView(APIView):
+    @swagger_auto_schema(
+        operation_summary='Delete a device',
+        operation_description='-',
+        responses={200: openapi.Response('Device deleted successfully', schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Device deleted')
+            }
+        ))}
+    )
+    def post(self, request):
+        user = request.user
+        # registration_id = request.data.get('registration_id')
+        delete_device(user=user)
+        return Response({'message': 'deleted'}, status=200)
