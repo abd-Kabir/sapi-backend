@@ -418,6 +418,12 @@ class ReportSerializer(serializers.ModelSerializer):
             'user'
         ]
 
+    def validate(self, attrs):
+        if attrs.get('post') and attrs.get('report_user'):
+            raise APIValidation(_('Можете оставить жалобу только на пост или юзер'),
+                                status_code=status.HTTP_400_BAD_REQUEST)
+        return super().validate(attrs)
+
     def create(self, validated_data):
         # Automatically set the user from the request
         validated_data['user'] = self.context['request'].user
