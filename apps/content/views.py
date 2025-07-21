@@ -453,7 +453,7 @@ class CreateReportAPIView(CreateAPIView):
         try:
             serializer.save()
         except IntegrityError:
-            raise serializers.ValidationError({'detail': _('Вы уже пожаловались на этот пост.')})
+            raise serializers.ValidationError({'detail': _('Вы уже пожаловались на этот пост или юзер.')})
 
 
 class PostToggleSaveAPIView(APIView):

@@ -403,6 +403,7 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'post',
+            'report_user',
             'report_type',
             'description',
             'is_resolved',

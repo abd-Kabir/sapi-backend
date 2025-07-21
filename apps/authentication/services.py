@@ -319,5 +319,5 @@ def send_notification_to_users(users, title, text):
 
 def resubscribe(user):
     subs = UserSubscription.objects.filter(subscriber=user)
-    
+    # TODO: end this for resubscribe users
     return
