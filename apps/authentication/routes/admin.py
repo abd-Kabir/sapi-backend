@@ -478,6 +478,18 @@ class AdminReportCommentAPIView(CreateAPIView):
     permission_classes = [IsAdmin, ]
     router_name = 'REPORTS'
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance: ReportComment = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response({
+            'id': instance.id,
+            'text': instance.text,
+            'username': instance.user.username,
+            'created_at': instance.created_at.strftime('%d %B, %Y')
+        }, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['kwargs'] = self.kwargs
