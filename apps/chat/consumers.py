@@ -25,7 +25,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # Verify user has access to this chat room
-        chat_access_verification = await self.verify_chat_access()
+        chat_access_verification = self.verify_chat_access()
         if not chat_access_verification:
             await self.close()
             return

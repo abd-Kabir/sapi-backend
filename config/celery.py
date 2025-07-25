@@ -30,9 +30,8 @@ app.conf.beat_schedule = {
     #     # 'schedule': crontab(minute='*/5'),
     #     'schedule': timedelta(seconds=30),
     # },
-    # 'run-cron-test-task': {
-    #     'task': 'apps.authentication.tasks.print_hello',
-    #     # 'schedule': crontab(minute='*/5'),
-    #     'schedule': crontab(minute=0, hour='0,12'),
-    # },
+    'run-cron-resubscribe-task': {
+        'task': 'apps.authentication.tasks.resubscribe_task',
+        'schedule': crontab(minute=0, hour='0,12'),
+    },
 }
