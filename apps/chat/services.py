@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 
 from apps.authentication.models import Donation, UserSubscription
-from config.core.api_exceptions import APIValidation
+from config.core.api_exceptions import APIValidation, APICodeValidation
 
 
 def check_chatting_verification(user, another_user):
@@ -20,13 +20,16 @@ def check_chatting_verification(user, another_user):
                 ).exists()
 
                 if not is_subscribed:
-                    raise APIValidation(_('Могут общаться только пользователи с подпиской этого креатора'),
-                                        status_code=status.HTTP_403_FORBIDDEN)
+                    raise APICodeValidation(
+                        _('Вы сможете написать этому креатору только после приобретения любого уровня подписки'),
+                        code='subscribers',
+                        status_code=status.HTTP_403_FORBIDDEN)
             if another_user_configs.filter(can_chat='donations').exists():
                 donation_settings = another_user_configs.filter(can_chat='donations').first()
                 if donation_settings.minimum_message_donation <= 0:
-                    raise APIValidation(
+                    raise APICodeValidation(
                         _(f'Могут общаться только пользователи которые задонатили этому креатору минимум {donation_settings.minimum_message_donation}'),
+                        code='donations',
                         status_code=status.HTTP_403_FORBIDDEN
                     )
                 total_donation = Donation.objects.filter(
@@ -34,12 +37,15 @@ def check_chatting_verification(user, another_user):
                     creator=another_user,
                 ).aggregate(total=Sum('amount'))['total']
                 if total_donation < donation_settings.minimum_message_donation:
-                    raise APIValidation(
+                    raise APICodeValidation(
                         _(f'Могут общаться только пользователи которые задонатили этому креатору минимум {donation_settings.minimum_message_donation}'),
+                        code='donations',
                         status_code=status.HTTP_403_FORBIDDEN
                     )
             return True
         else:
-            raise APIValidation(_('Этот пользователь закрыл чат'), status_code=status.HTTP_403_FORBIDDEN)
+            raise APICodeValidation(_('Этот пользователь закрыл чат'),
+                                    code='nobody',
+                                    status_code=status.HTTP_403_FORBIDDEN)
     else:
         return True

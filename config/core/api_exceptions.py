@@ -21,6 +21,23 @@ class APIValidation(APIException):
         super().__init__(detail, code)
 
 
+class APICodeValidation(APIException):
+    status_code = 400
+    default_detail = 'Validation error'
+    default_code = 'invalid'
+
+    def __init__(self, detail=None, code=None, status_code=None):
+        if detail is None:
+            detail = self.default_detail
+        self.detail = {
+            'detail': detail,
+        }
+        if code:
+            self.detail['code'] = code
+        if status_code:
+            self.status_code = status_code
+
+
 def uni_exception_handler(exc, context):
     response = exception_handler(exc, context)
     return response

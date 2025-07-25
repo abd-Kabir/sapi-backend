@@ -13,7 +13,7 @@ from apps.chat.serializers import MessageListSerializer, UserChatRoomListSeriali
 from apps.chat.services import check_chatting_verification
 from apps.chat.swagger import chat_settings_swagger
 from apps.files.serializers import FileSerializer
-from config.core.api_exceptions import APIValidation
+from config.core.api_exceptions import APIValidation, APICodeValidation
 from config.core.pagination import APILimitOffsetPagination
 
 
@@ -40,10 +40,12 @@ class UserGetChatRoomAPIView(APIView):
         chat_started_user = request.user
         writing_to = self.get_user(user_id)
         if not check_chatting_verification(chat_started_user, writing_to):
-            raise APIValidation(_('Нет доступа общаться с этим пользователем'), status_code=status.HTTP_403_FORBIDDEN)
+            raise APICodeValidation(_('Нет доступа общаться с этим пользователем'), code='blocked',
+                                    status_code=status.HTTP_403_FORBIDDEN)
 
         if BlockedUser.is_blocked(writing_to, chat_started_user):
-            raise APIValidation(_('Вы заблокированы этим пользователем'), status_code=status.HTTP_403_FORBIDDEN)
+            raise APICodeValidation(_('Вы заблокированы этим пользователем'), code='blocked',
+                                    status_code=status.HTTP_403_FORBIDDEN)
 
         if chat_started_user.id == writing_to.id:
             raise APIValidation(_('Чат не может быть создан с самим собой'), status_code=status.HTTP_400_BAD_REQUEST)
