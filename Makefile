@@ -25,4 +25,4 @@ logs:
 
 # Clean up unused Docker resources
 prune:
-	docker system prune -f
+	docker image prune -a -f
