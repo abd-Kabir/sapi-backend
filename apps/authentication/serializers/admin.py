@@ -187,7 +187,9 @@ class ReportListSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_report_user(obj: Report):
-        return obj.report_user.username if obj.report_user.username else obj.report_user.temp_username
+        if obj.report_user:
+            return obj.report_user.username if obj.report_user.username else obj.report_user.temp_username
+        return None
 
     @staticmethod
     def get_status_display(obj: Report):
