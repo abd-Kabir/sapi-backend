@@ -77,6 +77,7 @@ class UserChatRoomListSerializer(serializers.ModelSerializer):
 class MessageListSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(source='sender.username', read_only=True)
     is_read = serializers.SerializerMethodField()
+    type_display = serializers.CharField(source='get_type_display', read_only=True, allow_null=True)
 
     def get_is_read(self, obj):
         user = self.context['request'].user
@@ -90,6 +91,8 @@ class MessageListSerializer(serializers.ModelSerializer):
         model = Message
         fields = [
             'id',
+            'type',
+            'type_display',
             'content',
             'sender_id',
             'sender',
