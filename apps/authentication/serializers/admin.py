@@ -178,12 +178,24 @@ class ReportListSerializer(serializers.ModelSerializer):
     post_username = serializers.CharField(source='post.user.username', read_only=True)
     post_title = serializers.CharField(source='post.title', read_only=True)
     post_description = serializers.CharField(source='post.description', read_only=True)
-    report_user = serializers.CharField(source='report_user.username', read_only=True)
+    report_user = serializers.SerializerMethodField(read_only=True)
     report_user_description = serializers.CharField(source='report_user.creator_description', read_only=True)
     reported_username = serializers.CharField(source='user.username', read_only=True)
     report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    status_display = serializers.SerializerMethodField(read_only=True)
     category_name = serializers.CharField(source='post.category.name', read_only=True)
+
+    @staticmethod
+    def get_report_user(obj: Report):
+        return obj.report_user.username if obj.report_user.username else obj.report_user.temp_username
+
+    @staticmethod
+    def get_status_display(obj: Report):
+        if obj.report_user:
+            if obj.report_user.is_blocked_by and obj.status != 3:
+                obj.status = 3
+                obj.save(update_fields=['status'])
+        return obj.get_status_display()
 
     class Meta:
         model = Report

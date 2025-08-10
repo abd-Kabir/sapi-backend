@@ -66,10 +66,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         check_chatting_verification(self.user, another_user)
 
     @database_sync_to_async
-    def create_message(self, content=None, file_data=None, file_name=None):
+    def create_message(self, content=None, message_type='message', file_data=None, file_name=None):
         try:
             room = ChatRoom.objects.get(pk=self.room_id)
-            message = Message(room=room, sender=self.user)
+            message = Message(room=room, sender=self.user, type=message_type)
 
             if content:
                 message.content = content
@@ -88,17 +88,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
 
         message_text = text_data_json.get('message')
+        message_type = text_data_json.get('type')
         file_data = text_data_json.get('file_data')  # base64 file string
         file_name = text_data_json.get('file_name')  # original filename
 
         db_message = await self.create_message(
             content=message_text,
+            message_type=message_type,
             file_data=file_data,
             file_name=file_name
         )
 
         message = {
-            'type': 'chat_message',
+            'type': message_type,
             'message': message_text,
             'file_url': db_message.file.path if db_message.file else None,
             'sender_id': self.user.id,
@@ -118,6 +120,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': event['message'],
+            'type': event['type'],
             'file_path': event['file_url'],
             'sender_id': event['sender_id'],
             'created_at': event['created_at'],

@@ -13,6 +13,12 @@ class CanChatWithSettingsEnum(models.TextChoices):
     donations = 'donations', _('Только сообщения с донатом')
 
 
+class MessageTypesEnum(models.TextChoices):
+    message = 'message', _('Сообщение')
+    file = 'file', _('Файл')
+    media = 'media', _('Медиа')
+
+
 class ChatRoom(BaseModel):
     """Represents a chat room between two users"""
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator_chat_rooms')
@@ -53,6 +59,8 @@ class Message(BaseModel):
     content = models.TextField(null=True, blank=True)
     file = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True, related_name='messages')
     is_read = models.BooleanField(default=False)
+    type = models.CharField(choices=MessageTypesEnum.choices, default=MessageTypesEnum.message, max_length=55,
+                            null=True, blank=True)
 
     class Meta:
         db_table = 'chat_message'
