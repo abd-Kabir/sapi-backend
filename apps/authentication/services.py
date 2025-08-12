@@ -1,18 +1,21 @@
+import calendar
+import logging
 from datetime import timedelta, date
 
 from django.db.models import Sum, Q, Count
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
-from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.authentication.models import UserActivity, User, UserSubscription
+from apps.authentication.models import UserActivity, User, UserSubscription, PaymentType
 from apps.content.models import Post
 from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
 from apps.integrations.services.multibank import multibank_payment
 from config.core.api_exceptions import APIValidation
+
+logger = logging.getLogger(__name__)
 
 
 def generate_date_range(group, period, queryset):
@@ -318,6 +321,35 @@ def send_notification_to_users(users, title, text):
 
 
 def resubscribe(user):
-    subs = UserSubscription.objects.filter(subscriber=user)
-    # TODO: end this for resubscribe users
-    return
+    subscriptions = UserSubscription.objects.filter(
+        subscriber=user,
+        is_active=True,
+        end_date__lt=now()
+    )
+    for subscription in subscriptions:
+        try:
+            plan = subscription.plan
+            creator = subscription.creator
+
+            if not plan:
+                logger.warning(f"No duration found for plan {plan} in subscription {subscription.id}")
+                continue
+
+            multibank_payment(
+                user=user,
+                creator=creator,
+                card=subscription.subscriber_card,
+                amount=plan.price,
+                payment_type='subscription',
+                commission_by_subscriber=subscription.commission_by_subscriber,
+            )
+            if plan.duration:
+                subscription.end_date = now() + plan.duration
+            else:
+                today = date.today()
+                days_in_month = calendar.monthrange(today.year, today.month)[1]
+                subscription.end_date = now() + timedelta(days=days_in_month)
+            subscription.save(update_fields=['end_date'])
+        except Exception as e:
+            logger.error(f"Resubscribe failed for subscription {subscription.id}: {str(e)}")
+            continue
