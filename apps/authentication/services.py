@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.authentication.models import UserActivity, User, UserSubscription, PaymentType
+from apps.authentication.models import UserActivity, User, UserSubscription, BlockedUser
 from apps.content.models import Post
 from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
@@ -321,6 +321,7 @@ def send_notification_to_users(users, title, text):
 
 
 def resubscribe(user):
+    print(user, type(user),user.is_authenticated)
     subscriptions = UserSubscription.objects.filter(
         subscriber=user,
         is_active=True,
@@ -333,6 +334,11 @@ def resubscribe(user):
 
             if not plan:
                 logger.warning(f"No duration found for plan {plan} in subscription {subscription.id}")
+                continue
+
+            if BlockedUser.is_blocked(creator, user):
+                subscription.is_active = False
+                subscription.save(update_fields=['is_active'])
                 continue
 
             multibank_payment(
