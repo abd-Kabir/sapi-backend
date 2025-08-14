@@ -100,7 +100,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         message = {
-            'type': message_type,
+            'message_type': message_type,
+            'type': 'chat_message',
             'message': message_text,
             'file_url': db_message.file.path if db_message.file else None,
             'sender_id': self.user.id,
@@ -124,5 +125,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'file_path': event['file_url'],
             'sender_id': event['sender_id'],
             'created_at': event['created_at'],
-            'message_id': event['message_id']
+            'message_id': event['message_id'],
+            'message_type': event['message_type'],
         }))

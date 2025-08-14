@@ -43,8 +43,12 @@ class UserGetChatRoomAPIView(APIView):
             raise APICodeValidation(_('Нет доступа общаться с этим пользователем'), code='blocked',
                                     status_code=status.HTTP_403_FORBIDDEN)
 
+        if BlockedUser.blocked_by(chat_started_user, writing_to):
+            raise APICodeValidation(_("Вы заблокированы этим пользователем"), code='blocked',
+                                    status_code=status.HTTP_403_FORBIDDEN)
+
         if BlockedUser.is_blocked(writing_to, chat_started_user):
-            raise APICodeValidation(_('Вы заблокированы этим пользователем'), code='blocked',
+            raise APICodeValidation(_("Вы заблокировали этого пользователя."), code='blocked',
                                     status_code=status.HTTP_403_FORBIDDEN)
 
         if chat_started_user.id == writing_to.id:

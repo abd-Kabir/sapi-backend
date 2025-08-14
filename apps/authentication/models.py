@@ -130,7 +130,7 @@ class User(AbstractUser):
     max_donation_letters = models.PositiveBigIntegerField(default=None, null=True, blank=True)
     show_donation_amount = models.PositiveBigIntegerField(default=None, null=True, blank=True)
     donation_banner = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
-                                           related_name='donation_banner')
+                                        related_name='donation_banner')
 
     sapi_share = models.PositiveSmallIntegerField(default=10)
     pinfl = models.CharField(null=True, blank=True, max_length=14)
@@ -367,6 +367,12 @@ class BlockedUser(BaseModel):
             models.Q(blocker=user1, blocked=user2) |
             models.Q(blocker=user2, blocked=user1)
         ).exists()
+
+    @classmethod
+    def blocked_by(cls, blocked, blocker):
+        return cls.objects.filter(blocker=blocker, blocked=blocked).exists()
+
+
 
     def clean(self):
         if self.blocker == self.blocked:
