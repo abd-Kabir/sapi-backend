@@ -321,7 +321,6 @@ def send_notification_to_users(users, title, text):
 
 
 def resubscribe(user):
-    print(user, type(user),user.is_authenticated)
     subscriptions = UserSubscription.objects.filter(
         subscriber=user,
         is_active=True,

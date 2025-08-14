@@ -373,9 +373,6 @@ class BlockedUser(BaseModel):
         return cls.objects.filter(blocker=blocker, blocked=blocked).exists()
 
 
-    @classmethod
-    def is_blocked(cls, user1, user2):
-        return cls.blocked_by(user1, user2) or cls.blocked_by(user2, user1)
 
     def clean(self):
         if self.blocker == self.blocked:
