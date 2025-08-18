@@ -43,22 +43,6 @@ class Category(BaseModel):
         db_table = 'category'
 
 
-# TODO: signals for updating likes, comments count
-# @receiver([post_save, post_delete], sender=Like)
-# def update_like_count(sender, instance, **kwargs):
-#     instance.post.update_counts()
-#
-# @receiver([post_save, post_delete], sender=Comment)
-# def update_comment_count(sender, instance, **kwargs):
-#     instance.post.update_counts()
-# @receiver([post_save, post_delete], sender=Like)
-# def update_like_counts(sender, instance, **kwargs):
-#     if instance.post:
-#         instance.post.update_counts()
-#     if instance.comment:
-#         instance.comment.update_like_count()
-
-
 class Post(BaseModel):
     is_posted = models.BooleanField(default=False)
     publication_time = models.DateTimeField(null=True, blank=True)
