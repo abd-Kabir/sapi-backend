@@ -29,7 +29,7 @@ class FileCreateAPIView(APIView):
                 'file', in_=openapi.IN_FORM,
                 type=openapi.TYPE_FILE,
                 required=True,
-                description=_('Файл для загрузки (максимальный размер 50 МБ)')
+                description=_('Файл для загрузки (максимальный размер 500 МБ)')
             ),
         ]
     )
@@ -38,8 +38,8 @@ class FileCreateAPIView(APIView):
         if not file:
             raise APIValidation(detail=_('Файл не был отправлен'), code=status.HTTP_400_BAD_REQUEST)
 
-        if file.size > 20_971_520:
-            raise APIValidation(detail=_('Размер файла превысил 20 МБ!'), code=status.HTTP_400_BAD_REQUEST)
+        if file.size > 524_288_000:
+            raise APIValidation(detail=_('Размер файла превысил 500 МБ!'), code=status.HTTP_400_BAD_REQUEST)
 
         e_file = upload_file(file=file)
         return Response({
