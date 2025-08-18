@@ -204,12 +204,28 @@ class QuestionnairePostAnswerSerializer(serializers.ModelSerializer):
             .answers
         )
 
-        answer_options = instance.answers.values_list('id', flat=True)
-        post_answers_queryset = instance.post_answers.values_list('answers', flat=True)
-        post_answers_list = list(chain.from_iterable(post_answers_queryset))
-        correct_answers = calculate_correct_answers(answer_options, post_answers_list)
-        representation['correct_answers'] = correct_answers
-        representation['total_answers_count'] = len(post_answers_list)
+        answer_options = instance.answers.all()
+        post_answers_queryset = instance.post_answers
+        representation['answers'] = []
+        for answer_option in answer_options:
+            answer_option_id = answer_option.id
+            obj = {'id': answer_option_id, 'text': answer_option.text, 'is_correct': answer_option.is_correct}
+
+            answers_count_query = post_answers_queryset.filter(answers__contains=answer_option_id)
+            answers_count = answers_count_query.count()
+            obj['answers_count'] = answers_count
+
+            total_answers_query = post_answers_queryset.values_list('answers', flat=True)
+            total_answers_count = len(list(chain.from_iterable(total_answers_query)))
+            answers_percent = (answers_count / total_answers_count) * 100 if total_answers_count else 0
+            obj['percent'] = answers_percent
+
+            if request.user.is_authenticated:
+                is_selected = answers_count_query.filter(user=request.user).exists()
+                obj['is_selected'] = is_selected
+            else:
+                obj['is_selected'] = False
+            representation['answers'].append(obj)
         return representation
 
 

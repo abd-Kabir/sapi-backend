@@ -26,7 +26,7 @@ class DeleteAccountVerifySerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context['request'].user
         sms = attrs.get('code')
-        verify_sms_code(user, sms, 'delete_account')
+        verify_sms_code(user, sms, ['delete_account'])
         return super().validate(attrs)
 
 
