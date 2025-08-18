@@ -39,7 +39,7 @@ class LoginVerifySMSSerializer(serializers.Serializer):
         phone_number = only_phone_numbers(attrs.get('phone_number'))
         user = self.get_user(phone_number)
         sms = attrs.get('code')
-        verify_sms_code(user, sms)
+        verify_sms_code(user, sms, 'login')
         return super().validate(attrs)
 
 

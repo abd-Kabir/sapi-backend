@@ -77,8 +77,8 @@ def sms_confirmation_open_phone_number(phone_number, purpose):
     return True
 
 
-def verify_sms_code(user, code):
-    sms_confirmation = SMSConfirmation.objects.filter(code=code, user=user, is_used=False).first()
+def verify_sms_code(user, code, purpose):
+    sms_confirmation = SMSConfirmation.objects.filter(code=code, user=user, purpose=purpose, is_used=False).first()
     if not sms_confirmation or sms_confirmation.is_expired():
         raise APIValidation(_('Недействительный или просроченный код.'), status_code=status.HTTP_400_BAD_REQUEST)
     sms_confirmation.is_used = True
