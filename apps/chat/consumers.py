@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if content:
                 message.content = content
 
-            if file_data and file_name:
+            if file_data or file_name:
                 data = ContentFile(base64.b64decode(file_data), name=file_name)
                 file = upload_file(data)
                 message.file = file
