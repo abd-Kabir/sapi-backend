@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db.models import Count, Q, Sum
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from django.utils.timezone import now, localtime
 from django.utils.translation import gettext_lazy as _
@@ -372,7 +372,7 @@ class FollowersDashboardAPIView(APIView):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description=_('Тип для дашборда'),
-                enum=['week', 'month']
+                enum=['week', 'month', 'year', 'all']
             ),
         ]
     )
@@ -424,6 +424,43 @@ class FollowersDashboardAPIView(APIView):
             return Response({
                 "period": "last_week",
                 "daily_follow_counts": result
+            })
+
+        elif period == 'year':
+            start_date = today - timedelta(days=365)
+            data = (
+                UserFollow.objects.filter(created_at__date__gte=start_date)
+                .annotate(month=TruncMonth('created_at'))
+                .values('month')
+                .annotate(count=Count('id'))
+                .order_by('month')
+            )
+            result = OrderedDict()
+            for item in data:
+                label = item['month'].strftime('%b %Y')
+                result[label] = item['count']
+
+            return Response({
+                "period": "last_year",
+                "monthly_follow_counts": result
+            })
+
+        elif period == 'all':
+            data = (
+                UserFollow.objects.all()
+                .annotate(month=TruncMonth('created_at'))
+                .values('month')
+                .annotate(count=Count('id'))
+                .order_by('month')
+            )
+            result = OrderedDict()
+            for item in data:
+                label = item['month'].strftime('%b %Y')
+                result[label] = item['count']
+
+            return Response({
+                "period": "all_time",
+                "monthly_follow_counts": result
             })
 
         return Response({"error": "Invalid period"}, status=400)
