@@ -479,8 +479,8 @@ class FollowersDashboardByPlanAPIView(APIView):
         # Annotate each plan with subscriber count
         plans = SubscriptionPlan.objects.filter(creator=creator).annotate(
             subscriber_count=Count(
-                'usersubscription',
-                filter=Q(usersubscription__is_active=True)
+                'subscriptions',
+                filter=Q(subscriptions__is_active=True)
             )
         )
 

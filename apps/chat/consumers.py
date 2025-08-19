@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 
 from apps.chat.models import ChatRoom, Message, BlockedUser
 from apps.chat.services import check_chatting_verification
+from apps.files.serializers import FileSerializer
 from apps.files.utils import upload_file
 
 logger = logging.getLogger()
@@ -98,12 +99,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             file_data=file_data,
             file_name=file_name
         )
+        file = FileSerializer(db_message.file).data if db_message.file else None
 
         message = {
             'message_type': message_type,
             'type': 'chat_message',
             'message': message_text,
-            'file_url': db_message.file.path if db_message.file else None,
+            'file': file,
             'sender_id': self.user.id,
             'created_at': db_message.created_at.isoformat(),
             'message_id': db_message.id
@@ -122,7 +124,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': event['message'],
             'type': event['type'],
-            'file_path': event['file_url'],
+            'file': event['file'],
             'sender_id': event['sender_id'],
             'created_at': event['created_at'],
             'message_id': event['message_id'],
