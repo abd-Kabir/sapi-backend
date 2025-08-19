@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.authentication.models import SubscriptionPlan
+from apps.authentication.models import SubscriptionPlan, BlockedUser
 from apps.chat.models import Message, ChatRoom, ChatSettings
 from apps.files.serializers import FileSerializer
 
@@ -77,6 +77,8 @@ class UserChatRoomListSerializer(serializers.ModelSerializer):
 class MessageListSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(source='sender.username', read_only=True)
     is_read = serializers.SerializerMethodField()
+    # is_blocked = serializers.SerializerMethodField()
+    # is_blocked_by_me = serializers.SerializerMethodField()
     type_display = serializers.CharField(source='get_type_display', read_only=True, allow_null=True)
     file = FileSerializer(read_only=True, allow_null=True)
 
@@ -87,6 +89,14 @@ class MessageListSerializer(serializers.ModelSerializer):
             obj.save()
             return True
         return None
+
+    # def get_is_blocked(self, obj):
+    #     user = self.context['request'].user
+    #     return BlockedUser.blocked_by(user, obj.sender)
+    #
+    # def get_is_blocked_by_me(self, obj):
+    #     user = self.context['request'].user
+    #     return BlockedUser.blocked_by(obj.sender, user)
 
     class Meta:
         model = Message
@@ -100,6 +110,8 @@ class MessageListSerializer(serializers.ModelSerializer):
             'sender',
             'is_read',
             'created_at',
+            # 'is_blocked',
+            # 'is_blocked_by_me'
         ]
 
 

@@ -39,17 +39,19 @@ class UserGetChatRoomAPIView(APIView):
     def get(self, request, user_id, *args, **kwargs):
         chat_started_user = request.user
         writing_to = self.get_user(user_id)
+        is_blocked = BlockedUser.blocked_by(chat_started_user, writing_to)
+        is_blocked_by_me = BlockedUser.blocked_by(writing_to, chat_started_user)
         if not check_chatting_verification(chat_started_user, writing_to):
             raise APICodeValidation(_('Нет доступа общаться с этим пользователем'), code='blocked',
                                     status_code=status.HTTP_403_FORBIDDEN)
 
-        if BlockedUser.blocked_by(chat_started_user, writing_to):
-            raise APICodeValidation(_("Вы заблокированы этим пользователем"), code='blocked',
-                                    status_code=status.HTTP_403_FORBIDDEN)
-
-        if BlockedUser.is_blocked(writing_to, chat_started_user):
-            raise APICodeValidation(_("Вы заблокировали этого пользователя."), code='blocked',
-                                    status_code=status.HTTP_403_FORBIDDEN)
+        # if BlockedUser.blocked_by(chat_started_user, writing_to):
+        #     raise APICodeValidation(_("Вы заблокированы этим пользователем"), code='blocked',
+        #                             status_code=status.HTTP_403_FORBIDDEN)
+        #
+        # if BlockedUser.is_blocked(writing_to, chat_started_user):
+        #     raise APICodeValidation(_("Вы заблокировали этого пользователя."), code='blocked',
+        #                             status_code=status.HTTP_403_FORBIDDEN)
 
         if chat_started_user.id == writing_to.id:
             raise APIValidation(_('Чат не может быть создан с самим собой'), status_code=status.HTTP_400_BAD_REQUEST)
@@ -74,6 +76,8 @@ class UserGetChatRoomAPIView(APIView):
             'writing_to': writing_to.id,
             'writing_to_username': writing_to.username,
             'writing_to_profile_photo': writing_to_profile_photo,
+            'is_blocked': is_blocked,
+            'is_blocked_by_me': is_blocked_by_me,
         }, status=status.HTTP_200_OK)
 
 
