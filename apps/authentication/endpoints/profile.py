@@ -12,7 +12,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 IFollowedUsersAPIView, MyFollowersAPIView, MySubscribersAPIView,
                                                 UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView,
                                                 ProfileUserActivitiesAPIView, MySubscriptionsAPIView,
-                                                CancelSubscriptionAPIView, ProfileUserAnnouncementsAPIView)
+                                                CancelSubscriptionAPIView, ProfileUserAnnouncementsAPIView,
+                                                FollowersStatisticsWithPlanAPIView)
 
 urlpatterns = [
     # account
@@ -52,6 +53,7 @@ urlpatterns = [
     path('profile/dashboard/followers/', FollowersDashboardAPIView.as_view(), name='profile_dashboard_followers'),
     path('profile/dashboard/followers-by-plan/', FollowersDashboardByPlanAPIView.as_view(),
          name='profile_dashboard_by_plan'),
+    path('profile/dashboard/stats', FollowersStatisticsWithPlanAPIView.as_view(), name='profile_dashboard_stats'),
 
     # my followers/subscribes
     path('profile/followed-users/', IFollowedUsersAPIView.as_view(), name='profile_followed_users'),
