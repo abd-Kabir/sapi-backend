@@ -1,8 +1,8 @@
-from collections import OrderedDict
-from datetime import timedelta
+from collections import OrderedDict, defaultdict
+from datetime import timedelta, date
 
 from django.conf import settings
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, Min, Max, functions
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from django.utils.timezone import now, localtime
@@ -500,6 +500,146 @@ class FollowersDashboardByPlanAPIView(APIView):
                 'subscriber_count': plan.subscriber_count,
                 'percent': round(percent, 2),  # Rounded to 2 decimal places
             })
+
+        return Response(response_data)
+
+
+class FollowersStatisticsWithPlanAPIView(APIView):
+    permission_classes = [IsCreator, ]
+
+    @swagger_auto_schema(
+        operation_description='Period Type',
+        manual_parameters=[
+            openapi.Parameter(
+                'period', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description=_('Тип для дашборда'),
+                enum=['week', 'month', 'year', 'all']
+            ),
+        ]
+    )
+    def get(self, request):
+        period = request.query_params.get('period', 'all')
+        today = date.today()
+
+        active = UserSubscription.objects.filter(
+            is_active=True,
+            end_date__gte=now(),
+        ).count()
+        plans = SubscriptionPlan.objects.filter(
+            is_active=True,
+            is_deleted=False
+        )
+        response_data = {
+            'period': period,
+            'total_active_subscribers': active,
+            'plans': []
+        }
+
+        week_start = today - timedelta(days=7)
+        month_start = today - timedelta(days=30)
+        year_start = today - timedelta(days=365)
+
+        if period == 'week':
+            start_date = today - timedelta(days=6)
+            queryset = UserSubscription.objects.filter(start_date__date__gte=start_date)
+
+            for plan in plans:
+                daily_counts = defaultdict(int)
+                for i in range(7):
+                    d = start_date + timedelta(days=i)
+                    count = queryset.filter(plan=plan, start_date__date=d).count()
+                    daily_counts[str(d)] = count
+                response_data["plans"].append({
+                    "plan": plan.name,
+                    "active_count": plan.subscribers_count(),
+                    "data": daily_counts
+                })
+
+            response_data["new_subs"] = UserSubscription.objects.filter(
+                start_date__date__gte=week_start
+            ).count()
+
+        elif period == 'month':
+            start_date = today - timedelta(days=30)
+            qs = UserSubscription.objects.filter(start_date__date__gte=start_date)
+            for plan in plans:
+                five_day_counts = OrderedDict()
+                for i in range(0, 31, 5):
+                    d1 = start_date + timedelta(days=i)
+                    d2 = min(d1 + timedelta(days=4), today)
+                    count = qs.filter(plan=plan, start_date__date__gte=d1, start_date__date__lte=d2).count()
+                    key = f"{d1} to {d2}"
+                    five_day_counts[key] = count
+                response_data["plans"].append({
+                    "plan": plan.name,
+                    "active_count": plan.subscribers_count(),
+                    "data": five_day_counts
+                })
+
+            response_data["new_subs"] = UserSubscription.objects.filter(
+                start_date__date__gte=month_start
+            ).count()
+
+        elif period == 'year':
+            start_date = today - timedelta(days=365)
+            qs = UserSubscription.objects.filter(start_date__date__gte=start_date)
+            for plan in plans:
+                monthly_counts = OrderedDict()
+                for month in range(1, 12 + 1):
+                    counts = qs.filter(plan=plan, start_date__year=today.year, start_date__month=month).count()
+                    monthly_counts[f"{today.year}-{month:02d}"] = counts
+                response_data["plans"].append({
+                    "plan": plan.name,
+                    "active_count": plan.subscribers_count(),
+                    "data": monthly_counts
+                })
+
+            response_data["new_subs"] = UserSubscription.objects.filter(
+                start_date__date__gte=year_start
+            ).count()
+
+
+        elif period == 'all':
+            date_range = UserSubscription.objects.aggregate(
+                min_date=Min("start_date"),
+                max_date=Max("start_date")
+            )
+            if date_range["min_date"] and date_range["max_date"]:
+                start_date = date(date_range["min_date"].year, date_range["min_date"].month, 1)
+                end_date = date(date_range["max_date"].year, date_range["max_date"].month, 1)
+            else:
+                start_date = end_date = date.today()
+
+            months = []
+            current = start_date
+
+            while current <= end_date:
+                months.append(f"{current.year}-{current.month:02d}")
+                current = (current.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+            response_data["plans"] = []
+
+            for plan in plans:
+                subs = (
+                    UserSubscription.objects.filter(plan=plan)
+                    .annotate(
+                        year=functions.ExtractYear("start_date"),
+                        month=functions.ExtractMonth("start_date")
+                    )
+                    .values("year", "month")
+                    .annotate(count=Count("id"))
+                )
+                subs_dict = {f"{s['year']}-{s['month']:02d}": s["count"] for s in subs}
+                monthly_counts = OrderedDict()
+                for m in months:
+                    monthly_counts[m] = subs_dict.get(m, 0)
+                response_data["plans"].append({
+                    "plan": plan.name,
+                    "active_count": plan.subscribers_count(),
+                    "data": monthly_counts
+                })
 
         return Response(response_data)
 
