@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory, UserActivity, \
     NotificationDistribution, UserSubscription, User
+from apps.authentication.services import get_extra_text
 from apps.content.models import Post
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
@@ -18,7 +19,6 @@ class CreatorInfoSerializer(serializers.ModelSerializer):
             'phone_number',
             'profile_photo',
         ]
-
 
 class DeleteAccountVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, required=True)
@@ -190,6 +190,9 @@ class UserViewCreateSerializer(serializers.ModelSerializer):
 
 
 class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
+    extra_text = serializers.SerializerMethodField()
+    initiator_data = serializers.SerializerMethodField()
+
     class Meta:
         model = UserActivity
         fields = [
@@ -198,7 +201,21 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
             'content_owner',
             'initiator',
             'created_at',
+            'extra_text',
+            'initiator_data'
         ]
+
+    def get_initiator_data(self, obj):
+        if not obj.initiator:
+            return None
+        return {
+            'id': obj.initiator.id,
+            'username': obj.initiator.username,
+            'profile_photo': FileSerializer(obj.initiator.profile_photo).data if obj.initiator.profile_photo else None
+        }
+
+    def get_extra_text(self, obj):
+        return get_extra_text(obj)
 
 
 class ProfileUserNotificationDistributionsSerializer(serializers.ModelSerializer):

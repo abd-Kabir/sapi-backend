@@ -8,8 +8,8 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.authentication.models import UserActivity, User, UserSubscription, BlockedUser
-from apps.content.models import Post
+from apps.authentication.models import UserActivity, User, UserSubscription, BlockedUser, Donation, SubscriptionPlan
+from apps.content.models import Post, Comment
 from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
 from apps.integrations.services.multibank import multibank_payment
@@ -358,3 +358,47 @@ def resubscribe(user):
         except Exception as e:
             logger.error(f"Resubscribe failed for subscription {subscription.id}: {str(e)}")
             continue
+
+
+def get_extra_text(obj):
+    if not obj.content_id:
+        return None
+
+    if obj.type == 'donation':
+        try:
+            donation = Donation.objects.get(id=obj.content_id)
+            return {
+                'amount': donation.amount,
+                'message': donation.message
+            }
+        except Donation.DoesNotExist:
+            return None
+
+    elif obj.type == 'commented':
+        try:
+            comment = Comment.objects.get(id=obj.content_id)
+            return {
+                'message': comment.text,
+            }
+        except Comment.DoesNotExist:
+            return None
+
+    elif obj.type == 'subscribed':
+        try:
+            subscribed = SubscriptionPlan.objects.get(id=obj.content_id)
+            user_sub = (
+                UserSubscription.objects.filter(
+                    creator=obj.content_owner,
+                    subscriber=obj.initiator,
+                    is_active=True
+                ).exists()
+            )
+            if user_sub:
+                return {
+                    'message': subscribed.name,
+                }
+            return None
+        except SubscriptionPlan.DoesNotExist:
+            return None
+
+    return None
