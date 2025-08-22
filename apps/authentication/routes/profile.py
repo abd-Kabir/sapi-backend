@@ -27,7 +27,8 @@ from apps.authentication.serializers.profile import (DeleteAccountVerifySerializ
                                                      UserViewHistorySerializer, UserViewCreateSerializer,
                                                      ProfileUserActivitiesSerializer,
                                                      ProfileUserNotificationDistributionsSerializer,
-                                                     MySubscriptionsSerializer, IFollowedUsersSerializer)
+                                                     MySubscriptionsSerializer, IFollowedUsersSerializer,
+                                                     ProfileHistoryOperationSerializer)
 from apps.authentication.serializers.user import (BecomeCreatorSerializer, ConfigureDonationSettingsSerializer)
 from apps.content.models import Post
 from apps.content.serializers import PostListSerializer
@@ -790,6 +791,19 @@ class ProfileUserActivitiesAPIView(ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(content_owner=self.request.user)
+        return queryset.order_by('-created_at')
+
+
+class ProfileOperationHistoryAPIView(ListAPIView):
+    queryset = UserActivity.objects.all()
+    serializer_class = ProfileHistoryOperationSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(
+            content_owner=self.request.user,
+            type__in=['donation', 'subscribed']
+        )
         return queryset.order_by('-created_at')
 
 

@@ -402,3 +402,35 @@ def get_extra_text(obj):
             return None
 
     return None
+
+
+def get_operation_history(obj):
+    if not obj.content_id:
+        return None
+    if obj.type == 'donation':
+        try:
+            donation = Donation.objects.get(id=obj.content_id)
+            return {
+                'amount': donation.amount,
+                'message': donation.message
+            }
+        except Donation.DoesNotExist:
+            return None
+    elif obj.type == 'subscribed':
+        try:
+            subscribed = SubscriptionPlan.objects.get(id=obj.content_id)
+            user_sub = (
+                UserSubscription.objects.filter(
+                    creator=obj.content_owner,
+                    subscriber=obj.initiator,
+                    is_active=True
+                ).exists()
+            )
+            if user_sub:
+                return {
+                    'message': subscribed.name,
+                }
+            return None
+        except SubscriptionPlan.DoesNotExist:
+            return None
+    return None

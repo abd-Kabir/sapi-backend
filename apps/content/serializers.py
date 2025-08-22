@@ -26,6 +26,8 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'name_en',
+            'name_uz',
             'icon',
             'icon_info',
         ]

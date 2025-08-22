@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.authentication.models import SubscriptionPlan, Card, Fundraising, UserViewHistory, UserActivity, \
     NotificationDistribution, UserSubscription, User
-from apps.authentication.services import get_extra_text
+from apps.authentication.services import get_extra_text, get_operation_history
 from apps.content.models import Post
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.sms_services import verify_sms_code
@@ -19,6 +19,7 @@ class CreatorInfoSerializer(serializers.ModelSerializer):
             'phone_number',
             'profile_photo',
         ]
+
 
 class DeleteAccountVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, required=True)
@@ -157,7 +158,6 @@ class FundraisingSerializer(serializers.ModelSerializer):
             'description',
             'goal',
             'deadline',
-            'minimum_donation',
             'creator',
             'current_amount',
         ]
@@ -205,7 +205,8 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
             'initiator_data'
         ]
 
-    def get_initiator_data(self, obj):
+    @staticmethod
+    def get_initiator_data(obj):
         if not obj.initiator:
             return None
         return {
@@ -214,8 +215,38 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
             'profile_photo': FileSerializer(obj.initiator.profile_photo).data if obj.initiator.profile_photo else None
         }
 
-    def get_extra_text(self, obj):
+    @staticmethod
+    def get_extra_text(obj):
         return get_extra_text(obj)
+
+
+class ProfileHistoryOperationSerializer(serializers.ModelSerializer):
+    initiator_data = serializers.SerializerMethodField()
+    extra_text = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserActivity
+        fields = [
+            'type',
+            'content_id',
+            'created_at',
+            'extra_text',
+            'initiator_data'
+        ]
+
+    @staticmethod
+    def get_initiator_data(obj):
+        if not obj.initiator:
+            return None
+        return {
+            'id': obj.initiator.id,
+            'username': obj.initiator.username,
+            'profile_photo': FileSerializer(obj.initiator.profile_photo).data if obj.initiator.profile_photo else None
+        }
+
+    @staticmethod
+    def get_extra_text(obj):
+        return get_operation_history(obj)
 
 
 class ProfileUserNotificationDistributionsSerializer(serializers.ModelSerializer):
