@@ -282,6 +282,8 @@ class IFollowedUsersSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
     new_posts_count = serializers.SerializerMethodField(allow_null=True)
 
     def get_new_posts_count(self, obj):
@@ -301,6 +303,8 @@ class IFollowedUsersSerializer(serializers.ModelSerializer):
             'id',
             'category',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
             'username',
             'creator_description',
             'new_posts_count',

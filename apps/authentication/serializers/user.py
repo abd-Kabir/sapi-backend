@@ -26,6 +26,8 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
 
     class Meta:
         model = User
@@ -33,6 +35,8 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
             'id',
             'category',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
             'username',
             'creator_description',
             'profile_photo',
@@ -47,6 +51,8 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
     posts_count = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     subscribers_count = serializers.SerializerMethodField()
@@ -91,6 +97,8 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_creator',
             'category_id',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
             'creator_description',
             'profile_photo_info',
             'profile_banner_photo_info',

@@ -116,6 +116,8 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
 class PostAccessibilitySerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
     subscription_name = serializers.CharField(source='subscription.name', read_only=True, allow_null=True)
 
     def validate(self, attrs):
@@ -141,6 +143,8 @@ class PostAccessibilitySerializer(serializers.ModelSerializer):
             'id',
             'category',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
             'subscription',
             'subscription_name',
             'publication_time',
