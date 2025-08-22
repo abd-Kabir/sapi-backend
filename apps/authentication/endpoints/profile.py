@@ -13,7 +13,7 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView,
                                                 ProfileUserActivitiesAPIView, MySubscriptionsAPIView,
                                                 CancelSubscriptionAPIView, ProfileUserAnnouncementsAPIView,
-                                                FollowersStatisticsWithPlanAPIView)
+                                                FollowersStatisticsWithPlanAPIView, ProfileOperationHistoryAPIView)
 
 urlpatterns = [
     # account
@@ -72,6 +72,7 @@ urlpatterns = [
 
     # activities
     path('profile/notification/activities/', ProfileUserActivitiesAPIView.as_view(), name='profile_activities'),
+    path('profile/operation/history',ProfileOperationHistoryAPIView.as_view(),name='profile-history-operation'),
     path('profile/notification/announcements/', ProfileUserAnnouncementsAPIView.as_view(),
          name='profile_announcements'),
 ]
