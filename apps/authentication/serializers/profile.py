@@ -20,6 +20,7 @@ class CreatorInfoSerializer(serializers.ModelSerializer):
             'profile_photo',
         ]
 
+
 class DeleteAccountVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, required=True)
 
@@ -205,7 +206,7 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
         ]
 
     @staticmethod
-    def get_initiator_data(self, obj):
+    def get_initiator_data(obj):
         if not obj.initiator:
             return None
         return {
@@ -215,12 +216,14 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
         }
 
     @staticmethod
-    def get_extra_text(self, obj):
+    def get_extra_text(obj):
         return get_extra_text(obj)
+
 
 class ProfileHistoryOperationSerializer(serializers.ModelSerializer):
     initiator_data = serializers.SerializerMethodField()
     extra_text = serializers.SerializerMethodField()
+
     class Meta:
         model = UserActivity
         fields = [
@@ -232,7 +235,7 @@ class ProfileHistoryOperationSerializer(serializers.ModelSerializer):
         ]
 
     @staticmethod
-    def get_initiator_data(self, obj):
+    def get_initiator_data(obj):
         if not obj.initiator:
             return None
         return {
@@ -242,7 +245,7 @@ class ProfileHistoryOperationSerializer(serializers.ModelSerializer):
         }
 
     @staticmethod
-    def get_extra_text(self, obj):
+    def get_extra_text(obj):
         return get_operation_history(obj)
 
 

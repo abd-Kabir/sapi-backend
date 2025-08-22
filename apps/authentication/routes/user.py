@@ -254,6 +254,8 @@ class PopularCreatorListAPIView(APIView):
                 result.append({
                     'category_id': category.id,
                     'category_name': category.name,
+                    'category_name_uz': category.name_uz,
+                    'category_name_en': category.name_en,
                     'creators': creators,
                 })
         return result
@@ -277,6 +279,8 @@ class PopularCreatorListAPIView(APIView):
                             {
                                 "category_id": 1,
                                 "category_name": "Music",
+                                "category_name_en": "Music",
+                                "category_name_uz": "Music",
                                 "creators": [
                                     {
                                         "id": 1,
@@ -335,6 +339,8 @@ class PopularCategoryCreatorListAPIView(APIView):
             return {
                 'category_id': category.id,
                 'category_name': category.name,
+                'category_name_en': category.name_en,
+                'category_name_uz': category.name_uz,
                 'creators': creators,
             }
         else:
@@ -358,6 +364,8 @@ class PopularCategoryCreatorListAPIView(APIView):
                         "popular_by_category": {
                             "category_id": 1,
                             "category_name": "Music",
+                            "category_name_uz": "Music",
+                            "category_name_en": "Music",
                             "creators": [
                                 {
                                     "id": 1,
