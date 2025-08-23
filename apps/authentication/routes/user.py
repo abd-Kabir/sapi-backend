@@ -575,6 +575,7 @@ class GetMeAPIView(APIView):
             'is_creator': user.is_creator,
             'username': user.username,
             'phone_number': user.phone_number,
+            'creator_description': user.creator_description,
             'profile_photo': self.serialize_file(user.profile_photo),
             'banner_photo': self.serialize_file(user.profile_banner_photo),
             'category_id': user.category_id,

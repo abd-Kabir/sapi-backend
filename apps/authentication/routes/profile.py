@@ -198,7 +198,7 @@ class DeleteCardAPIView(DestroyAPIView):
 
 class SetMainCardAPIView(APIView):
     queryset = Card.objects.all()
-    permission_classes = [IsCreator, ]
+    # permission_classes = [IsCreator, ]
 
     @staticmethod
     def get_card(pk):
@@ -787,6 +787,7 @@ class UserViewHistoryDeleteAPIView(DestroyAPIView):
 class ProfileUserActivitiesAPIView(ListAPIView):
     queryset = UserActivity.objects.all()
     serializer_class = ProfileUserActivitiesSerializer
+    pagination_class = APILimitOffsetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()

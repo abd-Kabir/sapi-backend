@@ -157,11 +157,11 @@ class User(AbstractUser):
 
     def followers_count(self):
         """Return the number of followers this user has"""
-        return self.followers.count()
+        return self.followers.filter(follower__is_deleted=False).count()
 
     def following_count(self):
         """Return the number of users this user is following"""
-        return self.following.count()
+        return self.following.filter(follower__is_deleted=False).count()
 
     def is_following(self, user):
         """Check if this user is following another user"""
