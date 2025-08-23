@@ -2,6 +2,7 @@ from collections import OrderedDict, defaultdict
 from datetime import timedelta, date
 
 from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Count, Q, Sum, Min, Max, functions
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
@@ -38,6 +39,7 @@ from apps.integrations.services.sms_services import sms_confirmation_open
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator
+from config.swagger import sub_filter_swagger_param
 
 
 class EditAccountAPIView(APIView):
@@ -198,6 +200,7 @@ class DeleteCardAPIView(DestroyAPIView):
 
 class SetMainCardAPIView(APIView):
     queryset = Card.objects.all()
+
     # permission_classes = [IsCreator, ]
 
     @staticmethod
@@ -670,9 +673,18 @@ class MySubscribersAPIView(ListAPIView):
     serializer_class = BecomeCreatorSerializer
     pagination_class = APILimitOffsetPagination
 
+    @swagger_auto_schema(manual_parameters=[sub_filter_swagger_param])
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
+        sub_filter = self.request.query_params.get('sub_filter', None)
         queryset = super().get_queryset().filter(subscriptions__creator=self.request.user)
-        return queryset
+        if sub_filter == '0':
+            queryset = queryset.filter(subscriptions__plan__price=0)
+        elif sub_filter == '1':
+            queryset = queryset.filter(subscriptions__plan__price__gt=0)
+        return queryset.annotate(plan_names=ArrayAgg("subscriptions__plan__name", distinct=True)).distinct()
 
 
 class MySubscriptionsAPIView(ListAPIView):

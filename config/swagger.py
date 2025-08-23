@@ -2,16 +2,17 @@ from drf_yasg import openapi
 
 from apps.authentication.models import NotifDisStatus
 from apps.content.models import ReportStatusTypes, PostTypes
+
 query_category_swagger_param = openapi.Parameter(
-        'category', openapi.IN_QUERY,
-        description='Filter by Category ID',
-        type=openapi.TYPE_INTEGER
-    )
+    'category', openapi.IN_QUERY,
+    description='Filter by Category ID',
+    type=openapi.TYPE_INTEGER
+)
 query_category_id_swagger_param = openapi.Parameter(
-        'category_id', openapi.IN_QUERY,
-        description='Filter by Category ID. Get list of categories from this API: /content/category/',
-        type=openapi.TYPE_INTEGER
-    )
+    'category_id', openapi.IN_QUERY,
+    description='Filter by Category ID. Get list of categories from this API: /content/category/',
+    type=openapi.TYPE_INTEGER
+)
 query_choice_swagger_param = openapi.Parameter(
     'type',
     openapi.IN_QUERY,
@@ -194,4 +195,11 @@ date_notification_swagger_param = openapi.Parameter(
     description='Date (YYYY-MM-DD) to filter reports',
     type=openapi.TYPE_STRING,
     format=openapi.FORMAT_DATE
+)
+sub_filter_swagger_param = openapi.Parameter(
+    'sub_filter',
+    openapi.IN_QUERY,
+    description='Subscription filter, if 0: free, if 1: paid',
+    type=openapi.TYPE_STRING,
+    enum=['0', '1']
 )

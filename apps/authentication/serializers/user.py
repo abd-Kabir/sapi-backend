@@ -28,6 +28,11 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
     category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
     category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    plan_names = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_plan_names(obj):
+        return ', '.join(obj.plan_names) if obj.plan_names else None
 
     class Meta:
         model = User
@@ -38,6 +43,7 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
             'category_name_uz',
             'category_name_en',
             'username',
+            'plan_names',
             'creator_description',
             'profile_photo',
             'profile_photo_info',
