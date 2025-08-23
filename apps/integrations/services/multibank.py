@@ -37,12 +37,17 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     )
 
     # GET CREATOR RECEIPIENT
-    creator_receipient, receipient_sc = multibank_prod_app.get_receipient(data={
+    receipient_req_body = {
         'tin': creator.pinfl,
         'mfo': '00491',  # Hard coded bank's MFO
         'account_no': creator.multibank_account,
         'commitent': True
-    }, merchant_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['MERCHANT_ID'])
+    }
+    logger.debug(f'Multibank receipient request body: {receipient_req_body};')
+    creator_receipient, receipient_sc = multibank_prod_app.get_receipient(
+        data=receipient_req_body,
+        merchant_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['MERCHANT_ID']
+    )
     if not str(receipient_sc).startswith('2'):
         raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
 
