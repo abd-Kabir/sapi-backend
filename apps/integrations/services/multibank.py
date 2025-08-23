@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 
 from apps.authentication.models import User, Card
@@ -6,6 +8,8 @@ from apps.integrations.models import MultibankTransaction
 from config.core.api_exceptions import APIValidation
 
 from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger()
 
 
 def calculate_payment_amount(amount, sapi_share, commission_by_subscriber):
@@ -23,6 +27,7 @@ def calculate_payment_amount(amount, sapi_share, commission_by_subscriber):
 def multibank_payment(user: User, creator: User, card: Card, amount, payment_type, fundraising=None,
                       commission_by_subscriber=False):
     # AMOUNT calculation:
+    amount = amount * 100
     creator_amount, amount, sapi_amount = calculate_payment_amount(amount, creator.sapi_share, commission_by_subscriber)
 
     # SAPI TRANSACTION CREATION
@@ -66,6 +71,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'split': [creator_split, sapi_split]
     }
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
+    logger.debug(f'Multibank payment response: {payment_response};')
     if not str(payment_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
@@ -81,6 +87,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     payment_confirm_resp, payment_confirm_sc = multibank_prod_app.confirm_payment(
         transaction_id=payment_transaction_id
     )
+    logger.debug(f'Multibank payment confirm response: {payment_confirm_resp};')
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
