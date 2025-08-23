@@ -32,7 +32,9 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_plan_names(obj):
-        return ', '.join(obj.plan_names) if obj.plan_names else None
+        if hasattr(obj, 'plan_names'):
+            return ', '.join(obj.plan_names) if obj.plan_names else None
+        return None
 
     class Meta:
         model = User
