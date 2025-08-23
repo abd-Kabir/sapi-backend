@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.models import User, Card
+from apps.integrations.models import MultibankTransaction, MultibankTransactionStatusEnum
 
 
 class MultiBankBindCardCallbackWebhookAPIView(APIView):
@@ -10,7 +11,6 @@ class MultiBankBindCardCallbackWebhookAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
-        print(data)
         card = (
             Card.all_objects
             .filter(multibank_session_id=data.get('payer_id'), user__phone_number=data.get('phone'))
@@ -24,4 +24,35 @@ class MultiBankBindCardCallbackWebhookAPIView(APIView):
             if data.get('ps') in ['visa', 'uzcard', 'humo', 'mastercard', ]:
                 card.type = data.get('ps')
             card.save()
+        return Response()
+
+
+class MultiBankPaymentCallbackWebhookAPIView(APIView):
+    permission_classes = [AllowAny, ]
+
+    @staticmethod
+    def match_status(status):
+        mb_statuses = {
+            'draft': 'new',
+            'progress': 'new',
+            'success': 'paid',
+            'error': 'failed',
+        }
+        return mb_statuses.get(status, 'new')
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        print('MultibankPaymentCallbackWebhook', data)
+        transaction = MultibankTransaction.objects.filter(id=data.get('invoice_id'))
+        if transaction.exists():
+            transaction = transaction.first()
+            transaction.status = self.match_status(data.get('status'))
+            transaction.callback_data = data
+            if transaction.subscription:
+                transaction.subscription.is_active = True
+                transaction.subscription.save()
+            elif transaction.donation:
+                transaction.donation.is_active = True
+                transaction.donation.save()
+            transaction.save()
         return Response()

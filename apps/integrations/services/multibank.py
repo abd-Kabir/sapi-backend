@@ -35,6 +35,11 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         store_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'], amount=amount,
         transaction_type=payment_type, user=user, creator=creator, card_token=card.token
     )
+    if subscription:
+        transaction.subscription = subscription
+    elif donation:
+        transaction.donation = donation
+    transaction.save()
 
     # GET CREATOR RECEIPIENT
     receipient_req_body = {
@@ -73,7 +78,8 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
         'amount': amount,
         'store_id': settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['STORE_ID'],
         'invoice_id': str(transaction.id),
-        'split': [creator_split, sapi_split]
+        'split': [creator_split, sapi_split],
+        'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
     }
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
     logger.debug(f'Multibank payment response: {payment_response};')
