@@ -88,7 +88,10 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
     if need_otp_confirmation:
         transaction.save()
-        return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}
+        return {
+            'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id,
+            'url': payment_response.get('data', {}).get('checkout_url')
+        }
     payment_confirm_resp, payment_confirm_sc = multibank_prod_app.confirm_payment(
         transaction_id=payment_transaction_id
     )

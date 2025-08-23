@@ -219,6 +219,11 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
             return subscription
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['payment_reference'] = instance.payment_reference
+        return representation
+
     class Meta:
         model = UserSubscription
         fields = [
