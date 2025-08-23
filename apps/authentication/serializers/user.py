@@ -213,9 +213,10 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                            **validated_data)
             payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
-                                             commission_by_subscriber=commission_by_subscriber)
+                                             commission_by_subscriber=commission_by_subscriber,
+                                             subscription=subscription)
             subscription.payment_reference = payment_info
-            subscription.save(update_fields=['payment_reference'])
+            subscription.save(update_fields=['payment_reference', 'is_active'])
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
             return subscription
 
@@ -281,8 +282,10 @@ class DonationCreateSerializer(serializers.ModelSerializer):
             validated_data['donator'] = donator
             donation = super().create(validated_data)
             payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation',
-                                             fundraising, commission_by_subscriber)
+                                             fundraising, commission_by_subscriber=commission_by_subscriber,
+                                             donation=donation)
             donation.payment_info = payment_info
+            donation.save()
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation
 

@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 
-from apps.authentication.models import User, Card
+from apps.authentication.models import User, Card, UserSubscription, Donation
 from apps.integrations.api_integrations.multibank import multibank_prod_app
 from apps.integrations.models import MultibankTransaction
 from config.core.api_exceptions import APIValidation
@@ -25,7 +25,7 @@ def calculate_payment_amount(amount, sapi_share, commission_by_subscriber):
 
 
 def multibank_payment(user: User, creator: User, card: Card, amount, payment_type, fundraising=None,
-                      commission_by_subscriber=False):
+                      commission_by_subscriber=False, subscription: UserSubscription = None, donation: Donation = None):
     # AMOUNT calculation:
     amount = amount * 100
     creator_amount, amount, sapi_amount = calculate_payment_amount(amount, creator.sapi_share, commission_by_subscriber)
@@ -88,6 +88,10 @@ def multibank_payment(user: User, creator: User, card: Card, amount, payment_typ
     need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
     if need_otp_confirmation:
         transaction.save()
+        if subscription:
+            subscription.is_active = False
+        if donation:
+            donation.is_active = False
         return {
             'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id,
             'url': payment_response.get('data', {}).get('checkout_url')

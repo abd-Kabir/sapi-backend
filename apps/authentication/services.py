@@ -347,6 +347,7 @@ def resubscribe(user):
                 amount=plan.price,
                 payment_type='subscription',
                 commission_by_subscriber=subscription.commission_by_subscriber,
+                subscription=subscription,
             )
             if plan.duration:
                 subscription.end_date = now() + plan.duration

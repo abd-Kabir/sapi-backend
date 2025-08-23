@@ -59,7 +59,14 @@ class AllUserManager(BaseUserManager):
 
         return self.create_user(phone_number, password, **extra_fields)
 
+
 class SubscriptionPlanManager(Manager):
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(is_deleted=False)
+
+
+class DonationManager(Manager):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(is_active=True)

@@ -10,7 +10,8 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
-from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager
+from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager, \
+    DonationManager
 from apps.content.models import ReportTypes, Post
 from apps.files.models import File
 from config.models import BaseModel
@@ -403,6 +404,7 @@ class Fundraising(BaseModel):
 
 
 class Donation(BaseModel):
+    is_active = models.BooleanField(default=True)
     amount = models.PositiveBigIntegerField()
     message = models.TextField(null=True, blank=True)
     commission_by_subscriber = models.BooleanField(default=False)
@@ -412,6 +414,9 @@ class Donation(BaseModel):
 
     donator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations_made')
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='donations_received')
+
+    objects = DonationManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return f"Donation of {self.amount} by {self.donator} to {self.creator}"
