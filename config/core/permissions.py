@@ -72,6 +72,10 @@ class IsAdminAllowGet(permissions.BasePermission):
         if view.action == 'list' or view.action == 'retrieve':
             return True
         user = request.user
+
+        if user.is_admin:
+            return True
+
         if user.is_authenticated and user.is_admin:
             available_permissions = user.permissions.values_list('permission', flat=True)
             action_code = view.get_action()
