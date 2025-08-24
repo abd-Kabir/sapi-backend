@@ -38,6 +38,7 @@ class Category(BaseModel):
     name = models.CharField(max_length=155)
     name_uz = models.CharField(max_length=155, null=True)
     name_en = models.CharField(max_length=155, null=True)
+    name_ru = models.CharField(max_length=155, null=True)
     icon = models.ForeignKey('files.File', on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='categories')
 

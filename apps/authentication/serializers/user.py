@@ -28,6 +28,7 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
     category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
     category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
     plan_names = serializers.SerializerMethodField()
 
     @staticmethod
@@ -44,6 +45,7 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
             'category_name',
             'category_name_uz',
             'category_name_en',
+            'category_name_ru',
             'username',
             'plan_names',
             'creator_description',
@@ -61,6 +63,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
     category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
     category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
     posts_count = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     subscribers_count = serializers.SerializerMethodField()
@@ -107,6 +110,7 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'category_name',
             'category_name_uz',
             'category_name_en',
+            'category_name_ru',
             'creator_description',
             'profile_photo_info',
             'profile_banner_photo_info',
