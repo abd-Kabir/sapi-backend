@@ -19,7 +19,7 @@ class ChoiceTypeSerializer(serializers.Serializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    icon_info = FileSerializer(read_only=True, allow_null=True, source='icon')
+    icon_infos = FileSerializer(read_only=True, allow_null=True, source='icon')
 
     class Meta:
         model = Category
@@ -29,7 +29,7 @@ class CategorySerializer(serializers.ModelSerializer):
             'name_en',
             'name_uz',
             'icon',
-            'icon_info',
+            'icon_infos',
         ]
 
 
