@@ -682,7 +682,7 @@ class MySubscriptionsAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset().filter(subscriber=user, end_date__gte=timezone.now())
+        queryset = super().get_queryset().filter(subscriber=user)
         return queryset
 
 
@@ -721,13 +721,56 @@ class CancelSubscriptionAPIView(APIView):
             ),
         }
     )
-    def post(self, subscription_id, request, *args, **kwargs):
+    def post(self, request, subscription_id, *args, **kwargs):
         user = self.request.user
         subscription = UserSubscription.objects.filter(id=subscription_id, subscriber=user)
 
         if subscription.exists():
             subscription.update(is_active=False)
             return Response({'detail': _('Подписка отменена'), 'end_date': subscription.first().end_date},
+                            status=status.HTTP_200_OK)
+        return Response({'detail': _('Подписка не найдена')}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ActiveSubscriptionAPIView(APIView):
+
+    @swagger_auto_schema(
+        operation_description="API to activate a user's inactive subscription by its ID.",
+        manual_parameters=[
+            openapi.Parameter(
+                'subscription_id',
+                in_=openapi.IN_PATH,
+                type=openapi.TYPE_INTEGER,
+                description='ID of the subscription to activate.',
+            )
+        ],
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description='Successfully activated subscription',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Подписка активирована'),
+                    }
+                )
+            ),
+            status.HTTP_404_NOT_FOUND: openapi.Response(
+                description='Subscription not found',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING, example='Подписка не найдена'),
+                    }
+                )
+            ),
+        }
+    )
+    def post(self, request, subscription_id, *args, **kwargs):
+        user = self.request.user
+        subscription = UserSubscription.objects.filter(id=subscription_id, subscriber=user, is_active=False)
+        if subscription.exists():
+            subscription.update(is_active=True)
+            return Response({'detail': _('Подписка активирована')},
                             status=status.HTTP_200_OK)
         return Response({'detail': _('Подписка не найдена')}, status=status.HTTP_404_NOT_FOUND)
 

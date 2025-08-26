@@ -310,6 +310,7 @@ class UserSubscription(BaseModel):
     commission_by_subscriber = models.BooleanField(default=False)
     payment_type = models.CharField(choices=PaymentType.choices, default=PaymentType.card, null=True, blank=True)
     payment_reference = models.TextField(null=True, blank=True)
+    one_time = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'user_subscription'
