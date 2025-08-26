@@ -183,16 +183,21 @@ class UserFundraisingListSerializer(serializers.ModelSerializer):
 
 class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
 
-    def check_subscription(self, validated_data):
+    def check_subscription(self, validated_data, creator):
         request = self.context['request']
         subscriber = request.user
         plan = validated_data.get('plan')
         user_subs = UserSubscription.objects.filter(
             subscriber=subscriber,
             plan=plan,
-            end_date__gte=timezone.now(),
-        ).exists()
-        return user_subs
+        )
+        if user_subs.filter(end_date__gte=timezone.now()).exists():
+            raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
+        if user_subs.filter(creator=creator).exists():
+            raise APIValidation(
+                _('У вас уже имеется этот подписка. Срок ее действия истек, можете активировать ее в своем профиле.'),
+                status_code=400
+            )
 
     def validate(self, attrs):
         user = self.context['request'].user
@@ -212,8 +217,8 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             amount = plan.price
             commission_by_subscriber = validated_data.get('commission_by_subscriber')
 
-            if self.check_subscription(validated_data):
-                raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
+            self.check_subscription(validated_data, creator)
+            # raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
             subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                            **validated_data)
             payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
@@ -236,6 +241,7 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             'plan',
             'subscriber_card',
             'commission_by_subscriber',
+            'one_time',
         ]
 
 

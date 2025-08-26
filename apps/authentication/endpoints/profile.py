@@ -13,7 +13,8 @@ from apps.authentication.routes.profile import (EditAccountAPIView, RetrieveAcco
                                                 UserViewHistoryListCreateAPIView, UserViewHistoryDeleteAPIView,
                                                 ProfileUserActivitiesAPIView, MySubscriptionsAPIView,
                                                 CancelSubscriptionAPIView, ProfileUserAnnouncementsAPIView,
-                                                FollowersStatisticsWithPlanAPIView, ProfileOperationHistoryAPIView)
+                                                FollowersStatisticsWithPlanAPIView, ProfileOperationHistoryAPIView,
+                                                ActiveSubscriptionAPIView)
 
 urlpatterns = [
     # account
@@ -62,6 +63,8 @@ urlpatterns = [
     path('profile/my-subscriptions/', MySubscriptionsAPIView.as_view(), name='profile_my_subscriptions'),
     path('profile/cancel-subscription/<int:subscription_id>/', CancelSubscriptionAPIView.as_view(),
          name='profile_cancel_subscription'),
+    path('profile/active-subscription/<int:subscription_id>/', ActiveSubscriptionAPIView.as_view(),
+         name='profile_active_subscription'),
     path('profile/configure-donation/', ConfigureDonationSettingsAPIView.as_view(),
          name='profile_configure_donation_settings'),
     path('profile/configuration-donation/', ConfigurationDonationSettingsAPIView.as_view(),
@@ -72,7 +75,7 @@ urlpatterns = [
 
     # activities
     path('profile/notification/activities/', ProfileUserActivitiesAPIView.as_view(), name='profile_activities'),
-    path('profile/operation/history',ProfileOperationHistoryAPIView.as_view(),name='profile-history-operation'),
+    path('profile/operation/history', ProfileOperationHistoryAPIView.as_view(), name='profile-history-operation'),
     path('profile/notification/announcements/', ProfileUserAnnouncementsAPIView.as_view(),
          name='profile_announcements'),
 ]

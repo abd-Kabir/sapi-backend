@@ -324,7 +324,8 @@ def resubscribe(user):
     subscriptions = UserSubscription.objects.filter(
         subscriber=user,
         is_active=True,
-        end_date__lt=now()
+        end_date__lt=now(),
+        one_time=False,
     )
     for subscription in subscriptions:
         try:
