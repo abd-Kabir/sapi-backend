@@ -398,6 +398,7 @@ def get_extra_text(obj):
             if user_sub:
                 return {
                     'message': subscribed.name,
+                    'amount': subscribed.price,
                 }
             return None
         except SubscriptionPlan.DoesNotExist:
@@ -431,6 +432,7 @@ def get_operation_history(obj):
             if user_sub:
                 return {
                     'message': subscribed.name,
+                    'amount': subscribed.price,
                 }
             return None
         except SubscriptionPlan.DoesNotExist:
