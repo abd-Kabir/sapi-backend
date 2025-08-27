@@ -6,9 +6,9 @@ from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from config.views import MediaPath
+from config.views import MediaPath, AppleJSAPIView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/', include('apps.integrations.urls')),
 
     path('media/<path:path>', MediaPath.as_view(), name='serve_private_file'),
+    path('apple-app-site-association', AppleJSAPIView.as_view(), name='apple_js'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

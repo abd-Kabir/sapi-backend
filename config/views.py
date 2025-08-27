@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -61,3 +62,29 @@ class MediaPath(APIView):
             return resp
         except Exception as e:
             raise Http404('File not found')
+
+
+class AppleJSAPIView(APIView):
+    permission_classes = [AllowAny, ]
+
+    def get(self, request, *args, **kwargs):
+        return Response({
+            "applinks": {
+                "apps": [],
+                "details": [
+                    {
+                        "appIDs": [
+                            "QDCS6A57GJ.app.sapi"
+                        ],
+                        "paths": [
+                            "*"
+                        ]
+                    }
+                ]
+            },
+            "webcredentials": {
+                "apps": [
+                    "QDCS6A57GJ.app.sapi"
+                ]
+            }
+        })
