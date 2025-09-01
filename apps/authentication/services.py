@@ -346,7 +346,7 @@ def resubscribe(user):
                 creator=creator,
                 card=subscription.subscriber_card,
                 amount=plan.price,
-                payment_type='subscription',
+                transaction_type='subscription',
                 commission_by_subscriber=subscription.commission_by_subscriber,
                 subscription=subscription,
             )
