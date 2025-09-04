@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.authentication.models import UserActivity, User, UserSubscription, BlockedUser, Donation, SubscriptionPlan
 from apps.content.models import Post, Comment
+from apps.files.serializers import FileSerializer
 from apps.integrations.api_integrations.firebase import send_notification_to_user
 from apps.integrations.models import MultibankTransaction
 from apps.integrations.services.multibank import multibank_payment
@@ -364,13 +365,20 @@ def resubscribe(user):
 def get_extra_text(obj):
     if not obj.content_id:
         return None
+    post = Post.objects.filter(id=obj.content_id).first()
+    if not post:
+        return None
+
+    files_data = FileSerializer(post.files.all(), many=True).data
 
     if obj.type == 'donation':
         try:
             donation = Donation.objects.get(id=obj.content_id)
             return {
                 'amount': donation.amount,
-                'message': donation.message
+                'message': donation.message,
+                "post_id": post.id,
+                "post_file": files_data,
             }
         except Donation.DoesNotExist:
             return None
@@ -380,6 +388,8 @@ def get_extra_text(obj):
             comment = Comment.objects.get(id=obj.content_id)
             return {
                 'message': comment.text,
+                "post_id": post.id,
+                "post_file": files_data,
             }
         except Comment.DoesNotExist:
             return None
@@ -398,6 +408,8 @@ def get_extra_text(obj):
                 return {
                     'message': subscribed.name,
                     'amount': subscribed.price,
+                    "post_id": post.id,
+                    "post_file": files_data,
                 }
             return None
         except SubscriptionPlan.DoesNotExist:
@@ -409,12 +421,20 @@ def get_extra_text(obj):
 def get_operation_history(obj):
     if not obj.content_id:
         return None
+    post = Post.objects.filter(id=obj.content_id).first()
+    if not post:
+        return None
+
+    files_data = FileSerializer(post.files.all(), many=True).data
+
     if obj.type == 'donation':
         try:
             donation = Donation.objects.get(id=obj.content_id)
             return {
                 'amount': donation.amount,
-                'message': donation.message
+                'message': donation.message,
+                "post_id": post.id,
+                "post_file": files_data,
             }
         except Donation.DoesNotExist:
             return None
@@ -432,6 +452,8 @@ def get_operation_history(obj):
                 return {
                     'message': subscribed.name,
                     'amount': subscribed.price,
+                    "post_id": post.id,
+                    "post_file": files_data,
                 }
             return None
         except SubscriptionPlan.DoesNotExist:

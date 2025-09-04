@@ -193,6 +193,7 @@ class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
     extra_text = serializers.SerializerMethodField()
     initiator_data = serializers.SerializerMethodField()
 
+
     class Meta:
         model = UserActivity
         fields = [
