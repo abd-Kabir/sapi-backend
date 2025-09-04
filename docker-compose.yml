@@ -27,6 +27,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./media:/app/media
       - ./static:/app/static
+      - ./.well-known:/app/.well-known
     ports:
       - "8080:80"
     depends_on:

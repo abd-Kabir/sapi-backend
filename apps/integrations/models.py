@@ -88,6 +88,11 @@ class MultibankTransaction(BaseModel):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='user_multibank_transactions')
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
                                 related_name='creator_multibank_transactions')
+    subscription = models.ForeignKey('authentication.UserSubscription', on_delete=models.SET_NULL, null=True,
+                                     related_name='multibank_transactions')
+    donation = models.ForeignKey('authentication.Donation', on_delete=models.SET_NULL, null=True,
+                                     related_name='multibank_transactions')
+    callback_data = models.JSONField(null=True)
 
     class Meta:
         db_table = "multibank_transaction"

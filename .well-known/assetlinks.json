@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "uz.cloudcom.sapi",
+      "sha256_cert_fingerprints": [
+        "CA:F9:F6:61:4A:A4:26:F7:80:24:B5:64:07:C0:E6:68:1B:E7:47:65:35:6B:00:18:46:9D:85:99:3F:E4:18:CA"
+      ]
+    }
+  }
+]

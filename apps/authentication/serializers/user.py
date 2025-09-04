@@ -26,6 +26,16 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
+    plan_names = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_plan_names(obj):
+        if hasattr(obj, 'plan_names'):
+            return ', '.join(obj.plan_names) if obj.plan_names else None
+        return None
 
     class Meta:
         model = User
@@ -33,7 +43,11 @@ class BecomeCreatorSerializer(serializers.ModelSerializer):
             'id',
             'category',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
+            'category_name_ru',
             'username',
+            'plan_names',
             'creator_description',
             'profile_photo',
             'profile_photo_info',
@@ -47,6 +61,9 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
     posts_count = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     subscribers_count = serializers.SerializerMethodField()
@@ -91,6 +108,9 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
             'is_creator',
             'category_id',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
+            'category_name_ru',
             'creator_description',
             'profile_photo_info',
             'profile_banner_photo_info',
@@ -202,11 +222,17 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                            **validated_data)
             payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
-                                             commission_by_subscriber=commission_by_subscriber)
+                                             commission_by_subscriber=commission_by_subscriber,
+                                             subscription=subscription)
             subscription.payment_reference = payment_info
-            subscription.save(update_fields=['payment_reference'])
+            subscription.save(update_fields=['payment_reference', 'is_active'])
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
             return subscription
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['payment_reference'] = instance.payment_reference
+        return representation
 
     class Meta:
         model = UserSubscription
@@ -266,8 +292,10 @@ class DonationCreateSerializer(serializers.ModelSerializer):
             validated_data['donator'] = donator
             donation = super().create(validated_data)
             payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0), 'donation',
-                                             fundraising, commission_by_subscriber)
+                                             fundraising, commission_by_subscriber=commission_by_subscriber,
+                                             donation=donation)
             donation.payment_info = payment_info
+            donation.save()
             run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
             return donation
 

@@ -20,6 +20,9 @@ class AdminCreatorListSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
     block_reason_display = serializers.CharField(source='get_block_reason_display', read_only=True, allow_null=True)
 
     @staticmethod
@@ -63,6 +66,9 @@ class AdminCreatorListSerializer(serializers.ModelSerializer):
             'profile_photo_info',
             'profile_banner_photo_info',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
+            'category_name_ru',
         ]
 
 
@@ -81,6 +87,9 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
     profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_photo')
     profile_banner_photo_info = FileSerializer(read_only=True, allow_null=True, source='profile_banner_photo')
     category_name = serializers.CharField(source='category.name', read_only=True, allow_null=True)
+    category_name_uz = serializers.CharField(source='category.name_uz', read_only=True, allow_null=True)
+    category_name_en = serializers.CharField(source='category.name_en', read_only=True, allow_null=True)
+    category_name_ru = serializers.CharField(source='category.name_ru', read_only=True, allow_null=True)
 
     @staticmethod
     def get_first_content(obj):
@@ -143,6 +152,9 @@ class AdminCreatorRetrieveSerializer(serializers.ModelSerializer):
             'profile_photo_info',
             'profile_banner_photo_info',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
+            'category_name_ru',
         ]
 
 
@@ -184,6 +196,9 @@ class ReportListSerializer(serializers.ModelSerializer):
     report_type_display = serializers.CharField(source='get_report_type_display', read_only=True)
     status_display = serializers.SerializerMethodField(read_only=True)
     category_name = serializers.CharField(source='post.category.name', read_only=True)
+    category_name_uz = serializers.CharField(source='post.category.name_uz', read_only=True)
+    category_name_en = serializers.CharField(source='post.category.name_en', read_only=True)
+    category_name_ru = serializers.CharField(source='post.category.name_ru', read_only=True)
 
     @staticmethod
     def get_report_user(obj: Report):
@@ -204,6 +219,9 @@ class ReportListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'category_name',
+            'category_name_uz',
+            'category_name_en',
+            'category_name_ru',
             'post',
             'post_files',
             'post_username',
