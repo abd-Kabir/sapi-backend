@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "QDCS6A57GJ.app.sapi"
+        ],
+        "paths": [
+          "*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "QDCS6A57GJ.app.sapi"
+    ]
+  }
+}

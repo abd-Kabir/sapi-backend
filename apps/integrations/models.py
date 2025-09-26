@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from apps.authentication.models import User
+from apps.authentication.models import User, PaymentType
 from config.models import BaseModel
 
 sms_message_purpose = {
@@ -79,8 +79,10 @@ class MultibankTransaction(BaseModel):
     amount = models.BigIntegerField(null=True)
     sapi_amount = models.BigIntegerField(null=True)
     creator_amount = models.BigIntegerField(null=True)
+    ofd_items = models.JSONField(null=True)
 
     store_id = models.SmallIntegerField(null=True)
+    payment_type = models.CharField(choices=PaymentType.choices, default=PaymentType.card, null=True, blank=True)
     transaction_type = models.CharField(choices=MultibankTransactionTypeEnum.choices, max_length=15, null=True)
     transaction_id = models.CharField(max_length=55, null=True)
     card_token = models.TextField(null=True)
@@ -91,7 +93,7 @@ class MultibankTransaction(BaseModel):
     subscription = models.ForeignKey('authentication.UserSubscription', on_delete=models.SET_NULL, null=True,
                                      related_name='multibank_transactions')
     donation = models.ForeignKey('authentication.Donation', on_delete=models.SET_NULL, null=True,
-                                     related_name='multibank_transactions')
+                                 related_name='multibank_transactions')
     callback_data = models.JSONField(null=True)
 
     class Meta:

@@ -1,11 +1,15 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "uz.cloudcom.sapi",
       "sha256_cert_fingerprints": [
-        "CA:F9:F6:61:4A:A4:26:F7:80:24:B5:64:07:C0:E6:68:1B:E7:47:65:35:6B:00:18:46:9D:85:99:3F:E4:18:CA"
+        "CA:F9:F6:61:4A:A4:26:F7:80:24:B5:64:07:C0:E6:68:1B:E7:47:65:35:6B:00:18:46:9D:85:99:3F:E4:18:CA",
+        "FA:F1:3B:E8:70:34:21:07:CC:6B:9C:06:A0:57:F7:E6:0F:92:5F:93:D6:43:9B:70:92:05:D5:84:60:E8:EF:30"
       ]
     }
   }

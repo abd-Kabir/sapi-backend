@@ -10,6 +10,7 @@ services:
       - .:/app
       - ./media:/app/media
       - ./logs.log:/app/logs.log
+      - ./.well-known:/app/.well-known
     env_file:
       - .env
     ports:

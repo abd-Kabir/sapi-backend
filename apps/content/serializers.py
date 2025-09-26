@@ -28,7 +28,7 @@ class CategorySerializer(serializers.ModelSerializer):
             'name',
             'name_en',
             'name_uz',
-            'icon',
+            'name_ru',
             'icon_infos',
         ]
 
