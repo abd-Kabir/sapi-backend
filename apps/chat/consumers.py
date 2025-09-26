@@ -90,6 +90,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         message_text = text_data_json.get('message')
         message_type = text_data_json.get('type')
+        custom_id = text_data_json.get('custom_id')
         file_data = text_data_json.get('file_data')  # base64 file string
         file_name = text_data_json.get('file_name')  # original filename
 
@@ -104,6 +105,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = {
             'message_type': message_type,
             'type': 'chat_message',
+            'custom_id': custom_id,
             'message': message_text,
             'file': file,
             'sender_id': self.user.id,
@@ -124,6 +126,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': event['message'],
             'type': event['type'],
+            'custom_id': event['custom_id'],
             'file': event['file'],
             'sender_id': event['sender_id'],
             'created_at': event['created_at'],
