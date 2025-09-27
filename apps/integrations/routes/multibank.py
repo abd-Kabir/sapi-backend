@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -5,12 +7,14 @@ from rest_framework.views import APIView
 from apps.authentication.models import User, Card
 from apps.integrations.models import MultibankTransaction, MultibankTransactionStatusEnum
 
+logger = logging.getLogger()
 
 class MultiBankBindCardCallbackWebhookAPIView(APIView):
     permission_classes = [AllowAny, ]
 
     def post(self, request, *args, **kwargs):
         data = request.data
+        logger.debug(f'Multibank bind card webhook request: {data};')
         card = (
             Card.all_objects
             .filter(multibank_session_id=data.get('payer_id'), user__phone_number=data.get('phone'))
@@ -42,7 +46,7 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
-        print('MultibankPaymentCallbackWebhook', data)
+        logger.debug(f'Multibank payment webhook request: {data};')
         transaction = MultibankTransaction.objects.filter(id=data.get('invoice_id'))
         if transaction.exists():
             transaction = transaction.first()
