@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict, defaultdict
 from datetime import timedelta, date
 
@@ -5,7 +6,6 @@ from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Count, Q, Sum, Min, Max, functions
 from django.db.models.functions import TruncDate, TruncMonth
-from django.utils import timezone
 from django.utils.timezone import now, localtime
 from django.utils.translation import gettext_lazy as _
 from drf_yasg import openapi
@@ -40,6 +40,8 @@ from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
 from config.core.permissions import IsCreator
 from config.swagger import sub_filter_swagger_param
+
+logger = logging.getLogger()
 
 
 class EditAccountAPIView(APIView):
@@ -173,6 +175,7 @@ class AddCardAPIView(APIView):
                 'phone': user.phone_number
             }
         )
+        logger.debug(f'Multibank bind card response: {multibank_response};')
         if str(m_bank_status).startswith('2'):
             card.multibank_session_id = multibank_response.get('data', {}).get('session_id')
             card.save()
