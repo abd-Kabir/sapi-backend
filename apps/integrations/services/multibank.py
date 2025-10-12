@@ -180,8 +180,11 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
         data=receipient_req_body,
         merchant_id=settings.MULTIBANK_INTEGRATION_SETTINGS['PROD']['MERCHANT_ID']
     )
+    logger.debug(f'Multibank receipient response: {creator_receipient}; '
+                 f'Multibank receipient status_code: {receipient_sc};')
     if not str(receipient_sc).startswith('2'):
-        raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
+        raise APIValidation(creator_receipient, status_code=400)
+        # raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
 
     # PAYMENT CREATION
     creator_split = {
@@ -204,7 +207,7 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
             'mxik': '10305008005000000',
             'total': creator_amount,
             'package_code': '1660595',
-            # 'name': "кроссовки men's low shoes",
+            'name': 'Оплата за креатору за доступ.',
             # 'tin': "307578794"
         },
         # Услуги SAPI
@@ -214,7 +217,7 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
             'mxik': '10305008003000000',
             'total': sapi_amount,
             'package_code': '1545646',
-            # 'name': "кроссовки men's low shoes",
+            'name': 'Комиссия SAPI за услугу.',
             # 'tin': "307578794"
         }
     ]
@@ -230,12 +233,15 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
         'ofd': ofd,
         'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
     }
+    logger.debug(f'Multibank payment request body: {body};')
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
-    logger.debug(f'Multibank payment response: {payment_response};')
+    logger.debug(f'Multibank payment response: {payment_response}; '
+                 f'Multibank payment status_code: {payment_sc};')
     if not str(payment_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
-        raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
+        raise APIValidation(payment_response, status_code=400)
+        # raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     payment_transaction_id = payment_response.get('data', {}).get('uuid')
     transaction.transaction_id = payment_transaction_id
 
@@ -254,7 +260,8 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
     payment_confirm_resp, payment_confirm_sc = multibank_prod_app.confirm_payment(
         transaction_id=payment_transaction_id
     )
-    logger.debug(f'Multibank payment confirm response: {payment_confirm_resp};')
+    logger.debug(f'Multibank payment confirm response: {payment_confirm_resp}; '
+                 f'Multibank payment confirm status_code: {payment_confirm_sc};')
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
