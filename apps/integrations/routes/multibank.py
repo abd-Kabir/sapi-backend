@@ -9,6 +9,7 @@ from apps.integrations.models import MultibankTransaction, MultibankTransactionS
 
 logger = logging.getLogger()
 
+
 class MultiBankBindCardCallbackWebhookAPIView(APIView):
     permission_classes = [AllowAny, ]
 
@@ -50,13 +51,19 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
         transaction = MultibankTransaction.objects.filter(id=data.get('invoice_id'))
         if transaction.exists():
             transaction = transaction.first()
-            transaction.status = self.match_status(data.get('status'))
             transaction.callback_data = data
             if transaction.subscription:
                 transaction.subscription.is_active = True
                 transaction.subscription.save()
+                transaction.status = 'paid'
             elif transaction.donation:
                 transaction.donation.is_active = True
                 transaction.donation.save()
-            transaction.save()
+                transaction.status = 'paid'
+                if transaction.donation.fundraising_id:
+                    transaction.donation.fundraising.current_amount += transaction.creator_amount
+                    transaction.donation.fundraising.save()
+        else:
+            transaction.status = 'failed'
+        transaction.save()
         return Response()

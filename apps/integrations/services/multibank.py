@@ -140,13 +140,14 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
-        raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
+        raise APIValidation(payment_confirm_sc, status_code=400)
+        # raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
         transaction.status = 'paid'
     transaction.save()
-    if fundraising:
-        fundraising.current_amount += creator_amount
-        fundraising.save(update_fields=['current_amount'])
+    # if fundraising:
+    #     fundraising.current_amount += creator_amount
+    #     fundraising.save(update_fields=['current_amount'])
     return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}
 
 
@@ -231,7 +232,8 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
         'invoice_id': str(transaction.id),
         'split': [creator_split, sapi_split],
         'ofd': ofd,
-        'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
+        'callback_url': 'https://c004fbeaa9da.ngrok-free.app/api/multibank/payment/webhook/',
+        # 'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
     }
     logger.debug(f'Multibank payment request body: {body};')
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
@@ -245,31 +247,8 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
     payment_transaction_id = payment_response.get('data', {}).get('uuid')
     transaction.transaction_id = payment_transaction_id
 
-    # PAYMENT CONFIRMATION
-    need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
-    if need_otp_confirmation:
-        transaction.save()
-        if subscription:
-            subscription.is_active = False
-        if donation:
-            donation.is_active = False
-        return {
-            'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id,
-            'url': payment_response.get('data', {}).get('checkout_url')
-        }
-    payment_confirm_resp, payment_confirm_sc = multibank_prod_app.confirm_payment(
-        transaction_id=payment_transaction_id
-    )
-    logger.debug(f'Multibank payment confirm response: {payment_confirm_resp}; '
-                 f'Multibank payment confirm status_code: {payment_confirm_sc};')
-    if not str(payment_confirm_sc).startswith('2'):
-        transaction.status = 'failed'
-        transaction.save()
-        raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
-    if payment_confirm_resp.get('data', {}).get('status') == 'success':
-        transaction.status = 'paid'
     transaction.save()
-    if fundraising:
-        fundraising.current_amount += creator_amount
-        fundraising.save(update_fields=['current_amount'])
-    return {'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id}
+    # if fundraising:
+    #     fundraising.current_amount += creator_amount
+    #     fundraising.save(update_fields=['current_amount'])
+    return {'url': payment_response.get('data', {}).get('checkout_url'), 'transaction_id': payment_transaction_id}
