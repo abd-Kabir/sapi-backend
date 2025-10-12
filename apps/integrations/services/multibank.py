@@ -232,8 +232,8 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
         'invoice_id': str(transaction.id),
         'split': [creator_split, sapi_split],
         'ofd': ofd,
-        'callback_url': 'https://c004fbeaa9da.ngrok-free.app/api/multibank/payment/webhook/',
-        # 'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
+        # 'callback_url': 'https://c004fbeaa9da.ngrok-free.app/api/multibank/payment/webhook/',
+        'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
     }
     logger.debug(f'Multibank payment request body: {body};')
     payment_response, payment_sc = multibank_prod_app.create_payment(data=body)
