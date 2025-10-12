@@ -169,6 +169,12 @@ class UserSubscriptionPlanListSerializer(serializers.ModelSerializer):
 
 
 class UserFundraisingListSerializer(serializers.ModelSerializer):
+    current_amount = serializers.SerializerMethodField(allow_null=True)
+
+    @staticmethod
+    def get_current_amount(obj):
+        return obj.current_amount / 100
+
     class Meta:
         model = Fundraising
         fields = [
