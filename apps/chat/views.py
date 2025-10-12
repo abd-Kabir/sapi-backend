@@ -1,4 +1,4 @@
-from django.db.models import Q, Count
+from django.db.models import Q, Count, OuterRef, Subquery
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.filters import OrderingFilter
@@ -23,11 +23,25 @@ class UserChatRoomListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+
+        last_message_subquery = (
+            Message.objects
+            .filter(room=OuterRef('pk'))
+            .order_by('-created_at')
+            .values('created_at')[:1]
+        )
+
         queryset = super().get_queryset()
-        queryset = queryset.filter(
-            Q(creator=user) | Q(subscriber=user)
-        ).annotate(messages_count=Count('messages')
-                   ).filter(messages_count__gt=0)
+        queryset = (
+            queryset
+            .filter(Q(creator=user) | Q(subscriber=user))
+            .annotate(
+                messages_count=Count('messages'),
+                last_message_created_at=Subquery(last_message_subquery)
+            )
+            .filter(messages_count__gt=0)
+            .order_by('-last_message_created_at')
+        )
         return queryset
 
 
@@ -94,7 +108,7 @@ class LastMessagesAPIView(ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(room_id=self.kwargs['room_id'])
+        queryset = queryset.filter(room_id=self.kwargs['room_id']).order_by('-created_at')
         return queryset
 
 

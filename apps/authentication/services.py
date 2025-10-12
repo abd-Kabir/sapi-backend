@@ -1,6 +1,7 @@
 import calendar
 import logging
 from datetime import timedelta, date
+from bs4 import BeautifulSoup
 
 from django.db.models import Sum, Q, Count
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
@@ -317,6 +318,8 @@ def platform_earnings(trunc_func, start_date=None, end_date=None):
 
 
 def send_notification_to_users(users, title, text):
+    title = BeautifulSoup(title, "html.parser").get_text(strip=True)
+    text = BeautifulSoup(text, "html.parser").get_text(strip=True)
     for user in users:
         send_notification_to_user(user, title, text)
 

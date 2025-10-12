@@ -313,6 +313,8 @@ class PostListSerializer(serializers.ModelSerializer):
 
 
 class PostShowSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True, allow_null=True, source='user.username')
+    profile_photo_info = FileSerializer(read_only=True, allow_null=True, source='user.profile_photo')
     post_type_display = serializers.CharField(source='get_post_type_display', read_only=True)
     files = FileSerializer(read_only=True, allow_null=True, many=True)
     has_liked = serializers.SerializerMethodField()
@@ -334,6 +336,8 @@ class PostShowSerializer(serializers.ModelSerializer):
                 'id': instance.id,
                 'title': instance.title,
                 'description': instance.description,
+                'username': representation.get('username', None),
+                'profile_photo_info': representation.get('profile_photo_info', {}),
                 'like_count': instance.like_count,
                 'comment_count': instance.comment_count,
                 'post_type': instance.post_type,
@@ -348,6 +352,8 @@ class PostShowSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'description',
+            'username',
+            'profile_photo_info',
             'like_count',
             'comment_count',
             'post_type',
