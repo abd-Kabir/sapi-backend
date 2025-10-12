@@ -88,7 +88,7 @@ class MessageListSerializer(serializers.ModelSerializer):
             obj.is_read = True
             obj.save()
             return True
-        return None
+        return obj.is_read
 
     # def get_is_blocked(self, obj):
     #     user = self.context['request'].user
