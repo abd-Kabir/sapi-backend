@@ -17,7 +17,7 @@ class MultiBankBindCardCallbackWebhookAPIView(APIView):
         logger.debug(f'Multibank bind card webhook request: {data};')
         card = (
             Card.all_objects
-            .filter(multibank_session_id=data.get('payer_id'), user__phone_number=data.get('phone'))
+            .filter(multibank_session_id=data.get('session_id'), user__phone_number=data.get('phone'))
         )
         if card.exists():
             card = card.first()
