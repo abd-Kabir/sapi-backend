@@ -149,6 +149,11 @@ class MySubscriptionPlanRetrieveUpdateSerializer(serializers.ModelSerializer):
 
 class FundraisingSerializer(serializers.ModelSerializer):
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    current_amount = serializers.SerializerMethodField(allow_null=True)
+
+    @staticmethod
+    def get_current_amount(obj):
+        return obj.current_amount / 100
 
     class Meta:
         model = Fundraising
@@ -192,7 +197,6 @@ class UserViewCreateSerializer(serializers.ModelSerializer):
 class ProfileUserActivitiesSerializer(serializers.ModelSerializer):
     extra_text = serializers.SerializerMethodField()
     initiator_data = serializers.SerializerMethodField()
-
 
     class Meta:
         model = UserActivity
