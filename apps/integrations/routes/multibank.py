@@ -1,5 +1,6 @@
 import logging
 
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,23 +48,49 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
-        logger.debug(f'Multibank payment webhook request: {data};')
-        transaction = MultibankTransaction.objects.filter(id=data.get('invoice_id'))
-        if transaction.exists():
-            transaction = transaction.first()
-            transaction.callback_data = data
+        logger.debug(f'Multibank payment webhook request: {data}')
+
+        invoice_id = data.get('invoice_id')
+        if not invoice_id:
+            logger.warning('Webhook received without invoice_id.')
+            return Response({'detail': 'Missing invoice_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            transaction = MultibankTransaction.objects.get(id=invoice_id)
+        except MultibankTransaction.DoesNotExist:
+            logger.error(f'Transaction not found for invoice_id={invoice_id}')
+            return Response({'detail': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Save callback data
+        transaction.callback_data = data
+
+        try:
             if transaction.subscription:
                 transaction.subscription.is_active = True
                 transaction.subscription.save()
                 transaction.status = 'paid'
+
             elif transaction.donation:
                 transaction.donation.is_active = True
                 transaction.donation.save()
                 transaction.status = 'paid'
+
                 if transaction.donation.fundraising_id:
-                    transaction.donation.fundraising.current_amount += transaction.creator_amount
-                    transaction.donation.fundraising.save()
-        else:
+                    fundraising = transaction.donation.fundraising
+                    fundraising.current_amount += transaction.creator_amount
+                    fundraising.save()
+
+            else:
+                # no related subscription or donation
+                transaction.status = 'failed'
+
+            transaction.save()
+            logger.info(f'Transaction {transaction.id} updated successfully.')
+
+            return Response(status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception(f'Error processing transaction {transaction.id}: {e}')
             transaction.status = 'failed'
-        transaction.save()
-        return Response()
+            transaction.save()
+            return Response({'detail': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
