@@ -301,7 +301,8 @@ class SubscriptionPlan(BaseModel):
 
 class UserSubscription(BaseModel):
     """Active subscriptions of users to creators"""
-    subscriber_card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='subscriptions')
+    subscriber_card = models.ForeignKey(Card, on_delete=models.SET_NULL, related_name='subscriptions',
+                                        null=True, blank=True)
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name='subscriptions')
@@ -373,8 +374,6 @@ class BlockedUser(BaseModel):
     @classmethod
     def blocked_by(cls, blocked, blocker):
         return cls.objects.filter(blocker=blocker, blocked=blocked).exists()
-
-
 
     def clean(self):
         if self.blocker == self.blocked:

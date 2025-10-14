@@ -233,15 +233,15 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             # raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
             subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
                                                            **validated_data)
-            if validated_data.get('one_time'):
+            if validated_data.get('payment_type') == 'card':
+                payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
+                                                 commission_by_subscriber=commission_by_subscriber,
+                                                 subscription=subscription)
+            else:
                 payment_info = multibank_side_system_payment(subscriber, creator, amount, 'subscription',
                                                              payment_type=validated_data.get('payment_type'),
                                                              commission_by_subscriber=commission_by_subscriber,
                                                              subscription=subscription)
-            else:
-                payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
-                                                 commission_by_subscriber=commission_by_subscriber,
-                                                 subscription=subscription)
             subscription.payment_reference = payment_info
             subscription.save(update_fields=['payment_reference', 'is_active'])
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))

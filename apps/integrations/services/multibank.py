@@ -140,7 +140,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
-        raise APIValidation(payment_confirm_sc, status_code=400)
+        raise APIValidation(payment_confirm_resp, status_code=400)
         # raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
         transaction.status = 'paid'
