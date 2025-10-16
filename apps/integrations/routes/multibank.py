@@ -77,7 +77,7 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
 
                 if transaction.donation.fundraising_id:
                     fundraising = transaction.donation.fundraising
-                    fundraising.current_amount += transaction.creator_amount
+                    fundraising.current_amount = (fundraising.current_amount or 0) + (transaction.creator_amount or 0)
                     fundraising.save()
 
             else:
@@ -93,4 +93,4 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
             logger.exception(f'Error processing transaction {transaction.id}: {e}')
             transaction.status = 'failed'
             transaction.save()
-            return Response({'detail': 'Internal error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': f'Internal error, {e.args}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
