@@ -12,6 +12,15 @@ from django.utils.translation import gettext_lazy as _
 logger = logging.getLogger()
 
 
+def make_subs_donates_inactive(subscription: UserSubscription, donation: Donation):
+    if subscription:
+        subscription.is_active = False
+        subscription.save()
+    if donation:
+        donation.is_active = False
+        donation.save()
+
+
 def calculate_payment_amount(amount, sapi_share, commission_by_subscriber):
     multicard_commission = amount * 0.02
     sapi_amount = (sapi_share / 100) * amount
@@ -97,6 +106,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     transaction.sapi_amount = sapi_amount
     transaction.creator_amount = creator_amount
     transaction.ofd_items = ofd
+    transaction.save(update_fields=['sapi_amount', 'creator_amount', 'ofd_items'])
     body = {
         'card': {
             'token': card.token
@@ -106,6 +116,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
         'invoice_id': str(transaction.id),
         'split': [creator_split, sapi_split],
         'ofd': ofd,
+        # 'callback_url': 'https://03e51e29d3bd.ngrok-free.app/api/multibank/payment/webhook/',
         'callback_url': 'https://api.sapi.uz/api/multibank/payment/webhook/',
     }
     logger.debug(f'Multibank payment request body: {body};')
@@ -115,23 +126,18 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     if not str(payment_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
-        if subscription:
-            subscription.is_active = False
-        if donation:
-            donation.is_active = False
+        make_subs_donates_inactive(subscription, donation)
         raise APIValidation(payment_response, status_code=400)
         # raise APIValidation(_('Ошибка во время получение данных от Multibank'), status_code=400)
     payment_transaction_id = payment_response.get('data', {}).get('uuid')
     transaction.transaction_id = payment_transaction_id
+    transaction.save(update_fields=['transaction_id'])
 
     # PAYMENT CONFIRMATION
     need_otp_confirmation = True if payment_response.get('data', {}).get('otp_hash') else False
     if need_otp_confirmation:
         transaction.save()
-        if subscription:
-            subscription.is_active = False
-        if donation:
-            donation.is_active = False
+        make_subs_donates_inactive(subscription, donation)
         return {
             'need_otp': need_otp_confirmation, 'transaction_id': payment_transaction_id,
             'url': payment_response.get('data', {}).get('checkout_url')
@@ -144,10 +150,7 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     if not str(payment_confirm_sc).startswith('2'):
         transaction.status = 'failed'
         transaction.save()
-        if subscription:
-            subscription.is_active = False
-        if donation:
-            donation.is_active = False
+        make_subs_donates_inactive(subscription, donation)
         raise APIValidation(payment_confirm_resp, status_code=400)
         # raise APIValidation(_('Ошибка во время подтверждении оплаты Multibank'), status_code=400)
     if payment_confirm_resp.get('data', {}).get('status') == 'success':
