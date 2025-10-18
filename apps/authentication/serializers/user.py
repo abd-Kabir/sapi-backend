@@ -214,8 +214,9 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
                                 status_code=status.HTTP_400_BAD_REQUEST)
 
         card = attrs.get('subscriber_card')
-        if card.user != user:
-            raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_400_BAD_REQUEST)
+        if card:
+            if card.user != user:
+                raise APIValidation(_('Карта не найдена'), status_code=status.HTTP_400_BAD_REQUEST)
         return super().validate(attrs)
 
     def create(self, validated_data):
