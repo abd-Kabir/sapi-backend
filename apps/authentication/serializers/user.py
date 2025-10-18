@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -12,6 +14,8 @@ from apps.integrations.services.multibank import multibank_payment, calculate_pa
     multibank_side_system_payment
 from config.core.api_exceptions import APIValidation
 from config.services import run_with_thread
+
+logger = logging.getLogger()
 
 
 class BecomeUserMultibankAddAccountSerializer(serializers.ModelSerializer):
@@ -221,32 +225,45 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # with transaction.atomic():
-        request = self.context['request']
-        plan: SubscriptionPlan = validated_data.get('plan')
-        card = validated_data.get('subscriber_card')
-        creator = plan.creator
-        end_date = now() + plan.duration
-        subscriber = request.user
-        amount = plan.price
-        commission_by_subscriber = validated_data.get('commission_by_subscriber')
+        subscription = None
+        try:
+            request = self.context['request']
+            plan: SubscriptionPlan = validated_data.get('plan')
+            card = validated_data.get('subscriber_card')
+            creator = plan.creator
+            end_date = now() + plan.duration
+            subscriber = request.user
+            amount = plan.price
+            commission_by_subscriber = validated_data.get('commission_by_subscriber')
 
-        self.check_subscription(validated_data, creator)
-        # raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
-        subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
-                                                       **validated_data)
-        if validated_data.get('payment_type') == 'card':
-            payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
-                                             commission_by_subscriber=commission_by_subscriber,
-                                             subscription=subscription)
-        else:
-            payment_info = multibank_side_system_payment(subscriber, creator, amount, 'subscription',
-                                                         payment_type=validated_data.get('payment_type'),
-                                                         commission_by_subscriber=commission_by_subscriber,
-                                                         subscription=subscription)
-        subscription.payment_reference = payment_info
-        subscription.save(update_fields=['payment_reference', 'is_active'])
-        run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
-        return subscription
+            self.check_subscription(validated_data, creator)
+            # raise APIValidation(_('У вас уже имеется этот подписка'), status_code=400)
+            subscription = UserSubscription.objects.create(subscriber=subscriber, creator=creator, end_date=end_date,
+                                                           is_active=False, **validated_data)
+            if validated_data.get('payment_type') == 'card':
+                payment_info = multibank_payment(subscriber, creator, card, amount, 'subscription',
+                                                 commission_by_subscriber=commission_by_subscriber,
+                                                 subscription=subscription)
+            else:
+                payment_info = multibank_side_system_payment(subscriber, creator, amount, 'subscription',
+                                                             payment_type=validated_data.get('payment_type'),
+                                                             commission_by_subscriber=commission_by_subscriber,
+                                                             subscription=subscription)
+            subscription.payment_reference = payment_info
+            subscription.save(update_fields=['payment_reference', 'is_active'])
+            run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
+            return subscription
+        except Exception as e:
+            logger.debug(f'Subscription creation failed: {str(e.args)}')
+            if subscription:
+                subscription.delete()
+            error_details = e.args
+
+            if isinstance(e.args, tuple) and len(e.args) > 0:
+                first_arg = e.args[0]
+                if isinstance(first_arg, dict):
+                    error_details = first_arg.get('error', {}).get('details')
+            raise APIValidation(error_details, status_code=status.HTTP_400_BAD_REQUEST)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -295,40 +312,52 @@ class DonationCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # with transaction.atomic():
-        donator = self.context['request'].user
-        creator = validated_data.get('creator')
-        commission_by_subscriber = validated_data.get('commission_by_subscriber')
-        card = validated_data.get('card')
-        fundraising = validated_data.get('fundraising')
-        if fundraising:
-            if fundraising.minimum_donation and fundraising.minimum_donation > validated_data.get('amount', 0):
-                raise APIValidation(_(f'Минимальный донат является: {validated_data.get("amount", 0)}'),
-                                    status_code=400)
-            if fundraising.deadline < now():
-                raise APIValidation(_('Срок сбора средств прошел'), status_code=400)
-        if creator.minimum_message_donation > validated_data.get('amount', 0):
-            validated_data['message'] = None
-        if creator.max_donation_letters:
-            validated_data['message'] = validated_data['message'][:creator.max_donation_letters]
-        validated_data['donator'] = donator
-        donation = super().create(validated_data)
-        if validated_data.get('payment_type') == 'card':
-            payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0),
-                                             'donation',
-                                             fundraising=fundraising,
-                                             commission_by_subscriber=commission_by_subscriber,
-                                             donation=donation)
-        else:
-            payment_info = multibank_side_system_payment(donator, creator, validated_data.get('amount', 0),
-                                                         'donation',
-                                                         payment_type=validated_data.get('payment_type'),
-                                                         fundraising=fundraising,
-                                                         commission_by_subscriber=commission_by_subscriber,
-                                                         donation=donation)
-        donation.payment_info = payment_info
-        donation.save()
-        run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
-        return donation
+        donation = None
+        try:
+            donator = self.context['request'].user
+            creator = validated_data.get('creator')
+            commission_by_subscriber = validated_data.get('commission_by_subscriber')
+            card = validated_data.get('card')
+            fundraising = validated_data.get('fundraising')
+            if fundraising:
+                if fundraising.minimum_donation and fundraising.minimum_donation > validated_data.get('amount', 0):
+                    raise APIValidation(_(f'Минимальный донат является: {validated_data.get("amount", 0)}'),
+                                        status_code=400)
+                if fundraising.deadline < now():
+                    raise APIValidation(_('Срок сбора средств прошел'), status_code=400)
+            if creator.minimum_message_donation > validated_data.get('amount', 0):
+                validated_data['message'] = None
+            if creator.max_donation_letters:
+                validated_data['message'] = validated_data['message'][:creator.max_donation_letters]
+            validated_data['donator'] = donator
+            donation = super().create(validated_data)
+            if validated_data.get('payment_type') == 'card':
+                payment_info = multibank_payment(donator, creator, card, validated_data.get('amount', 0),
+                                                 'donation',
+                                                 fundraising=fundraising,
+                                                 commission_by_subscriber=commission_by_subscriber,
+                                                 donation=donation)
+            else:
+                payment_info = multibank_side_system_payment(donator, creator, validated_data.get('amount', 0),
+                                                             'donation',
+                                                             payment_type=validated_data.get('payment_type'),
+                                                             fundraising=fundraising,
+                                                             commission_by_subscriber=commission_by_subscriber,
+                                                             donation=donation)
+            donation.payment_info = payment_info
+            donation.save()
+            run_with_thread(create_activity, ('donation', None, donation.id, donator, validated_data.get('creator_id')))
+            return donation
+        except Exception as e:
+            logger.debug(f'Donation creation failed: {str(e.args)}')
+            if donation:
+                donation.delete()
+            error_details = e.args
+            if isinstance(e.args, tuple) and len(e.args) > 0:
+                first_arg = e.args[0]
+                if isinstance(first_arg, dict):
+                    error_details = first_arg.get('error', {}).get('details')
+            raise APIValidation(error_details, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class CalculatePaymentCommissionSerializer(serializers.Serializer):
