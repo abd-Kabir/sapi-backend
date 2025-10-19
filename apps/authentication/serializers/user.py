@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, status
 
-from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising
+from apps.authentication.models import User, SubscriptionPlan, UserSubscription, Donation, Fundraising, UserFollow
 from apps.authentication.services import create_activity
 from apps.files.serializers import FileSerializer
 from apps.integrations.services.multibank import multibank_payment, calculate_payment_amount, \
@@ -252,6 +252,16 @@ class UserSubscriptionCreateSerializer(serializers.ModelSerializer):
             subscription.payment_reference = payment_info
             subscription.save(update_fields=['payment_reference', 'is_active'])
             run_with_thread(create_activity, ('subscribed', None, subscription.id, subscriber, creator))
+
+            follow_relation = UserFollow.objects.filter(
+                follower=subscriber,
+                followed=creator,
+            ).exists()
+            if not follow_relation:
+                UserFollow.objects.create(
+                    follower=subscriber,
+                    followed=creator,
+                )
             return subscription
         except Exception as e:
             logger.debug(f'Subscription creation failed: {str(e.args)}')
