@@ -5,13 +5,14 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
 from apps.authentication.managers import CardManager, UserManager, AllUserManager, SubscriptionPlanManager, \
-    DonationManager
+    DonationManager, UserSubscriptionManager
 from apps.content.models import ReportTypes, Post
 from apps.files.models import File
 from config.models import BaseModel
@@ -309,16 +310,23 @@ class UserSubscription(BaseModel):
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+    is_paid = models.BooleanField(default=False)
     commission_by_subscriber = models.BooleanField(default=False)
     payment_type = models.CharField(choices=PaymentType.choices, default=PaymentType.card, null=True, blank=True)
     payment_reference = models.TextField(null=True, blank=True)
     one_time = models.BooleanField(default=False)
 
+    objects = UserSubscriptionManager()
+    all_objects = models.Manager()
+
     class Meta:
         db_table = 'user_subscription'
         constraints = [
-            models.UniqueConstraint(fields=['subscriber', 'creator', 'plan'],
-                                    name='user_subs_unique_subscriber_creator_plan')
+            models.UniqueConstraint(
+                fields=['subscriber', 'creator', 'plan'],
+                condition=Q(is_paid=True),
+                name='user_subs_unique_subscriber_creator_plan'
+            )
         ]
 
     def save(self, *args, **kwargs):

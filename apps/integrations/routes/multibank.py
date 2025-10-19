@@ -67,6 +67,7 @@ class MultiBankPaymentCallbackWebhookAPIView(APIView):
         try:
             if transaction.subscription:
                 transaction.subscription.is_active = True
+                transaction.subscription.is_paid = True
                 transaction.subscription.save()
                 transaction.status = 'paid'
 
