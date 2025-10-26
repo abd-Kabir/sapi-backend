@@ -6,7 +6,8 @@ from apps.content.views import (PostCreateAPIView, CategoryModelViewSet, ChoiceT
                                 PostToggleLikeAPIView, PostShowAPIView, PostShowCommentListAPIView,
                                 PostShowRepliesListAPIView, PostLeaveCommentAPIView, CreateReportAPIView,
                                 PostToggleSaveAPIView, PostByUserListAPIView, PostByFollowedListAPIView,
-                                CalculateQuestionnaireAnswersAPIView, CancelQuestionnaireAnswerAPIView)
+                                CalculateQuestionnaireAnswersAPIView, CancelQuestionnaireAnswerAPIView,
+                                PostDeleteAPIView)
 
 router = DefaultRouter()
 router.register('category', CategoryModelViewSet, basename='category')
@@ -34,5 +35,6 @@ urlpatterns = [
 
     path('reports/create/', CreateReportAPIView.as_view(), name='create_report'),
     path('post/<int:post_id>/toggle-save/', PostToggleSaveAPIView.as_view(), name='post_toggle_save'),
+    path('post/<int:pk>/delete/', PostDeleteAPIView.as_view(), name='post_delete'),
 ]
 urlpatterns += router.urls

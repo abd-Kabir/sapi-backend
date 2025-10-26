@@ -9,7 +9,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, serializers
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -21,12 +21,11 @@ from apps.content.serializers import PostCreateSerializer, CategorySerializer, C
     PostAccessibilitySerializer, QuestionnairePostAnswerSerializer, PostListSerializer, \
     PostToggleLikeSerializer, PostShowSerializer, PostShowCommentListSerializer, PostShowCommentRepliesSerializer, \
     PostLeaveCommentSerializer, ReportSerializer
-from apps.content.services import calculate_correct_answers
 from config.core.api_exceptions import APIValidation
 from config.core.pagination import APILimitOffsetPagination
-from config.core.permissions import IsCreator, IsAdmin, IsAdminAllowGet
-from config.swagger import query_choice_swagger_param, post_type_swagger_param
+from config.core.permissions import IsCreator, IsAdminAllowGet
 from config.services import run_with_thread
+from config.swagger import query_choice_swagger_param, post_type_swagger_param
 from config.views import BaseModelViewSet
 
 
@@ -514,3 +513,14 @@ class PopularCreatorListAPIView(APIView):
     def get(self, request, *args, **kwargs):
 
         return Response()
+
+
+class PostDeleteAPIView(DestroyAPIView):
+    queryset = Post.objects.all()
+    permission_classes = [IsCreator, ]
+
+    def delete(self, request, *args, **kwargs):
+        post = self.get_object()
+        if request.user != post.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return super().delete(request, *args, **kwargs)

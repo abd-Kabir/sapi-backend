@@ -168,7 +168,7 @@ class AnswerOption(models.Model):
 
 class PostAnswer(BaseModel):
     user = models.ForeignKey('authentication.User', on_delete=models.SET_NULL, null=True, related_name='post_answers')
-    post = models.ForeignKey(Post, on_delete=models.SET_NULL, null=True, related_name='post_answers')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, related_name='post_answers')
     answers = models.JSONField(default=list)
 
     class Meta:
@@ -212,7 +212,7 @@ class Comment(BaseModel):
 
 class Like(BaseModel):
     user = models.ForeignKey('authentication.User', on_delete=models.CASCADE, related_name='likes')
-    post = models.ForeignKey(Post, on_delete=models.SET_NULL, related_name='likes', null=True, blank=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes', null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, related_name='likes', null=True, blank=True)
 
     def clean(self):
