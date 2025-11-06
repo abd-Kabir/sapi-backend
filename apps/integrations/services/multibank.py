@@ -71,13 +71,13 @@ def multibank_payment(user: User, creator: User, card: Card, amount, transaction
     # PAYMENT CREATION
     creator_split = {
         'type': 'account',
-        'receipient': creator_receipient.get('data', {}).get('uuid'),
+        'recipient': creator_receipient.get('data', {}).get('uuid'),
         'amount': int(creator_amount),
         'details': 'Донат для креатора SAPI'
     }
     sapi_split = {
         'type': 'account',
-        'receipient': '900addbc-4fed-11f0-8b0d-00505680eaf6',  # Hard coded SAPI's ID
+        'recipient': '900addbc-4fed-11f0-8b0d-00505680eaf6',  # Hard coded SAPI's ID
         'amount': int(sapi_amount),
         'details': 'Донат для креатора SAPI'
     }
@@ -201,13 +201,13 @@ def multibank_side_system_payment(user: User, creator: User, amount, transaction
     # PAYMENT CREATION
     creator_split = {
         'type': 'account',
-        'receipient': creator_receipient.get('data', {}).get('uuid'),
+        'recipient': creator_receipient.get('data', {}).get('uuid'),
         'amount': int(creator_amount),
         'details': 'Донат для креатора SAPI'
     }
     sapi_split = {
         'type': 'account',
-        'receipient': '900addbc-4fed-11f0-8b0d-00505680eaf6',  # Hard coded SAPI's ID
+        'recipient': '900addbc-4fed-11f0-8b0d-00505680eaf6',  # Hard coded SAPI's ID
         'amount': int(sapi_amount),
         'details': 'Донат для креатора SAPI'
     }
